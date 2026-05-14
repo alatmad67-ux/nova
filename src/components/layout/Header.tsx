@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -55,7 +56,7 @@ export function Header() {
               <Button variant="ghost" size="icon" className="relative text-slate-900 rounded-full hover:bg-slate-50">
                 <ShoppingBag className="h-5 w-5" />
                 <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-primary text-white flex items-center justify-center rounded-full text-[9px] font-bold border-2 border-white">
-                  3
+                  2
                 </span>
               </Button>
             </Link>
