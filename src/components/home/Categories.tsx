@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -18,32 +17,35 @@ const CATEGORIES = [
 
 export function Categories() {
   return (
-    <section className="container mx-auto px-4 py-8 overflow-hidden">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold">تسوق حسب القسم</h3>
-        <Link href="/categories" className="text-sm font-medium text-primary hover:underline">
-          عرض الكل
+    <section className="container mx-auto px-4 py-10 overflow-hidden">
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="text-xl md:text-2xl font-bold text-slate-900">تسوق حسب القسم</h3>
+        <Link href="/categories" className="text-sm font-semibold text-primary hover:opacity-80 flex items-center gap-1 transition-all">
+          مشاهدة الكل
+          <span className="text-lg">←</span>
         </Link>
       </div>
-      <div className="flex overflow-x-auto pb-4 gap-6 no-scrollbar snap-x">
+      <div className="flex overflow-x-auto pb-4 gap-4 md:gap-8 no-scrollbar snap-x scroll-smooth">
         {CATEGORIES.map((cat) => {
           const img = PlaceHolderImages.find(i => i.id === cat.icon);
           return (
             <Link 
               key={cat.id} 
               href={`/category/${cat.id}`}
-              className="flex flex-col items-center gap-3 snap-start min-w-[90px] group"
+              className="flex flex-col items-center gap-4 snap-start min-w-[85px] md:min-w-[110px] group"
             >
-              <div className="relative h-20 w-20 rounded-2xl overflow-hidden bg-secondary transition-transform group-hover:scale-105 duration-300">
-                <Image
-                  src={img?.imageUrl || ''}
-                  alt={cat.name}
-                  fill
-                  className="object-cover"
-                  data-ai-hint={cat.hint}
-                />
+              <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-full overflow-hidden bg-white shadow-premium p-1 group-hover:scale-105 group-hover:shadow-card-hover transition-all duration-500 border border-slate-100">
+                <div className="relative h-full w-full rounded-full overflow-hidden">
+                  <Image
+                    src={img?.imageUrl || ''}
+                    alt={cat.name}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    data-ai-hint={cat.hint}
+                  />
+                </div>
               </div>
-              <span className="text-sm font-medium text-center text-slate-700 whitespace-nowrap group-hover:text-primary transition-colors">
+              <span className="text-xs md:text-sm font-bold text-center text-slate-600 whitespace-nowrap group-hover:text-primary transition-colors">
                 {cat.name}
               </span>
             </Link>

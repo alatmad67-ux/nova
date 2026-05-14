@@ -1,4 +1,3 @@
-
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -11,6 +10,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        arabic: ['IBM Plex Sans Arabic', 'sans-serif'],
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
         code: ['monospace'],
