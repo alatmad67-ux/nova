@@ -5,10 +5,16 @@
  * NOVA FIREBASE INITIALIZATION & SECURITY SYNC
  * 
  * CRITICAL: This file triggers a redeployment of Security Rules.
- * Security Rules applied at: 2026-03-01T20:00:00Z
- * - Public access enabled for: products, categories, settings.
- * - Admin restricted for: orders, admins, delivery-companies.
- * - Store ID used: nova-official
+ * Rules Version: 2026.03.01.v2
+ * 
+ * Access Policy:
+ * - products: Public Read
+ * - categories: Public Read
+ * - settings: Public Read
+ * - orders: Admin Read/Public Create
+ * - admins: Admin Only
+ * 
+ * Store Context: nova-official
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';

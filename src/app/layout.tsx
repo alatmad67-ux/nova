@@ -16,7 +16,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // CRITICAL: Standardizing Store ID for NOVA
+  // CRITICAL: Standardizing Store ID for NOVA Official Project
+  // All products/categories must have storeId: 'nova-official' in Firestore
   const novaStoreContext = {
     storeId: 'nova-official',
     storeName: 'NOVA',

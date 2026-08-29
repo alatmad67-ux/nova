@@ -5,12 +5,22 @@ import React, { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
+import { useStore } from '@/providers/store-provider';
 
 export function Categories() {
   const db = useFirestore();
-  // Ensure we are fetching from the REAL 'categories' collection
-  const catQuery = useMemo(() => query(collection(db, 'categories'), orderBy('order', 'asc')), [db]);
+  const { storeId } = useStore();
+
+  const catQuery = useMemo(() => {
+    // We fetch categories associated with our storeId
+    return query(
+      collection(db, 'categories'),
+      where('storeId', '==', storeId),
+      orderBy('order', 'asc')
+    );
+  }, [db, storeId]);
+
   const { data: categories, loading } = useCollection(catQuery);
 
   if (loading) return (
@@ -24,7 +34,7 @@ export function Categories() {
   return (
     <section className="container mx-auto px-4 py-12 overflow-hidden">
       <div className="flex overflow-x-auto pb-8 gap-8 md:gap-16 no-scrollbar snap-x scroll-smooth justify-center md:justify-start">
-        {categories?.map((cat: any) => (
+        {categories && categories.length > 0 ? categories.map((cat: any) => (
           <Link 
             key={cat.id} 
             href={`/category/${cat.slug}`}
@@ -37,6 +47,7 @@ export function Categories() {
                   alt={cat.name}
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-125 opacity-70 group-hover:opacity-100"
+                  data-ai-hint="fashion category icon"
                 />
               </div>
             </div>
@@ -44,7 +55,11 @@ export function Categories() {
               {cat.name}
             </span>
           </Link>
-        ))}
+        )) : (
+          <div className="w-full text-center py-10 opacity-20 font-bold uppercase tracking-widest">
+            لا توجد أقسام مضافة بعد
+          </div>
+        )}
       </div>
     </section>
   );

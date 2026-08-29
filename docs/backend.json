@@ -21,7 +21,8 @@
         "slug": { "type": "string" },
         "image": { "type": "string" },
         "order": { "type": "number" },
-        "isActive": { "type": "boolean", "default": true }
+        "isActive": { "type": "boolean", "default": true },
+        "storeId": { "type": "string" }
       },
       "required": ["name", "slug"]
     },
@@ -186,7 +187,7 @@
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "PUBLIC_READ: Necessary for guests to create orders, but in a real app would be write-only for guests."
+      "description": "ADMIN_ONLY: Only admin can read/write orders, but we allow public create."
     },
     "/admins/{uid}": {
       "schema": "Admin",

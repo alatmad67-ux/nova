@@ -33,9 +33,11 @@ export function useCollection(query: Query | null) {
         setLoading(false);
       },
       async (serverError: any) => {
-        // محاولة استخراج المسار من كائن الاستعلام لتوفير سياق أفضل لتصحيح الأخطاء
-        const path = (query as any).path || (query as any)._query?.path?.segments?.join('/') || 'collection_query';
+        // More robust path extraction for debugging
+        const path = (query as any)._query?.path?.segments?.join('/') || (query as any).path || 'collection_query';
         
+        console.error(`Firestore Permission Error on path: ${path}`, serverError);
+
         const permissionError = new FirestorePermissionError({
           path: path,
           operation: 'list',

@@ -23,7 +23,7 @@ export function Footer() {
               <span className="text-[10px] font-light tracking-[0.5em] text-white/40 uppercase -mt-1 group-hover:text-primary transition-colors">Women Fashion</span>
             </div>
             <p className="text-sm leading-relaxed font-light">
-              وجهتكِ الأولى للأناقة العصرية في العراق. تصاميم حصرية بجودة ملكية تناسب ذوقكِ الرفيع.
+              وجهتكِ الأولى للأناقة العصرية في العراق. تصاميم حصرية بجودة ملكية تناسب ذوقكِ الرفيع في عالم NOVA.
             </p>
             <div className="flex gap-6">
               <Link href="#" className="text-white/20 hover:text-primary transition-all hover:scale-110"><Instagram className="h-5 w-5" /></Link>
@@ -69,7 +69,7 @@ export function Footer() {
                 <div className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-primary/50 transition-colors">
                   <Mail className="h-4 w-4 text-primary" />
                 </div>
-                <span className="font-bold text-xs">care@novafashion.iq</span>
+                <span className="font-bold text-xs text-white/40">care@novafashion.iq</span>
               </li>
             </ul>
           </div>
