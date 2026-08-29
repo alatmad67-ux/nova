@@ -1,6 +1,17 @@
 
 {
   "entities": {
+    "Store": {
+      "title": "Store",
+      "description": "Store configuration and subscription data.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "suspended", "trial"] }
+      }
+    },
     "Category": {
       "title": "Category",
       "description": "Product categories like Dresses, Skirts, etc.",
@@ -120,50 +131,25 @@
         "storeId": { "type": "string" }
       }
     },
-    "DeliveryCompany": {
-      "title": "Delivery Company",
-      "description": "Information about shipping providers.",
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin user profile and roles.",
       "type": "object",
       "properties": {
-        "name": { "type": "string" },
         "phone": { "type": "string" },
-        "apiUrl": { "type": "string" },
-        "apiKey": { "type": "string" },
-        "apiSecret": { "type": "string" },
-        "notes": { "type": "string" },
-        "isActive": { "type": "boolean", "default": true }
-      },
-      "required": ["name"]
-    },
-    "Settings": {
-      "title": "Store Settings",
-      "description": "Global configuration for the brand.",
-      "type": "object",
-      "properties": {
-        "storeName": { "type": "string" },
-        "whatsapp": { "type": "string" },
-        "socialLinks": {
-          "type": "object",
-          "properties": {
-            "instagram": { "type": "string" },
-            "tiktok": { "type": "string" },
-            "facebook": { "type": "string" },
-            "snapchat": { "type": "string" },
-            "telegram": { "type": "string" }
-          }
-        },
-        "deliveryFees": {
-          "type": "object",
-          "additionalProperties": { "type": "number" }
-        },
-        "lowStockThreshold": { "type": "number" }
+        "role": { "type": "string", "enum": ["super_admin", "merchant"] },
+        "storeId": { "type": "string" }
       }
     }
   },
   "auth": {
-    "providers": ["google.com", "password"]
+    "providers": ["google.com", "password", "phone"]
   },
   "firestore": {
+    "/stores/{storeId}": {
+      "schema": "Store",
+      "description": "Store profiles."
+    },
     "/categories/{categoryId}": {
       "schema": "Category",
       "description": "Product categories."
@@ -176,9 +162,9 @@
       "schema": "Order",
       "description": "Customer orders."
     },
-    "/delivery-companies/{companyId}": {
-      "schema": "DeliveryCompany",
-      "description": "Shipping providers."
+    "/admins/{uid}": {
+      "schema": "Admin",
+      "description": "Administrative users."
     },
     "/settings/general": {
       "schema": "Settings",
