@@ -9,7 +9,8 @@
         "name": { "type": "string" },
         "slug": { "type": "string" },
         "image": { "type": "string" },
-        "order": { "type": "number" }
+        "order": { "type": "number" },
+        "isActive": { "type": "boolean", "default": true }
       },
       "required": ["name", "slug"]
     },
@@ -19,12 +20,28 @@
       "type": "object",
       "properties": {
         "name": { "type": "string" },
+        "sku": { "type": "string" },
+        "barcode": { "type": "string" },
+        "brand": { "type": "string" },
         "description": { "type": "string" },
+        "material": { "type": "string" },
+        "purchasePrice": { "type": "number" },
         "price": { "type": "number" },
         "originalPrice": { "type": "number" },
         "categoryId": { "type": "string" },
         "categoryName": { "type": "string" },
         "images": { "type": "array", "items": { "type": "string" } },
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "code": { "type": "string" }
+            }
+          }
+        },
+        "sizes": { "type": "array", "items": { "type": "string" } },
         "variants": { 
           "type": "array", 
           "items": {
@@ -33,14 +50,19 @@
               "color": { "type": "string" },
               "size": { "type": "string" },
               "stock": { "type": "number" },
-              "sku": { "type": "string" }
+              "sku": { "type": "string" },
+              "barcode": { "type": "string" }
             }
           }
         },
         "status": { "type": "string", "enum": ["active", "draft", "out_of_stock"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "isNew": { "type": "boolean", "default": false },
+        "isBestSeller": { "type": "boolean", "default": false },
+        "isFeatured": { "type": "boolean", "default": false },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "storeId": { "type": "string" }
       },
-      "required": ["name", "price", "categoryId"]
+      "required": ["name", "price", "categoryId", "storeId"]
     },
     "Order": {
       "title": "Order",
@@ -85,7 +107,8 @@
           }
         },
         "status": { "type": "string", "enum": ["جديد", "تم التأكيد", "قيد التجهيز", "جاهز للشحن", "مع شركة التوصيل", "تم التسليم", "ملغي", "مرتجع"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "storeId": { "type": "string" }
       }
     },
     "Settings": {

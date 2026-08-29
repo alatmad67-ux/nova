@@ -3,7 +3,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Youtube, Phone, Mail, MapPin, Sparkles } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, Phone, Mail, Sparkles } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -37,7 +37,7 @@ export function Footer() {
           <div>
             <h4 className="text-white font-black text-xs uppercase tracking-widest mb-8">استكشفي</h4>
             <ul className="space-y-4 text-sm font-bold">
-              <li><Link href="/categories" className="hover:text-primary transition-colors">الأقسام</Link></li>
+              <li><Link href="/" className="hover:text-primary transition-colors">الرئيسية</Link></li>
               <li><Link href="/new-arrivals" className="hover:text-primary transition-colors">وصل حديثاً</Link></li>
               <li><Link href="/best-sellers" className="hover:text-primary transition-colors">الأكثر مبيعاً</Link></li>
               <li><Link href="/offers" className="hover:text-primary transition-colors">العروض</Link></li>
