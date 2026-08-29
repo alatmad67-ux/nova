@@ -1,56 +1,43 @@
+
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-
-const CATEGORIES = [
-  { id: 1, name: 'إلكترونيات', icon: 'cat-electronics', hint: 'electronics' },
-  { id: 2, name: 'أزياء', icon: 'cat-fashion', hint: 'fashion' },
-  { id: 3, name: 'المنزل', icon: 'cat-home', hint: 'home furniture' },
-  { id: 4, name: 'جمال', icon: 'cat-electronics', hint: 'beauty cosmetics' },
-  { id: 5, name: 'أطفال', icon: 'cat-fashion', hint: 'toys kids' },
-  { id: 6, name: 'رياضة', icon: 'cat-electronics', hint: 'sports gear' },
-  { id: 7, name: 'سوبر ماركت', icon: 'cat-home', hint: 'grocery' },
-];
+import { useCollection, useFirestore } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 export function Categories() {
+  const db = useFirestore();
+  const catQuery = useMemo(() => query(collection(db, 'categories'), orderBy('order', 'asc')), [db]);
+  const { data: categories, loading } = useCollection(catQuery);
+
+  if (loading) return null;
+
   return (
-    <section className="container mx-auto px-4 py-10 overflow-hidden">
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="text-xl md:text-2xl font-bold text-slate-900">تسوق حسب القسم</h3>
-        <Link href="/categories" className="text-sm font-semibold text-primary hover:opacity-80 flex items-center gap-1 transition-all">
-          مشاهدة الكل
-          <span className="text-lg">←</span>
-        </Link>
-      </div>
-      <div className="flex overflow-x-auto pb-4 gap-4 md:gap-8 no-scrollbar snap-x scroll-smooth">
-        {CATEGORIES.map((cat) => {
-          const img = PlaceHolderImages.find(i => i.id === cat.icon);
-          return (
-            <Link 
-              key={cat.id} 
-              href={`/category/${cat.id}`}
-              className="flex flex-col items-center gap-4 snap-start min-w-[85px] md:min-w-[110px] group"
-            >
-              <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-full overflow-hidden bg-white shadow-premium p-1 group-hover:scale-105 group-hover:shadow-card-hover transition-all duration-500 border border-slate-100">
-                <div className="relative h-full w-full rounded-full overflow-hidden">
-                  <Image
-                    src={img?.imageUrl || ''}
-                    alt={cat.name}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    data-ai-hint={cat.hint}
-                  />
-                </div>
+    <section className="container mx-auto px-4 py-12 overflow-hidden">
+      <div className="flex overflow-x-auto pb-8 gap-8 md:gap-16 no-scrollbar snap-x scroll-smooth justify-center md:justify-start">
+        {categories?.map((cat: any) => (
+          <Link 
+            key={cat.id} 
+            href={`/category/${cat.slug}`}
+            className="flex flex-col items-center gap-5 snap-start min-w-[100px] md:min-w-[140px] group"
+          >
+            <div className="relative h-20 w-20 md:h-32 md:w-32 rounded-full overflow-hidden bg-white/5 shadow-xl p-1.5 group-hover:scale-110 group-hover:shadow-primary/20 transition-all duration-700 border border-white/10 celestial-glow">
+              <div className="relative h-full w-full rounded-full overflow-hidden">
+                <Image
+                  src={cat.image || 'https://picsum.photos/seed/cat/200/200'}
+                  alt={cat.name}
+                  fill
+                  className="object-cover transition-transform duration-1000 group-hover:scale-125 opacity-70 group-hover:opacity-100"
+                />
               </div>
-              <span className="text-xs md:text-sm font-bold text-center text-slate-600 whitespace-nowrap group-hover:text-primary transition-colors">
-                {cat.name}
-              </span>
-            </Link>
-          );
-        })}
+            </div>
+            <span className="text-xs md:text-sm font-black text-center text-white/60 tracking-[0.2em] uppercase group-hover:text-primary transition-colors">
+              {cat.name}
+            </span>
+          </Link>
+        ))}
       </div>
     </section>
   );

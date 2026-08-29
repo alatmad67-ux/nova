@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { StoreProvider } from '@/providers/store-provider';
+import { CartProvider } from '@/providers/cart-provider';
 
 export const metadata: Metadata = {
   title: 'NOVA | أزياء نسائية فاخرة',
@@ -29,11 +30,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-arabic antialiased selection:bg-primary/30 selection:text-white">
+      <body className="font-arabic antialiased selection:bg-primary/30 selection:text-white overflow-x-hidden">
         <FirebaseClientProvider>
           <StoreProvider value={novaStoreContext}>
-            {children}
-            <Toaster />
+            <CartProvider>
+              {children}
+              <Toaster />
+            </CartProvider>
           </StoreProvider>
         </FirebaseClientProvider>
       </body>

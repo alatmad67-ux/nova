@@ -4,100 +4,107 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, ShoppingBag, Star } from 'lucide-react';
+import { Heart, ShoppingBag, Star, Sparkles } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { useCart } from '@/providers/cart-provider';
 import { cn } from "@/lib/utils";
 
 interface ProductProps {
   product: {
     id: string;
     name: string;
-    price: string;
-    originalPrice?: string;
+    price: number;
+    originalPrice?: number;
     category: string;
     rating: number;
-    reviews: number;
     image: string;
     badge?: string;
   }
 }
 
 export function ProductCard({ product }: ProductProps) {
+  const { toggleFavorite, favorites } = useCart();
+  const isFav = favorites.includes(product.id);
+
+  const discount = product.originalPrice 
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
+    : null;
+
   return (
-    <Card className="group relative border-none bg-white rounded-[1.5rem] overflow-hidden transition-all duration-500 hover:shadow-card-hover flex flex-col h-full shadow-premium">
-      {/* Image Container */}
-      <Link href={`/product/${product.id}`} className="block relative aspect-[4/5] overflow-hidden bg-slate-50">
+    <div className="nova-card group relative overflow-hidden flex flex-col h-full celestial-glow">
+      <Link href={`/product/${product.id}`} className="block relative aspect-[3/4] overflow-hidden bg-white/5">
         <Image
           src={product.image}
           alt={product.name}
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-110"
+          className="object-cover transition-transform duration-1000 group-hover:scale-110"
+          sizes="(max-width: 768px) 50vw, 25vw"
         />
         
-        {/* Actions Overlays */}
-        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
         <button 
-          className="absolute top-3 right-3 p-2.5 rounded-full bg-white/90 backdrop-blur shadow-sm hover:bg-white text-slate-400 hover:text-red-500 transition-all duration-300 scale-90 group-hover:scale-100 z-10"
-          aria-label="Add to wishlist"
+          className={cn(
+            "absolute top-4 right-4 p-3 rounded-full backdrop-blur-md shadow-lg transition-all duration-300 scale-90 group-hover:scale-100 z-10",
+            isFav ? "bg-primary text-black" : "bg-black/40 text-white hover:text-primary"
+          )}
           onClick={(e) => {
             e.preventDefault();
-            e.stopPropagation();
+            toggleFavorite(product.id);
           }}
         >
-          <Heart className="h-4 w-4" />
+          <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
         </button>
 
         {product.badge && (
-          <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-600 text-white border-none px-2.5 py-0.5 text-[10px] font-bold rounded-lg shadow-lg z-10" variant="default">
+          <Badge className="absolute top-4 left-4 bg-primary text-black border-none px-3 py-1 text-[10px] font-black rounded-lg shadow-lg z-10">
             {product.badge}
           </Badge>
         )}
 
-        {/* Quick View Hint - Desktop Only */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:flex">
-          <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full font-bold text-xs text-slate-900 shadow-xl border border-white/50">
-            مشاهدة التفاصيل
-          </div>
-        </div>
+        {discount && (
+          <Badge className="absolute bottom-4 right-4 bg-red-500 text-white border-none px-2 py-0.5 text-[10px] font-black rounded-md z-10">
+            -{discount}%
+          </Badge>
+        )}
       </Link>
 
-      {/* Content */}
-      <div className="p-4 md:p-5 flex flex-col flex-grow">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-md">{product.category}</span>
-          <div className="flex items-center gap-0.5 text-yellow-400">
+      <div className="p-5 flex flex-col flex-grow">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">{product.category}</span>
+          <div className="flex items-center gap-1 text-primary">
             <Star className="h-3 w-3 fill-current" />
-            <span className="text-[10px] font-bold text-slate-500">{product.rating}</span>
+            <span className="text-[10px] font-black">{product.rating.toFixed(1)}</span>
           </div>
         </div>
 
-        <Link href={`/product/${product.id}`} className="block">
-          <h4 className="font-bold text-slate-800 text-sm md:text-base line-clamp-2 mb-4 leading-relaxed hover:text-primary transition-colors min-h-[3rem]">
+        <Link href={`/product/${product.id}`} className="block group/title">
+          <h4 className="font-bold text-white/90 text-sm md:text-base line-clamp-2 mb-4 leading-relaxed group-hover/title:text-primary transition-colors min-h-[3rem]">
             {product.name}
           </h4>
         </Link>
 
-        <div className="mt-auto pt-2 flex items-center justify-between border-t border-slate-50">
+        <div className="mt-auto pt-4 flex items-center justify-between border-t border-white/5">
           <div className="flex flex-col">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-lg md:text-xl font-black text-slate-900">{product.price}</span>
-              <span className="text-[10px] font-bold text-slate-500">د.ع</span>
+              <span className="text-lg md:text-xl font-black gold-text">{product.price.toLocaleString()}</span>
+              <span className="text-[10px] font-bold text-white/40 uppercase">د.ع</span>
             </div>
             {product.originalPrice && (
-              <span className="text-xs text-slate-400 line-through decoration-slate-300/60">
-                {product.originalPrice} د.ع
+              <span className="text-xs text-white/30 line-through">
+                {product.originalPrice.toLocaleString()} د.ع
               </span>
             )}
           </div>
           
-          <Button size="icon" className="h-10 w-10 rounded-xl bg-slate-900 hover:bg-primary text-white transition-all shadow-lg shadow-slate-900/10 hover:shadow-primary/20 active:scale-95">
-            <ShoppingBag className="h-5 w-5" />
+          <Button asChild size="icon" className="h-10 w-10 rounded-xl bg-primary hover:bg-primary/80 text-black shadow-lg shadow-primary/10">
+            <Link href={`/product/${product.id}`}>
+              <ShoppingBag className="h-5 w-5" />
+            </Link>
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
