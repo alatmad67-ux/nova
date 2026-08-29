@@ -24,6 +24,8 @@ import { toast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { ImageUploadButton } from '@/components/ui/image-upload-button';
 import { useStore } from '@/providers/store-provider';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function AdminCategoriesPage() {
   const db = useFirestore();
@@ -42,39 +44,70 @@ export default function AdminCategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', slug: '', image: '', order: 0, isActive: true });
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!formData.name || !formData.slug) {
       toast({ variant: "destructive", title: "خطأ", description: "الاسم والاسم اللطيف مطلوبان" });
       return;
     }
 
-    try {
-      if (editingId) {
-        await updateDoc(doc(db, 'categories', editingId), formData);
-        toast({ title: "تم التحديث", description: "تم تحديث القسم بنجاح" });
-      } else {
-        await addDoc(collection(db, 'categories'), { 
-          ...formData, 
-          storeId,
-          order: (categories?.length || 0) + 1 
+    const categoryData = { 
+      ...formData, 
+      storeId,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (editingId) {
+      const docRef = doc(db, 'categories', editingId);
+      updateDoc(docRef, categoryData)
+        .then(() => {
+          toast({ title: "تم التحديث", description: "تم تحديث القسم بنجاح في Firestore" });
+          resetForm();
+        })
+        .catch(async (error) => {
+          const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'update',
+            requestResourceData: categoryData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
         });
-        toast({ title: "تمت الإضافة", description: "تمت إضافة القسم الجديد بنجاح" });
-      }
-      resetForm();
-    } catch (error) {
-      console.error("Error saving category:", error);
-      toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ القسم في Firestore" });
+    } else {
+      const colRef = collection(db, 'categories');
+      const newCategory = {
+        ...categoryData,
+        order: (categories?.length || 0) + 1,
+        createdAt: new Date().toISOString()
+      };
+      addDoc(colRef, newCategory)
+        .then(() => {
+          toast({ title: "تمت الإضافة", description: "تمت إضافة القسم الجديد بنجاح إلى Firestore" });
+          resetForm();
+        })
+        .catch(async (error) => {
+          const permissionError = new FirestorePermissionError({
+            path: colRef.path,
+            operation: 'create',
+            requestResourceData: newCategory,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!window.confirm('حذف هذا القسم قد يؤثر على المنتجات المرتبطة به. هل أنتِ متأكدة؟')) return;
-    try {
-      await deleteDoc(doc(db, 'categories', id));
-      toast({ title: "تم الحذف", description: "تم حذف القسم بنجاح" });
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل حذف القسم" });
-    }
+    const docRef = doc(db, 'categories', id);
+    deleteDoc(docRef)
+      .then(() => {
+        toast({ title: "تم الحذف", description: "تم حذف القسم بنجاح من Firestore" });
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
 
   const resetForm = () => {
@@ -89,7 +122,7 @@ export default function AdminCategoriesPage() {
     setIsAdding(true);
   };
 
-  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-primary">جاري التحقق من الأقسام الملكية...</div>;
+  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-primary">جاري جلب بيانات NOVA...</div>;
 
   return (
     <AdminGuard>
@@ -101,7 +134,7 @@ export default function AdminCategoriesPage() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <LayoutGrid className="h-5 w-5 text-primary" />
-                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">هيكلية NOVA</span>
+                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">NOVA STRUCTURE</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-black gold-text">إدارة الأقسام</h1>
             </div>
@@ -126,7 +159,7 @@ export default function AdminCategoriesPage() {
                 <div className="space-y-3">
                   <Label className="text-xs font-black text-white/40 tracking-widest uppercase">اسم القسم *</Label>
                   <Input 
-                    placeholder="مثلاً: فساتين سهرة"
+                    placeholder="فساتين، أطقم، إلخ"
                     className="bg-white/5 border-white/10 rounded-xl"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -135,7 +168,7 @@ export default function AdminCategoriesPage() {
                 <div className="space-y-3">
                   <Label className="text-xs font-black text-white/40 tracking-widest uppercase">الاسم اللطيف (Slug) *</Label>
                   <Input 
-                    placeholder="evening-dresses"
+                    placeholder="dresses"
                     className="bg-white/5 border-white/10 rounded-xl"
                     value={formData.slug}
                     onChange={(e) => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})}
@@ -193,18 +226,13 @@ export default function AdminCategoriesPage() {
                     </button>
                   </div>
                 </div>
-                
-                <div className="flex flex-col items-center gap-1 text-white/10 group-hover:text-primary/40 transition-colors">
-                  <Move className="h-4 w-4" />
-                  <span className="text-[10px] font-black">{cat.order}</span>
-                </div>
               </div>
             ))}
             
             {!loading && categories?.length === 0 && (
               <div className="col-span-full py-20 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2.5rem]">
                 <LayoutGrid className="h-12 w-12 mx-auto mb-4" />
-                <p className="font-black uppercase tracking-widest">لم يتم العثور على أقسام في Firestore</p>
+                <p className="font-black uppercase tracking-widest">لا توجد بيانات حقيقية في Firestore حالياً</p>
               </div>
             )}
           </div>

@@ -14,7 +14,7 @@
     },
     "Category": {
       "title": "Category",
-      "description": "Product categories like Dresses, Skirts, etc.",
+      "description": "Product categories for NOVA.",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
@@ -24,11 +24,11 @@
         "isActive": { "type": "boolean", "default": true },
         "storeId": { "type": "string" }
       },
-      "required": ["name", "slug"]
+      "required": ["name", "slug", "storeId"]
     },
     "Product": {
       "title": "Product",
-      "description": "Fashion product with variants and stock management.",
+      "description": "Fashion product with variants and stock management for NOVA.",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
@@ -71,14 +71,13 @@
         "isNew": { "type": "boolean", "default": false },
         "isBestSeller": { "type": "boolean", "default": false },
         "isFeatured": { "type": "boolean", "default": false },
-        "createdAt": { "type": "string", "format": "date-time" },
         "storeId": { "type": "string" }
       },
       "required": ["name", "price", "categoryId", "storeId"]
     },
     "Order": {
       "title": "Order",
-      "description": "Customer order details.",
+      "description": "Customer order details for NOVA.",
       "type": "object",
       "properties": {
         "orderNumber": { "type": "string" },
@@ -118,59 +117,23 @@
             "total": { "type": "number" }
           }
         },
-        "status": { "type": "string", "enum": ["جديد", "تم التأكيد", "قيد التجهيز", "جاهز للشحن", "مع شركة التوصيل", "تم التسليم", "ملغي", "مرتجع"] },
-        "shippingInfo": {
-          "type": "object",
-          "properties": {
-            "companyId": { "type": "string" },
-            "companyName": { "type": "string" },
-            "trackingNumber": { "type": "string" },
-            "status": { "type": "string", "enum": ["لم يتم الشحن", "جاهز للشحن", "تم تسليمه لشركة التوصيل", "قيد التوصيل", "تم التسليم", "فشل التسليم", "مرتجع"] }
-          }
-        },
-        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" },
         "storeId": { "type": "string" }
-      }
-    },
-    "Admin": {
-      "title": "Admin",
-      "description": "Admin user profile and roles.",
-      "type": "object",
-      "properties": {
-        "phone": { "type": "string" },
-        "role": { "type": "string", "enum": ["super_admin", "merchant"] },
-        "storeId": { "type": "string" }
-      }
-    },
-    "DeliveryCompany": {
-      "title": "DeliveryCompany",
-      "description": "Shipping and delivery company details.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "phone": { "type": "string" },
-        "apiUrl": { "type": "string" },
-        "apiKey": { "type": "string" },
-        "apiSecret": { "type": "string" },
-        "isActive": { "type": "boolean" },
-        "notes": { "type": "string" }
       }
     },
     "Settings": {
       "title": "Settings",
-      "description": "Global store settings like delivery fees and contact info.",
+      "description": "Global store settings for NOVA.",
       "type": "object",
       "properties": {
         "storeName": { "type": "string" },
         "whatsapp": { "type": "string" },
-        "socialLinks": { "type": "object" },
-        "deliveryFees": { "type": "object" },
-        "lowStockThreshold": { "type": "number" }
+        "deliveryFees": { "type": "object" }
       }
     }
   },
   "auth": {
-    "providers": ["google.com", "password", "phone"]
+    "providers": ["google.com", "password"]
   },
   "firestore": {
     "/stores/{storeId}": {
@@ -187,15 +150,7 @@
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "ADMIN_ONLY: Only admin can read/write orders, but we allow public create."
-    },
-    "/admins/{uid}": {
-      "schema": "Admin",
-      "description": "ADMIN_ONLY: Strictly restricted to administrative users."
-    },
-    "/delivery-companies/{companyId}": {
-      "schema": "DeliveryCompany",
-      "description": "ADMIN_ONLY: Administrative access only."
+      "description": "PUBLIC_WRITE/ADMIN_READ: Allow public create, only admin can read."
     },
     "/settings/general": {
       "schema": "Settings",

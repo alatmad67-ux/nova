@@ -28,6 +28,8 @@ import { useStore } from '@/providers/store-provider';
 import { cn } from "@/lib/utils";
 import Image from 'next/image';
 import { ImageUploadButton } from '@/components/ui/image-upload-button';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
@@ -81,30 +83,38 @@ export default function NewProductPage() {
     setProductData(prev => ({ ...prev, variants: newVariants }));
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!productData.name || !productData.price || !productData.categoryId) {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى ملء الحقول الأساسية للمنتج" });
       return;
     }
 
     setLoading(true);
-    try {
-      const selectedCat = categories?.find(c => c.id === productData.categoryId);
-      
-      await addDoc(collection(db, 'products'), {
-        ...productData,
-        categoryName: selectedCat?.name || '',
-        storeId,
-        createdAt: serverTimestamp(),
-      });
+    const selectedCat = categories?.find(c => c.id === productData.categoryId);
+    const colRef = collection(db, 'products');
+    
+    const newProduct = {
+      ...productData,
+      categoryName: selectedCat?.name || '',
+      storeId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
 
-      toast({ title: "تم الحفظ", description: "تمت إضافة المنتج الجديد بنجاح" });
-      router.push('/admin/products');
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ المنتج في قاعدة البيانات" });
-    } finally {
-      setLoading(false);
-    }
+    addDoc(colRef, newProduct)
+      .then(() => {
+        toast({ title: "تم الحفظ", description: "تمت إضافة المنتج الجديد بنجاح إلى Firestore" });
+        router.push('/admin/products');
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: colRef.path,
+          operation: 'create',
+          requestResourceData: newProduct,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setLoading(false);
+      });
   };
 
   const handleImageUpload = (url: string) => {
@@ -139,7 +149,7 @@ export default function NewProductPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">إضافة فخامة جديدة</span>
+              <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">NOVA NEW COLLECTION</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black gold-text">إضافة منتج</h1>
           </div>
@@ -151,7 +161,7 @@ export default function NewProductPage() {
               disabled={loading}
               className="h-12 px-12 rounded-2xl bg-primary text-black font-black shadow-2xl shadow-primary/20 hover:scale-105 transition-all"
             >
-              {loading ? "جاري الحفظ..." : "حفظ المنتج"}
+              {loading ? "جاري الحفظ..." : "حفظ المنتج في Firestore"}
             </Button>
           </div>
         </div>
@@ -183,7 +193,7 @@ export default function NewProductPage() {
                     <div className="space-y-3">
                       <Label className="text-xs font-black text-white/40 uppercase tracking-widest">اسم المنتج *</Label>
                       <Input 
-                        placeholder="مثلاً: فستان سهرة مخملي"
+                        placeholder="فستان سهرة"
                         className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold"
                         value={productData.name}
                         onChange={(e) => setProductData({...productData, name: e.target.value})}
@@ -213,9 +223,9 @@ export default function NewProductPage() {
                       </select>
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-xs font-black text-white/40 uppercase tracking-widest">الخامة / القماش</Label>
+                      <Label className="text-xs font-black text-white/40 uppercase tracking-widest">الخامة</Label>
                       <Input 
-                        placeholder="مثلاً: حرير طبيعي 100%"
+                        placeholder="حرير، مخمل، إلخ"
                         className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold"
                         value={productData.material}
                         onChange={(e) => setProductData({...productData, material: e.target.value})}
@@ -226,7 +236,7 @@ export default function NewProductPage() {
                   <div className="space-y-3">
                     <Label className="text-xs font-black text-white/40 uppercase tracking-widest">وصف المنتج</Label>
                     <Textarea 
-                      placeholder="اكتبي تفاصيل القطعة وما يميزها..."
+                      placeholder="تفاصيل الفخامة..."
                       className="min-h-[150px] bg-white/5 border-white/10 rounded-2xl font-bold"
                       value={productData.description}
                       onChange={(e) => setProductData({...productData, description: e.target.value})}
@@ -239,7 +249,7 @@ export default function NewProductPage() {
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="space-y-3">
-                      <Label className="text-xs font-black text-white/40 uppercase tracking-widest">سعر الشراء (للمخزن)</Label>
+                      <Label className="text-xs font-black text-white/40 uppercase tracking-widest">سعر الشراء</Label>
                       <Input 
                         type="number"
                         className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold text-left dir-ltr"
@@ -248,7 +258,7 @@ export default function NewProductPage() {
                       />
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-xs font-black text-white/40 uppercase tracking-widest">سعر البيع الحالي *</Label>
+                      <Label className="text-xs font-black text-white/40 uppercase tracking-widest">سعر البيع *</Label>
                       <Input 
                         type="number"
                         className="h-14 bg-white/5 border-white/10 rounded-2xl font-black text-primary text-left dir-ltr"
@@ -286,24 +296,21 @@ export default function NewProductPage() {
                     <ImageUploadButton 
                       onUploadComplete={handleImageUpload}
                       className="aspect-[3/4]"
-                      label="رفع صورة المنتج"
+                      label="رفع صورة"
                     />
                   </div>
-                  <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest text-center mt-4">
-                    يمكنك رفع صور متعددة للمنتج لإظهار كافة تفاصيل الفخامة
-                  </p>
                 </div>
               )}
 
               {activeTab === 'options' && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="space-y-6">
-                    <Label className="text-lg font-black text-white">الألوان المتوفرة</Label>
+                    <Label className="text-lg font-black text-white">الألوان</Label>
                     <div className="space-y-4">
                       {productData.colors.map((c, idx) => (
                         <div key={idx} className="flex gap-4 items-center">
                           <Input 
-                            placeholder="اسم اللون (مثلاً: أحمر ملكي)"
+                            placeholder="اسم اللون"
                             className="h-12 bg-white/5 border-white/10 rounded-xl font-bold"
                             value={c.name}
                             onChange={(e) => {
@@ -333,13 +340,13 @@ export default function NewProductPage() {
                       ))}
                       <Button variant="outline" className="w-full border-dashed border-white/10 text-white/40 h-12 rounded-xl" onClick={() => setProductData({...productData, colors: [...productData.colors, { name: '', code: '' }] })}>
                         <Plus className="ml-2 h-4 w-4" />
-                        إضافة لون آخر
+                        إضافة لون
                       </Button>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <Label className="text-lg font-black text-white">القياسات المتوفرة</Label>
+                    <Label className="text-lg font-black text-white">القياسات</Label>
                     <div className="flex flex-wrap gap-3">
                       {SIZES.map(s => (
                         <button
@@ -364,7 +371,7 @@ export default function NewProductPage() {
                   </div>
 
                   <Button className="w-full h-14 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl font-black text-white" onClick={generateVariants}>
-                    توليد جدول المخزون بناءً على الخيارات
+                    تحديث خيارات المخزون
                   </Button>
                 </div>
               )}
@@ -375,9 +382,9 @@ export default function NewProductPage() {
                     <table className="w-full text-right">
                       <thead className="bg-white/5 text-[10px] font-black text-white/40 uppercase tracking-widest">
                         <tr>
-                          <th className="p-4">الخيار (اللون/القياس)</th>
-                          <th className="p-4">الكمية في المخزن</th>
-                          <th className="p-4">SKU خاص</th>
+                          <th className="p-4">الخيار</th>
+                          <th className="p-4">المخزون</th>
+                          <th className="p-4">SKU</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -421,7 +428,6 @@ export default function NewProductPage() {
                     <div className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5">
                       <div className="flex flex-col">
                         <span className="font-bold text-white">وصل حديثاً</span>
-                        <span className="text-[10px] text-white/40">سيظهر في قسم المجموعات الجديدة</span>
                       </div>
                       <input 
                         type="checkbox" 
@@ -433,7 +439,7 @@ export default function NewProductPage() {
                   </div>
                   
                   <div className="space-y-3">
-                    <Label className="text-xs font-black text-white/40 uppercase tracking-widest">حالة المنتج</Label>
+                    <Label className="text-xs font-black text-white/40 uppercase tracking-widest">حالة العرض</Label>
                     <select 
                       className="w-full h-14 px-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none appearance-none"
                       value={productData.status}
@@ -468,7 +474,7 @@ export default function NewProductPage() {
                   else handleSave();
                 }}
               >
-                {activeTab === 'settings' ? 'حفظ المنتج النهائي' : 'الخطوة التالية'}
+                {activeTab === 'settings' ? 'حفظ نهائي في Firestore' : 'التالي'}
                 <ChevronRight className="mr-2 h-4 w-4 rotate-180" />
               </Button>
             </div>

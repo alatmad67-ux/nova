@@ -13,7 +13,6 @@ export function ProductGrid() {
   const { storeId } = useStore();
   const db = useFirestore();
 
-  // Fetching REAL products from Firestore
   const productsQuery = useMemo(() => {
     if (!db) return null;
     return query(
@@ -54,8 +53,8 @@ export function ProductGrid() {
       ) : (
         <div className="text-center py-32 nova-card celestial-glow">
           <Package className="h-16 w-16 mx-auto mb-6 text-primary opacity-20" />
-          <h3 className="text-2xl font-black text-white mb-2">خزينة نوفا فارغة حالياً</h3>
-          <p className="text-white/40 font-light">انتظري مجموعتنا الجديدة من التصاميم الفلكية قريباً</p>
+          <h3 className="text-2xl font-black text-white mb-2">لا توجد منتجات في Firestore حالياً</h3>
+          <p className="text-white/40 font-light">بانتظار إضافة المجموعات الجديدة من لوحة التحكم</p>
         </div>
       )}
     </section>

@@ -13,7 +13,7 @@ export function Categories() {
   const { storeId } = useStore();
 
   const catQuery = useMemo(() => {
-    // We fetch categories associated with our storeId
+    if (!db) return null;
     return query(
       collection(db, 'categories'),
       where('storeId', '==', storeId),
@@ -47,7 +47,6 @@ export function Categories() {
                   alt={cat.name}
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-125 opacity-70 group-hover:opacity-100"
-                  data-ai-hint="fashion category icon"
                 />
               </div>
             </div>
@@ -57,7 +56,7 @@ export function Categories() {
           </Link>
         )) : (
           <div className="w-full text-center py-10 opacity-20 font-bold uppercase tracking-widest">
-            لا توجد أقسام مضافة بعد
+            لا توجد أقسام حقيقية في Firestore حالياً
           </div>
         )}
       </div>
