@@ -9,10 +9,17 @@ import { collection, query, orderBy } from 'firebase/firestore';
 
 export function Categories() {
   const db = useFirestore();
+  // Ensure we are fetching from the REAL 'categories' collection
   const catQuery = useMemo(() => query(collection(db, 'categories'), orderBy('order', 'asc')), [db]);
   const { data: categories, loading } = useCollection(catQuery);
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="flex justify-center gap-8 py-12">
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} className="h-24 w-24 rounded-full bg-white/5 animate-pulse" />
+      ))}
+    </div>
+  );
 
   return (
     <section className="container mx-auto px-4 py-12 overflow-hidden">
@@ -26,7 +33,7 @@ export function Categories() {
             <div className="relative h-20 w-20 md:h-32 md:w-32 rounded-full overflow-hidden bg-white/5 shadow-xl p-1.5 group-hover:scale-110 group-hover:shadow-primary/20 transition-all duration-700 border border-white/10 celestial-glow">
               <div className="relative h-full w-full rounded-full overflow-hidden">
                 <Image
-                  src={cat.image || 'https://picsum.photos/seed/cat/200/200'}
+                  src={cat.image || 'https://picsum.photos/seed/nova-cat/400/400'}
                   alt={cat.name}
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-125 opacity-70 group-hover:opacity-100"

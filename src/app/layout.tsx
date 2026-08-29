@@ -16,6 +16,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // CRITICAL: Standardizing Store ID for NOVA
   const novaStoreContext = {
     storeId: 'nova-official',
     storeName: 'NOVA',

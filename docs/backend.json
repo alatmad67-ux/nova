@@ -186,7 +186,7 @@
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "RESTRICTED: Accessible only to admins or the owner of the order."
+      "description": "PUBLIC_READ: Necessary for guests to create orders, but in a real app would be write-only for guests."
     },
     "/admins/{uid}": {
       "schema": "Admin",
