@@ -4,10 +4,11 @@
 /**
  * تهيئة Firebase وتصدير الخدمات لمتجر NOVA
  * 
- * ملاحظة أمان هامة:
- * المجموعات (products, categories, settings) يجب أن تكون عامة القراءة.
- * المجموعات (orders, admins) يجب أن تكون محمية وخاصة بالإدارة.
- * تم تحديث هذا الملف لتنشيط إعادة نشر Security Rules.
+ * تحديث قواعد الأمان (CRITICAL SECURITY REDEPLOY):
+ * - المجموعات (products, categories, settings, stores) يجب أن تكون عامة القراءة (Public Read).
+ * - المجموعات (orders, admins, delivery-companies) يجب أن تكون محمية وخاصة بالإدارة (Admin Only).
+ * 
+ * تم تعديل هذا الملف في: 2024-05-20T10:30:00Z لتنشيط إعادة نشر Security Rules.
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';

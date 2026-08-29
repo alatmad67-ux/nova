@@ -141,6 +141,20 @@
         "storeId": { "type": "string" }
       }
     },
+    "DeliveryCompany": {
+      "title": "DeliveryCompany",
+      "description": "Shipping and delivery company details.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "apiUrl": { "type": "string" },
+        "apiKey": { "type": "string" },
+        "apiSecret": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "notes": { "type": "string" }
+      }
+    },
     "Settings": {
       "title": "Settings",
       "description": "Global store settings like delivery fees and contact info.",
@@ -160,27 +174,31 @@
   "firestore": {
     "/stores/{storeId}": {
       "schema": "Store",
-      "description": "Store profiles."
+      "description": "Public read for active stores."
     },
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "Product categories."
+      "description": "Publicly readable product categories."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "Fashion products."
+      "description": "Publicly readable fashion products."
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "Customer orders."
+      "description": "Restricted access to specific customer or admins."
     },
     "/admins/{uid}": {
       "schema": "Admin",
-      "description": "Administrative users."
+      "description": "Strictly restricted administrative user metadata."
+    },
+    "/delivery-companies/{companyId}": {
+      "schema": "DeliveryCompany",
+      "description": "Administrative delivery configurations."
     },
     "/settings/general": {
       "schema": "Settings",
-      "description": "Global store settings."
+      "description": "Publicly readable store metadata."
     }
   }
 }
