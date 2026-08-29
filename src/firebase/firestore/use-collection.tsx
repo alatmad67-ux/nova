@@ -32,11 +32,15 @@ export function useCollection(query: Query | null) {
         setData(docs);
         setLoading(false);
       },
-      async (error) => {
+      async (serverError: any) => {
+        // محاولة استخراج المسار من كائن الاستعلام لتوفير سياق أفضل لتصحيح الأخطاء
+        const path = (query as any).path || (query as any)._query?.path?.segments?.join('/') || 'collection_query';
+        
         const permissionError = new FirestorePermissionError({
-          path: 'collection_query',
+          path: path,
           operation: 'list',
         });
+        
         errorEmitter.emit('permission-error', permissionError);
         setLoading(false);
       }

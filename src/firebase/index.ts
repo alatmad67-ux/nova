@@ -1,6 +1,13 @@
 
 'use client';
 
+/**
+ * تهيئة Firebase وتصدير الخدمات
+ * 
+ * ملاحظة أمان: المجموعات العامة (المنتجات، الأقسام، المتاجر، الإعدادات) 
+ * تتطلب صلاحية قراءة عامة في قواعد أمان Firestore.
+ */
+
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';

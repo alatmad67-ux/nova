@@ -28,7 +28,7 @@ export function useDoc(docRef: DocumentReference | null) {
         setData(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null);
         setLoading(false);
       },
-      async (error) => {
+      async (serverError: any) => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'get',
