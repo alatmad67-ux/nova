@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { ImageUploadButton } from '@/components/ui/image-upload-button';
 
 export default function AdminCategoriesPage() {
   const db = useFirestore();
@@ -127,13 +128,21 @@ export default function AdminCategoriesPage() {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-xs font-black text-white/40 tracking-widest uppercase">URL الصورة</Label>
-                  <Input 
-                    placeholder="https://..."
-                    className="bg-white/5 border-white/10 rounded-xl"
-                    value={formData.image}
-                    onChange={(e) => setFormData({...formData, image: e.target.value})}
-                  />
+                  <Label className="text-xs font-black text-white/40 tracking-widest uppercase">صورة القسم</Label>
+                  <div className="flex gap-4 items-center">
+                    <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex-shrink-0">
+                      {formData.image ? (
+                        <Image src={formData.image} alt="Preview" fill className="object-cover" />
+                      ) : (
+                        <ImageIcon className="h-full w-full p-2 opacity-20" />
+                      )}
+                    </div>
+                    <ImageUploadButton 
+                      onUploadComplete={(url) => setFormData({...formData, image: url})}
+                      label="رفع صورة"
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
                 <div className="flex items-end">
                   <Button className="w-full h-10 bg-primary text-black font-black rounded-xl" onClick={handleSave}>

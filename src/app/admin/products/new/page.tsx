@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  ChevronRight, 
   Plus, 
   Trash2, 
   Image as ImageIcon, 
@@ -22,11 +21,13 @@ import {
   Layers, 
   Settings,
   Sparkles,
-  ArrowRight
+  ChevronRight
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useStore } from '@/providers/store-provider';
 import { cn } from "@/lib/utils";
+import Image from 'next/image';
+import { ImageUploadButton } from '@/components/ui/image-upload-button';
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
@@ -51,7 +52,7 @@ export default function NewProductPage() {
     originalPrice: 0,
     categoryId: '',
     categoryName: '',
-    images: [''],
+    images: [] as string[],
     colors: [{ name: '', code: '' }],
     selectedSizes: [] as string[],
     variants: [] as any[],
@@ -106,6 +107,20 @@ export default function NewProductPage() {
     }
   };
 
+  const handleImageUpload = (url: string) => {
+    setProductData(prev => ({
+      ...prev,
+      images: [...prev.images, url]
+    }));
+  };
+
+  const removeImage = (idx: number) => {
+    setProductData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== idx)
+    }));
+  };
+
   const TABS = [
     { id: 'basic', label: 'المعلومات الأساسية', icon: Layout },
     { id: 'pricing', label: 'التسعير', icon: Tag },
@@ -142,7 +157,6 @@ export default function NewProductPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Navigation Sidebar */}
           <div className="lg:col-span-3 space-y-2">
             {TABS.map((tab) => (
               <button
@@ -161,7 +175,6 @@ export default function NewProductPage() {
             ))}
           </div>
 
-          {/* Form Content */}
           <div className="lg:col-span-9">
             <div className="nova-card p-10 md:p-16 celestial-glow">
               {activeTab === 'basic' && (
@@ -253,7 +266,6 @@ export default function NewProductPage() {
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-white/20 font-light">* سيتم إظهار السعر قبل الخصم كخط مشطوب للزبونة.</p>
                 </div>
               )}
 
@@ -262,38 +274,24 @@ export default function NewProductPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     {productData.images.map((img, idx) => (
                       <div key={idx} className="relative group aspect-[3/4] bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-                        {img ? (
-                          <div className="relative w-full h-full">
-                            <Image src={img} alt="Preview" fill className="object-cover" />
-                            <button 
-                              className="absolute top-2 left-2 p-1.5 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => {
-                                const newImgs = [...productData.images];
-                                newImgs.splice(idx, 1);
-                                setProductData({...productData, images: newImgs});
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center gap-3">
-                            <ImageIcon className="h-8 w-8 text-white/10" />
-                            <Input 
-                              placeholder="URL الصورة" 
-                              className="w-[80%] h-8 text-[10px] bg-white/10 border-none text-center"
-                              onBlur={(e) => {
-                                const newImgs = [...productData.images];
-                                newImgs[idx] = e.target.value;
-                                if (idx === productData.images.length - 1) newImgs.push('');
-                                setProductData({...productData, images: newImgs});
-                              }}
-                            />
-                          </div>
-                        )}
+                        <Image src={img} alt="Preview" fill className="object-cover" />
+                        <button 
+                          className="absolute top-2 left-2 p-1.5 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          onClick={() => removeImage(idx)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     ))}
+                    <ImageUploadButton 
+                      onUploadComplete={handleImageUpload}
+                      className="aspect-[3/4]"
+                      label="رفع صورة المنتج"
+                    />
                   </div>
+                  <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest text-center mt-4">
+                    يمكنك رفع صور متعددة للمنتج لإظهار كافة تفاصيل الفخامة
+                  </p>
                 </div>
               )}
 
@@ -414,12 +412,6 @@ export default function NewProductPage() {
                       </tbody>
                     </table>
                   </div>
-                  {productData.variants.length === 0 && (
-                    <div className="text-center py-10 opacity-20">
-                      <Layers className="h-12 w-12 mx-auto mb-4" />
-                      <p>يرجى تحديد الألوان والقياسات أولاً</p>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -438,18 +430,6 @@ export default function NewProductPage() {
                         onChange={(e) => setProductData({...productData, isNew: e.target.checked})}
                       />
                     </div>
-                    <div className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-white">الأكثر مبيعاً</span>
-                        <span className="text-[10px] text-white/40">سيظهر في قسم المنتجات الرائجة</span>
-                      </div>
-                      <input 
-                        type="checkbox" 
-                        checked={productData.isBestSeller} 
-                        className="h-6 w-6 accent-primary"
-                        onChange={(e) => setProductData({...productData, isBestSeller: e.target.checked})}
-                      />
-                    </div>
                   </div>
                   
                   <div className="space-y-3">
@@ -459,8 +439,8 @@ export default function NewProductPage() {
                       value={productData.status}
                       onChange={(e) => setProductData({...productData, status: e.target.value})}
                     >
-                      <option value="active" className="bg-slate-900 text-green-400">نشط (يظهر في المتجر)</option>
-                      <option value="draft" className="bg-slate-900 text-white/40">مسودة (للمعاينة فقط)</option>
+                      <option value="active" className="bg-slate-900 text-green-400">نشط</option>
+                      <option value="draft" className="bg-slate-900 text-white/40">مسودة</option>
                       <option value="out_of_stock" className="bg-slate-900 text-red-400">نفد المخزون</option>
                     </select>
                   </div>
@@ -471,7 +451,7 @@ export default function NewProductPage() {
             <div className="mt-12 flex items-center justify-between">
               <Button 
                 variant="ghost" 
-                className="text-white/20 font-bold flex items-center gap-2"
+                className="text-white/20 font-bold"
                 onClick={() => {
                   const currentIndex = TABS.findIndex(t => t.id === activeTab);
                   if (currentIndex > 0) setActiveTab(TABS[currentIndex - 1].id);
