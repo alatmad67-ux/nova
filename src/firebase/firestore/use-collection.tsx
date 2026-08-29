@@ -35,9 +35,10 @@ export function useCollection(query: Query | null) {
       },
       async (serverError: any) => {
         // Robust way to identify path without relying on internal properties
-        const path = 'firestore_collection_query';
+        // Try to get path from internal segments if available for better debugging
+        const path = (query as any)._query?.path?.segments?.join('/') || 'collection_query';
         
-        console.error(`Firestore error:`, serverError);
+        console.error(`Firestore error on path ${path}:`, serverError);
 
         const permissionError = new FirestorePermissionError({
           path: path,

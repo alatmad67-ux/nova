@@ -43,17 +43,6 @@
         "categoryId": { "type": "string" },
         "categoryName": { "type": "string" },
         "images": { "type": "array", "items": { "type": "string" } },
-        "colors": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": { "type": "string" },
-              "code": { "type": "string" }
-            }
-          }
-        },
-        "sizes": { "type": "array", "items": { "type": "string" } },
         "variants": { 
           "type": "array", 
           "items": {
@@ -61,16 +50,11 @@
             "properties": {
               "color": { "type": "string" },
               "size": { "type": "string" },
-              "stock": { "type": "number" },
-              "sku": { "type": "string" },
-              "barcode": { "type": "string" }
+              "stock": { "type": "number" }
             }
           }
         },
         "status": { "type": "string", "enum": ["active", "draft", "out_of_stock"] },
-        "isNew": { "type": "boolean", "default": false },
-        "isBestSeller": { "type": "boolean", "default": false },
-        "isFeatured": { "type": "boolean", "default": false },
         "storeId": { "type": "string" }
       },
       "required": ["name", "price", "categoryId", "storeId"]
@@ -87,38 +71,14 @@
             "name": { "type": "string" },
             "phone": { "type": "string" },
             "province": { "type": "string" },
-            "region": { "type": "string" },
-            "address": { "type": "string" },
-            "landmark": { "type": "string" },
-            "notes": { "type": "string" }
+            "address": { "type": "string" }
           }
         },
-        "items": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "productId": { "type": "string" },
-              "name": { "type": "string" },
-              "price": { "type": "number" },
-              "quantity": { "type": "number" },
-              "color": { "type": "string" },
-              "size": { "type": "string" },
-              "sku": { "type": "string" }
-            }
-          }
-        },
-        "totals": {
-          "type": "object",
-          "properties": {
-            "subtotal": { "type": "number" },
-            "shipping": { "type": "number" },
-            "discount": { "type": "number" },
-            "total": { "type": "number" }
-          }
-        },
+        "items": { "type": "array", "items": { "type": "object" } },
+        "totals": { "type": "object" },
         "status": { "type": "string" },
-        "storeId": { "type": "string" }
+        "storeId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       }
     },
     "Settings": {
@@ -129,6 +89,16 @@
         "storeName": { "type": "string" },
         "whatsapp": { "type": "string" },
         "deliveryFees": { "type": "object" }
+      }
+    },
+    "DeliveryCompany": {
+      "title": "Delivery Company",
+      "description": "Logistics providers for shipping orders.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "isActive": { "type": "boolean" }
       }
     }
   },
@@ -142,19 +112,23 @@
     },
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC_READ: Publicly accessible categories for visitors."
+      "description": "PUBLIC_READ: Publicly accessible categories for the storefront."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC_READ: Publicly accessible products for visitors."
+      "description": "PUBLIC_READ: Publicly accessible products for the storefront."
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "PUBLIC_WRITE/ADMIN_READ: Allow public create, only admin can read."
+      "description": "PUBLIC_CREATE/ADMIN_READ: Public can submit orders, only admins can view or update them."
     },
-    "/settings/general": {
+    "/settings/{settingId}": {
       "schema": "Settings",
-      "description": "PUBLIC_READ: Publicly accessible settings."
+      "description": "PUBLIC_READ: Global store settings accessible by everyone."
+    },
+    "/delivery-companies/{companyId}": {
+      "schema": "DeliveryCompany",
+      "description": "ADMIN_ONLY: Only admins can manage delivery service providers."
     }
   }
 }
