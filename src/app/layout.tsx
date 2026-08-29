@@ -8,7 +8,7 @@ import { CartProvider } from '@/providers/cart-provider';
 
 export const metadata: Metadata = {
   title: 'NOVA | أزياء نسائية فاخرة',
-  description: 'Nova Women Fashion - متجر الأزياء النسائية الفاخرة في العراق',
+  description: 'نوفا للأزياء النسائية الفاخرة - تصاميم حصرية تناسب ذوقكِ الرفيع في العراق',
 };
 
 export default function RootLayout({
@@ -30,7 +30,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-arabic antialiased selection:bg-primary/30 selection:text-white overflow-x-hidden">
+      <body className="font-arabic antialiased selection:bg-primary/30 selection:text-white overflow-x-hidden bg-black">
         <FirebaseClientProvider>
           <StoreProvider value={novaStoreContext}>
             <CartProvider>

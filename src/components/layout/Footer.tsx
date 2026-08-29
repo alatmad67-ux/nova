@@ -3,78 +3,85 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Youtube, Phone, Mail, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, Phone, Mail, MapPin, Sparkles } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="bg-slate-900 text-slate-300 pt-16 pb-20 md:pb-8">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+    <footer className="bg-black text-white/60 pt-20 pb-24 md:pb-12 border-t border-white/5 relative overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
           {/* Brand */}
-          <div className="space-y-6">
-            <Link href="/" className="text-2xl font-bold text-white">
-              متجر النهرين
+          <div className="space-y-8">
+            <Link href="/" className="flex flex-col group">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                <span className="text-3xl font-bold tracking-[0.2em] gold-text">NOVA</span>
+              </div>
+              <span className="text-[10px] font-light tracking-[0.5em] text-white/40 uppercase -mt-1 group-hover:text-primary transition-colors">Women Fashion</span>
             </Link>
-            <p className="text-sm leading-relaxed text-slate-400">
-              وجهتك الأولى للتسوق الإلكتروني في العراق. نوفر لك أجود المنتجات العالمية والمحلية بضمان حقيقي وتوصيل سريع.
+            <p className="text-sm leading-relaxed font-light">
+              وجهتكِ الأولى للأناقة العصرية في العراق. تصاميم حصرية بجودة ملكية تناسب ذوقكِ الرفيع.
             </p>
-            <div className="flex gap-4">
-              <Link href="#" className="hover:text-primary transition-colors"><Facebook className="h-5 w-5" /></Link>
-              <Link href="#" className="hover:text-primary transition-colors"><Instagram className="h-5 w-5" /></Link>
-              <Link href="#" className="hover:text-primary transition-colors"><Twitter className="h-5 w-5" /></Link>
-              <Link href="#" className="hover:text-primary transition-colors"><Youtube className="h-5 w-5" /></Link>
+            <div className="flex gap-6">
+              <Link href="#" className="text-white/20 hover:text-primary transition-all hover:scale-110"><Instagram className="h-5 w-5" /></Link>
+              <Link href="#" className="text-white/20 hover:text-primary transition-all hover:scale-110"><Facebook className="h-5 w-5" /></Link>
+              <Link href="#" className="text-white/20 hover:text-primary transition-all hover:scale-110"><Twitter className="h-5 w-5" /></Link>
+              <Link href="#" className="text-white/20 hover:text-primary transition-all hover:scale-110"><Youtube className="h-5 w-5" /></Link>
             </div>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="text-white font-bold mb-6">روابط سريعة</h4>
-            <ul className="space-y-4 text-sm">
-              <li><Link href="#" className="hover:text-white transition-colors">من نحن</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">سياسة الخصوصية</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">الشروط والأحكام</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">الأسئلة الشائعة</Link></li>
+            <h4 className="text-white font-black text-xs uppercase tracking-widest mb-8">استكشفي</h4>
+            <ul className="space-y-4 text-sm font-bold">
+              <li><Link href="/categories" className="hover:text-primary transition-colors">الأقسام</Link></li>
+              <li><Link href="/new-arrivals" className="hover:text-primary transition-colors">وصل حديثاً</Link></li>
+              <li><Link href="/best-sellers" className="hover:text-primary transition-colors">الأكثر مبيعاً</Link></li>
+              <li><Link href="/offers" className="hover:text-primary transition-colors">العروض</Link></li>
             </ul>
           </div>
 
           {/* Support */}
           <div>
-            <h4 className="text-white font-bold mb-6">خدمة العملاء</h4>
-            <ul className="space-y-4 text-sm">
-              <li><Link href="#" className="hover:text-white transition-colors">تتبع الطلبية</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">سياسة الإرجاع</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">طرق الدفع</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">الشحن والتوصيل</Link></li>
+            <h4 className="text-white font-black text-xs uppercase tracking-widest mb-8">خدمة العملاء</h4>
+            <ul className="space-y-4 text-sm font-bold">
+              <li><Link href="#" className="hover:text-primary transition-colors">تتبع الطلبية</Link></li>
+              <li><Link href="#" className="hover:text-primary transition-colors">سياسة الإبدال</Link></li>
+              <li><Link href="#" className="hover:text-primary transition-colors">الأسئلة الشائعة</Link></li>
+              <li><Link href="#" className="hover:text-primary transition-colors">تواصل معنا</Link></li>
             </ul>
           </div>
 
           {/* Contact */}
           <div>
-            <h4 className="text-white font-bold mb-6">اتصل بنا</h4>
-            <ul className="space-y-4 text-sm">
-              <li className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-primary" />
-                <span>+964 770 123 4567</span>
+            <h4 className="text-white font-black text-xs uppercase tracking-widest mb-8">اتصلي بنا</h4>
+            <ul className="space-y-6 text-sm">
+              <li className="flex items-center gap-4 group">
+                <div className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-primary/50 transition-colors">
+                  <Phone className="h-4 w-4 text-primary" />
+                </div>
+                <span className="font-bold">+964 770 000 0000</span>
               </li>
-              <li className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-primary" />
-                <span>support@nahrainshop.iq</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span>بغداد، شارع المنصور</span>
+              <li className="flex items-center gap-4 group">
+                <div className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-primary/50 transition-colors">
+                  <Mail className="h-4 w-4 text-primary" />
+                </div>
+                <span className="font-bold text-xs">care@novafashion.iq</span>
               </li>
             </ul>
           </div>
         </div>
         
-        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
-          <p>© 2024 متجر النهرين. جميع الحقوق محفوظة.</p>
-          <div className="flex gap-4 grayscale opacity-50">
-            {/* Payment Icons Placeholder */}
-            <span className="bg-slate-700 px-3 py-1 rounded">Visa</span>
-            <span className="bg-slate-700 px-3 py-1 rounded">MasterCard</span>
-            <span className="bg-slate-700 px-3 py-1 rounded">ZainCash</span>
+        <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] font-bold uppercase tracking-[0.2em]">
+          <p>© 2026 NOVA — WOMEN FASHION. جميع الحقوق محفوظة.</p>
+          <div className="flex gap-8 opacity-30">
+            <span>Zain Cash</span>
+            <span>Visa Card</span>
+            <span>MasterCard</span>
+            <span>الدفع عند الاستلام</span>
           </div>
         </div>
       </div>
