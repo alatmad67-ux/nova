@@ -10,14 +10,16 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Lock, Phone } from 'lucide-react';
+import { Sparkles, Lock, Phone, AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const auth = useAuth();
   const { user, loading: userLoading } = useUser();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ phone: '', password: '' });
 
   useEffect(() => {
@@ -29,7 +31,12 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.phone || !formData.password) {
+    setError(null);
+
+    const phone = formData.phone.trim();
+    const password = formData.password.trim();
+
+    if (!phone || !password) {
       toast({ variant: "destructive", title: "تنبيه", description: "يرجى إدخال جميع البيانات" });
       return;
     }
@@ -38,13 +45,23 @@ export default function AdminLoginPage() {
     try {
       // Mapping phone to a virtual email for secure Password Auth
       // As specified, the admin phone is 07858833838
-      const adminEmail = `${formData.phone}@novafashion.iq`;
-      await signInWithEmailAndPassword(auth, adminEmail, formData.password);
+      const adminEmail = `${phone}@novafashion.iq`;
+      await signInWithEmailAndPassword(auth, adminEmail, password);
+      
       toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بنجاح" });
       router.push('/admin/dashboard');
-    } catch (error: any) {
-      console.error(error);
-      toast({ variant: "destructive", title: "خطأ في الدخول", description: "رقم الهاتف أو كلمة المرور غير صحيحة" });
+    } catch (err: any) {
+      console.error("Login error:", err.code, err.message);
+      let message = "رقم الهاتف أو كلمة المرور غير صحيحة";
+      
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        message = "معلومات الدخول غير صحيحة. يرجى التأكد من إنشاء الحساب في لوحة تحكم Firebase أولاً.";
+      } else if (err.code === 'auth/too-many-requests') {
+        message = "محاولات كثيرة خاطئة. يرجى المحاولة لاحقاً.";
+      }
+      
+      setError(message);
+      toast({ variant: "destructive", title: "خطأ في الدخول", description: message });
     } finally {
       setLoading(false);
     }
@@ -66,6 +83,16 @@ export default function AdminLoginPage() {
             <p className="text-white/40 text-sm font-light">حصري لمديرة متجر NOVA</p>
           </div>
 
+          {error && (
+            <Alert variant="destructive" className="mb-8 bg-red-500/10 border-red-500/20 text-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>خطأ في الدخول</AlertTitle>
+              <AlertDescription className="text-xs">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-8">
             <div className="space-y-3">
               <Label className="text-xs font-black text-white/40 uppercase tracking-widest pr-2">رقم الهاتف</Label>
@@ -76,6 +103,7 @@ export default function AdminLoginPage() {
                   className="h-14 pr-12 bg-white/5 border-white/10 rounded-2xl text-white font-bold text-left dir-ltr"
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -90,6 +118,7 @@ export default function AdminLoginPage() {
                   className="h-14 pr-12 bg-white/5 border-white/10 rounded-2xl text-white font-bold text-left dir-ltr"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  disabled={loading}
                 />
               </div>
             </div>
