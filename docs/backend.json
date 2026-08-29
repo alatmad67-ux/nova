@@ -108,11 +108,11 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC_READ: Publicly accessible categories. ADMIN_WRITE: Only admin (07858833838@novafashion.iq) can modify."
+      "description": "PUBLIC_READ: Anyone can read/list categories. ADMIN_WRITE: Only admin (07858833838@novafashion.iq) can create, update, or delete."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC_READ: Publicly accessible products. ADMIN_WRITE: Only admin (07858833838@novafashion.iq) can modify."
+      "description": "PUBLIC_READ: Anyone can read/list products. ADMIN_WRITE: Only admin (07858833838@novafashion.iq) can create, update, or delete."
     },
     "/orders/{orderId}": {
       "schema": "Order",
@@ -120,7 +120,7 @@
     },
     "/settings/{settingId}": {
       "schema": "Settings",
-      "description": "PUBLIC_READ: Publicly accessible settings. ADMIN_WRITE: Only admin (07858833838@novafashion.iq) can modify."
+      "description": "PUBLIC_READ: Anyone can read settings. ADMIN_WRITE: Only admin (07858833838@novafashion.iq) can modify."
     },
     "/delivery-companies/{companyId}": {
       "schema": "DeliveryCompany",
@@ -128,7 +128,7 @@
     },
     "/stores/{storeId}": {
       "schema": "Store",
-      "description": "PUBLIC_READ: Public metadata. ADMIN_WRITE: Only admin can modify."
+      "description": "PUBLIC_READ: Public metadata. ADMIN_WRITE: Only admin (07858833838@novafashion.iq) can modify."
     }
   }
 }

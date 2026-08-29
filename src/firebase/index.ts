@@ -5,14 +5,14 @@
  * NOVA FIREBASE INITIALIZATION & SECURITY SYNC
  * 
  * CRITICAL: This file triggers a redeployment of Security Rules.
- * Rules Version: 2026.03.02.v3 (FIXED SECURITY)
+ * Rules Version: 2026.03.02.v4 (ENFORCED ADMIN & PUBLIC ACCESS)
  * 
  * Access Policy:
- * - products, categories, settings: PUBLIC READ, ADMIN WRITE (07858833838@novafashion.iq)
- * - orders: PUBLIC CREATE, ADMIN READ/WRITE (07858833838@novafashion.iq)
- * - delivery-companies: ADMIN ONLY (07858833838@novafashion.iq)
+ * - products, categories, settings: PUBLIC READ & LIST, ADMIN WRITE (07858833838@novafashion.iq)
+ * - orders: PUBLIC CREATE, ADMIN FULL ACCESS (07858833838@novafashion.iq)
+ * - delivery-companies: ADMIN ONLY ACCESS (07858833838@novafashion.iq)
  * 
- * Store Context: nova-official
+ * Target Store: NOVA (nova-official)
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
