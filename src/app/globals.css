@@ -3,6 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* NOVA GLOBAL STYLES - SYNC TRIGGER 2026 */
+
 @layer base {
   :root {
     --background: 0 0% 0%;

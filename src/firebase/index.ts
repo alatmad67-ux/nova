@@ -2,13 +2,12 @@
 'use client';
 
 /**
- * تهيئة Firebase وتصدير الخدمات لمتجر NOVA
+ * NOVA FIREBASE INITIALIZATION & SECURITY SYNC
  * 
- * تحديث قواعد الأمان (CRITICAL SECURITY REDEPLOY):
- * - المجموعات (products, categories, settings, stores) يجب أن تكون عامة القراءة (Public Read).
- * - المجموعات (orders, admins, delivery-companies) يجب أن تكون محمية وخاصة بالإدارة (Admin Only).
- * 
- * تم تعديل هذا الملف في: 2024-05-20T10:30:00Z لتنشيط إعادة نشر Security Rules.
+ * CRITICAL: This file triggers a redeployment of Security Rules.
+ * Security Rules applied at: 2026-03-01T15:00:00Z
+ * - Public access enabled for: products, categories, settings, stores.
+ * - Admin restricted for: orders, admins, delivery-companies.
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';

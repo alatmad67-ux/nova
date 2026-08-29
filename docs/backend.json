@@ -174,31 +174,31 @@
   "firestore": {
     "/stores/{storeId}": {
       "schema": "Store",
-      "description": "Public read for active stores."
+      "description": "PUBLIC_READ: Publicly accessible store metadata."
     },
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "Publicly readable product categories."
+      "description": "PUBLIC_READ: Publicly accessible categories for visitors."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "Publicly readable fashion products."
+      "description": "PUBLIC_READ: Publicly accessible products for visitors."
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "Restricted access to specific customer or admins."
+      "description": "RESTRICTED: Accessible only to admins or the owner of the order."
     },
     "/admins/{uid}": {
       "schema": "Admin",
-      "description": "Strictly restricted administrative user metadata."
+      "description": "ADMIN_ONLY: Strictly restricted to administrative users."
     },
     "/delivery-companies/{companyId}": {
       "schema": "DeliveryCompany",
-      "description": "Administrative delivery configurations."
+      "description": "ADMIN_ONLY: Administrative access only."
     },
     "/settings/general": {
       "schema": "Settings",
-      "description": "Publicly readable store metadata."
+      "description": "PUBLIC_READ: Publicly accessible settings."
     }
   }
 }
