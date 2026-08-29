@@ -17,6 +17,7 @@ export function useCollection(query: Query | null) {
 
   useEffect(() => {
     if (!query) {
+      setData(null);
       setLoading(false);
       return;
     }
@@ -33,10 +34,10 @@ export function useCollection(query: Query | null) {
         setLoading(false);
       },
       async (serverError: any) => {
-        // More robust path extraction for debugging
-        const path = (query as any)._query?.path?.segments?.join('/') || (query as any).path || 'collection_query';
+        // Robust way to identify path without relying on internal properties
+        const path = 'firestore_collection_query';
         
-        console.error(`Firestore Permission Error on path: ${path}`, serverError);
+        console.error(`Firestore error:`, serverError);
 
         const permissionError = new FirestorePermissionError({
           path: path,

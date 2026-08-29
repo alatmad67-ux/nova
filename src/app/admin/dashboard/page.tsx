@@ -6,17 +6,16 @@ import {
   TrendingUp, 
   ShoppingBag, 
   Users, 
-  AlertTriangle, 
   Package, 
   Clock,
   Sparkles,
-  Truck,
-  LogOut
+  LogOut,
+  ChevronLeft
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useCollection, useFirestore, useAuth } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, where } from 'firebase/firestore';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { 
   ResponsiveContainer,
@@ -24,47 +23,61 @@ import {
   Area,
   XAxis,
   YAxis,
-  CartesianGrid
+  CartesianGrid,
+  Tooltip
 } from 'recharts';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
-import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { useStore } from '@/providers/store-provider';
+import { Badge } from '@/components/ui/badge';
 
 export default function AdminDashboard() {
   const db = useFirestore();
   const auth = useAuth();
   const router = useRouter();
+  const { storeId } = useStore();
   
-  const ordersQuery = useMemo(() => query(collection(db, 'orders'), orderBy('createdAt', 'desc')), [db]);
+  // Orders Query - Filtered by storeId
+  const ordersQuery = useMemo(() => 
+    query(
+      collection(db, 'orders'), 
+      where('storeId', '==', storeId),
+      orderBy('createdAt', 'desc')
+    ), [db, storeId]);
+    
   const { data: orders, loading: ordersLoading } = useCollection(ordersQuery);
   
-  const productsQuery = useMemo(() => query(collection(db, 'products')), [db]);
+  // Products Query - Filtered by storeId
+  const productsQuery = useMemo(() => 
+    query(
+      collection(db, 'products'),
+      where('storeId', '==', storeId)
+    ), [db, storeId]);
+    
   const { data: products } = useCollection(productsQuery);
 
   const stats = useMemo(() => {
-    if (!orders) return null;
-
     const today = startOfDay(new Date());
-    const todayOrders = orders.filter(o => {
+    const validOrders = orders || [];
+
+    const todayOrders = validOrders.filter(o => {
       const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : new Date();
       return date >= today;
     });
 
-    const todaySales = todayOrders.reduce((acc, o) => acc + (o.status !== 'ملغي' ? o.totals.total : 0), 0);
-    const monthSales = orders.filter(o => o.status !== 'ملغي').reduce((acc, o) => acc + o.totals.total, 0);
+    const todaySales = todayOrders.reduce((acc, o) => acc + (o.status !== 'ملغي' ? (o.totals?.total || 0) : 0), 0);
+    const monthSales = validOrders.filter(o => o.status !== 'ملغي').reduce((acc, o) => acc + (o.totals?.total || 0), 0);
 
     return {
       todaySales,
       monthSales,
-      totalOrders: orders.length,
-      newOrders: orders.filter(o => o.status === 'جديد').length,
-      pending: orders.filter(o => o.status === 'قيد التجهيز').length,
-      shipping: orders.filter(o => o.status === 'جاهز للشحن' || o.status === 'مع شركة التوصيل').length,
-      completed: orders.filter(o => o.status === 'تم التسليم').length,
-      totalCustomers: new Set(orders.map(o => o.customer.phone)).size
+      totalOrders: validOrders.length,
+      newOrders: validOrders.filter(o => o.status === 'جديد').length,
+      pending: validOrders.filter(o => o.status === 'قيد التجهيز').length,
+      totalCustomers: new Set(validOrders.map(o => o.customer?.phone)).size
     };
   }, [orders]);
 
@@ -88,19 +101,19 @@ export default function AdminDashboard() {
   }, [products]);
 
   const chartData = useMemo(() => {
-    if (!orders) return [];
     const data = [];
+    const validOrders = orders || [];
     for (let i = 6; i >= 0; i--) {
       const date = subDays(new Date(), i);
       const dayStart = startOfDay(date);
       const dayEnd = endOfDay(date);
       
-      const dayTotal = orders
+      const dayTotal = validOrders
         .filter(o => {
           const oDate = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : new Date();
           return oDate >= dayStart && oDate <= dayEnd && o.status !== 'ملغي';
         })
-        .reduce((acc, o) => acc + o.totals.total, 0);
+        .reduce((acc, o) => acc + (o.totals?.total || 0), 0);
 
       data.push({
         name: format(date, 'EEE', { locale: ar }),
@@ -115,21 +128,20 @@ export default function AdminDashboard() {
     router.push('/admin/login');
   };
 
-  if (ordersLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-primary">جاري تحميل البيانات الفلكية...</div>;
-
   return (
     <AdminGuard>
       <div className="min-h-screen bg-black text-white flex flex-col font-arabic">
         <Header />
         
         <main className="flex-grow container mx-auto px-4 py-12">
+          {/* Top Bar */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">إدارة الممالك</span>
+                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">نظام إدارة NOVA</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-black gold-text">لوحة تحكم NOVA</h1>
+              <h1 className="text-4xl md:text-5xl font-black gold-text">لوحة التحكم</h1>
             </div>
             <div className="flex items-center gap-4">
               <div className="bg-white/5 p-2 px-6 rounded-2xl border border-white/10 text-xs font-bold text-white/40">
@@ -138,76 +150,121 @@ export default function AdminDashboard() {
               <button 
                 onClick={handleLogout}
                 className="h-12 w-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                title="تسجيل الخروج"
               >
                 <LogOut className="h-5 w-5" />
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {[
-              { label: 'مبيعات اليوم', value: `${stats?.todaySales.toLocaleString()} د.ع`, icon: TrendingUp, color: 'text-green-400' },
-              { label: 'طلبات جديدة', value: stats?.newOrders, icon: ShoppingBag, color: 'text-primary' },
-              { label: 'قيد التجهيز', value: stats?.pending, icon: Clock, color: 'text-blue-400' },
-              { label: 'إجمالي العملاء', value: stats?.totalCustomers, icon: Users, color: 'text-purple-400' }
-            ].map((s, i) => (
-              <div key={i} className="nova-card p-8 celestial-glow flex items-center gap-6">
-                <div className={cn("h-14 w-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center", s.color)}>
-                  <s.icon className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">{s.label}</p>
-                  <p className="text-2xl font-black text-white">{s.value}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2">
-              <div className="nova-card p-10 h-full">
-                <h3 className="text-xl font-black text-white mb-10">إحصائيات المبيعات</h3>
-                <div className="h-[350px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                      <defs>
-                        <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={10} axisLine={false} tickLine={false} />
-                      <YAxis stroke="rgba(255,255,255,0.3)" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(val) => `${val/1000}k`} />
-                      <Area type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+          {ordersLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="nova-card p-8 animate-pulse bg-white/5 h-32" />
+              ))}
             </div>
+          ) : (
+            <>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                {[
+                  { label: 'مبيعات اليوم', value: `${stats.todaySales.toLocaleString()} د.ع`, icon: TrendingUp, color: 'text-green-400' },
+                  { label: 'طلبات جديدة', value: stats.newOrders, icon: ShoppingBag, color: 'text-primary' },
+                  { label: 'قيد التجهيز', value: stats.pending, icon: Clock, color: 'text-blue-400' },
+                  { label: 'إجمالي العملاء', value: stats.totalCustomers, icon: Users, color: 'text-purple-400' }
+                ].map((s, i) => (
+                  <div key={i} className="nova-card p-8 celestial-glow flex items-center gap-6">
+                    <div className={cn("h-14 w-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center", s.color)}>
+                      <s.icon className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">{s.label}</p>
+                      <p className="text-2xl font-black text-white">{s.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-            <div className="space-y-8">
-              <div className="nova-card p-10">
-                <h3 className="text-lg font-black text-white mb-8">تنبيه المخزون</h3>
-                <div className="space-y-6">
-                  {lowStockItems.length > 0 ? lowStockItems.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black text-white">{item.name}</span>
-                        <span className="text-[10px] text-white/40 font-bold uppercase">{item.color} / {item.size}</span>
-                      </div>
-                      <Badge className="bg-yellow-500/20 text-yellow-400 border-none font-black">{item.stock} قطع</Badge>
+              {/* Charts and Lists */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div className="lg:col-span-2">
+                  <div className="nova-card p-10 h-full">
+                    <h3 className="text-xl font-black text-white mb-10 flex items-center justify-between">
+                      إحصائيات المبيعات (آخر 7 أيام)
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                    </h3>
+                    <div className="h-[350px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                          <defs>
+                            <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                          <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={10} axisLine={false} tickLine={false} />
+                          <YAxis stroke="rgba(255,255,255,0.3)" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(val) => `${val/1000}k`} />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem' }}
+                            itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
+                          />
+                          <Area type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </div>
-                  )) : (
-                    <div className="text-center py-10 opacity-20">
-                      <Package className="h-10 w-10 mx-auto mb-4" />
-                      <p className="text-sm font-bold">المخزون ممتلئ بالنجوم</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  {/* Low Stock Widget */}
+                  <div className="nova-card p-10">
+                    <h3 className="text-lg font-black text-white mb-8 flex items-center justify-between">
+                      تنبيه المخزون
+                      <Package className="h-5 w-5 text-yellow-500" />
+                    </h3>
+                    <div className="space-y-6">
+                      {lowStockItems.length > 0 ? lowStockItems.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-yellow-500/30 transition-all">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-black text-white">{item.name}</span>
+                            <span className="text-[10px] text-white/40 font-bold uppercase">{item.color} / {item.size}</span>
+                          </div>
+                          <Badge className="bg-yellow-500/20 text-yellow-400 border-none font-black">{item.stock} قطعة</Badge>
+                        </div>
+                      )) : (
+                        <div className="text-center py-10 opacity-20">
+                          <Package className="h-10 w-10 mx-auto mb-4" />
+                          <p className="text-sm font-bold">المخزون مكتمل حالياً</p>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="nova-card p-10 bg-primary/5 border-primary/20">
+                    <h3 className="text-lg font-black text-white mb-6">إجراءات سريعة</h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      <button 
+                        onClick={() => router.push('/admin/orders')}
+                        className="w-full h-12 flex items-center justify-between px-6 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-bold transition-all"
+                      >
+                        معالجة الطلبات
+                        <ChevronLeft className="h-4 w-4 rotate-180" />
+                      </button>
+                      <button 
+                        onClick={() => router.push('/admin/products/new')}
+                        className="w-full h-12 flex items-center justify-between px-6 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-bold transition-all"
+                      >
+                        إضافة منتج جديد
+                        <ChevronLeft className="h-4 w-4 rotate-180" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </main>
         <Footer />
       </div>

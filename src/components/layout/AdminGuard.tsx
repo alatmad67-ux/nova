@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 
@@ -11,18 +11,28 @@ const ADMIN_EMAIL = `${ADMIN_PHONE}@novafashion.iq`;
 export function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, loading } = useUser();
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
     if (!loading) {
       if (!user || user.email !== ADMIN_EMAIL) {
         router.push('/admin/login');
+      } else {
+        setIsAuthorized(true);
       }
     }
   }, [user, loading, router]);
 
-  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-primary">جاري التحقق من الصلاحيات...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-primary font-arabic">
+        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-6"></div>
+        <p className="text-sm font-black tracking-widest uppercase animate-pulse">جاري التحقق من هوية NOVA...</p>
+      </div>
+    );
+  }
   
-  if (!user || user.email !== ADMIN_EMAIL) return null;
+  if (!isAuthorized) return null;
 
   return <>{children}</>;
 }
