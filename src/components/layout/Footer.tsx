@@ -15,13 +15,13 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
           {/* Brand */}
           <div className="space-y-8">
-            <Link href="/" className="flex flex-col group">
+            <div className="flex flex-col group">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                 <span className="text-3xl font-bold tracking-[0.2em] gold-text">NOVA</span>
               </div>
               <span className="text-[10px] font-light tracking-[0.5em] text-white/40 uppercase -mt-1 group-hover:text-primary transition-colors">Women Fashion</span>
-            </Link>
+            </div>
             <p className="text-sm leading-relaxed font-light">
               وجهتكِ الأولى للأناقة العصرية في العراق. تصاميم حصرية بجودة ملكية تناسب ذوقكِ الرفيع.
             </p>

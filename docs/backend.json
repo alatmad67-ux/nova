@@ -107,9 +107,33 @@
           }
         },
         "status": { "type": "string", "enum": ["جديد", "تم التأكيد", "قيد التجهيز", "جاهز للشحن", "مع شركة التوصيل", "تم التسليم", "ملغي", "مرتجع"] },
+        "shippingInfo": {
+          "type": "object",
+          "properties": {
+            "companyId": { "type": "string" },
+            "companyName": { "type": "string" },
+            "trackingNumber": { "type": "string" },
+            "status": { "type": "string", "enum": ["لم يتم الشحن", "جاهز للشحن", "تم تسليمه لشركة التوصيل", "قيد التوصيل", "تم التسليم", "فشل التسليم", "مرتجع"] }
+          }
+        },
         "createdAt": { "type": "string", "format": "date-time" },
         "storeId": { "type": "string" }
       }
+    },
+    "DeliveryCompany": {
+      "title": "Delivery Company",
+      "description": "Information about shipping providers.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "apiUrl": { "type": "string" },
+        "apiKey": { "type": "string" },
+        "apiSecret": { "type": "string" },
+        "notes": { "type": "string" },
+        "isActive": { "type": "boolean", "default": true }
+      },
+      "required": ["name"]
     },
     "Settings": {
       "title": "Store Settings",
@@ -151,6 +175,10 @@
     "/orders/{orderId}": {
       "schema": "Order",
       "description": "Customer orders."
+    },
+    "/delivery-companies/{companyId}": {
+      "schema": "DeliveryCompany",
+      "description": "Shipping providers."
     },
     "/settings/general": {
       "schema": "Settings",
