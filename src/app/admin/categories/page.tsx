@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, orderBy, where } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AdminGuard } from '@/components/layout/AdminGuard';
@@ -23,10 +23,19 @@ import {
 import { toast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { ImageUploadButton } from '@/components/ui/image-upload-button';
+import { useStore } from '@/providers/store-provider';
 
 export default function AdminCategoriesPage() {
   const db = useFirestore();
-  const catQuery = useMemo(() => query(collection(db, 'categories'), orderBy('order', 'asc')), [db]);
+  const { storeId } = useStore();
+  
+  const catQuery = useMemo(() => 
+    query(
+      collection(db, 'categories'), 
+      where('storeId', '==', storeId),
+      orderBy('order', 'asc')
+    ), [db, storeId]);
+    
   const { data: categories, loading } = useCollection(catQuery);
 
   const [isAdding, setIsAdding] = useState(false);
@@ -44,12 +53,17 @@ export default function AdminCategoriesPage() {
         await updateDoc(doc(db, 'categories', editingId), formData);
         toast({ title: "تم التحديث", description: "تم تحديث القسم بنجاح" });
       } else {
-        await addDoc(collection(db, 'categories'), { ...formData, order: (categories?.length || 0) + 1 });
+        await addDoc(collection(db, 'categories'), { 
+          ...formData, 
+          storeId,
+          order: (categories?.length || 0) + 1 
+        });
         toast({ title: "تمت الإضافة", description: "تمت إضافة القسم الجديد بنجاح" });
       }
       resetForm();
     } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ القسم" });
+      console.error("Error saving category:", error);
+      toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ القسم في Firestore" });
     }
   };
 
@@ -75,7 +89,7 @@ export default function AdminCategoriesPage() {
     setIsAdding(true);
   };
 
-  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-primary">جاري ترتيب الأقسام...</div>;
+  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-primary">جاري التحقق من الأقسام الملكية...</div>;
 
   return (
     <AdminGuard>
@@ -87,7 +101,7 @@ export default function AdminCategoriesPage() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <LayoutGrid className="h-5 w-5 text-primary" />
-                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">هيكلية المتجر</span>
+                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">هيكلية NOVA</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-black gold-text">إدارة الأقسام</h1>
             </div>
@@ -104,7 +118,7 @@ export default function AdminCategoriesPage() {
           {isAdding && (
             <div className="nova-card p-10 mb-12 border-primary/20 animate-in fade-in zoom-in-95 duration-300">
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-black text-white">{editingId ? 'تعديل قسم' : 'قسم جديد'}</h3>
+                <h3 className="text-xl font-black text-white">{editingId ? 'تعديل القسم' : 'قسم جديد'}</h3>
                 <button onClick={resetForm} className="text-white/20 hover:text-white"><X className="h-6 w-6" /></button>
               </div>
               
@@ -112,7 +126,7 @@ export default function AdminCategoriesPage() {
                 <div className="space-y-3">
                   <Label className="text-xs font-black text-white/40 tracking-widest uppercase">اسم القسم *</Label>
                   <Input 
-                    placeholder="مثلاً: فساتين"
+                    placeholder="مثلاً: فساتين سهرة"
                     className="bg-white/5 border-white/10 rounded-xl"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -121,7 +135,7 @@ export default function AdminCategoriesPage() {
                 <div className="space-y-3">
                   <Label className="text-xs font-black text-white/40 tracking-widest uppercase">الاسم اللطيف (Slug) *</Label>
                   <Input 
-                    placeholder="dresses"
+                    placeholder="evening-dresses"
                     className="bg-white/5 border-white/10 rounded-xl"
                     value={formData.slug}
                     onChange={(e) => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})}
@@ -147,7 +161,7 @@ export default function AdminCategoriesPage() {
                 <div className="flex items-end">
                   <Button className="w-full h-10 bg-primary text-black font-black rounded-xl" onClick={handleSave}>
                     <Save className="ml-2 h-4 w-4" />
-                    حفظ القسم
+                    حفظ في Firestore
                   </Button>
                 </div>
               </div>
@@ -186,6 +200,13 @@ export default function AdminCategoriesPage() {
                 </div>
               </div>
             ))}
+            
+            {!loading && categories?.length === 0 && (
+              <div className="col-span-full py-20 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2.5rem]">
+                <LayoutGrid className="h-12 w-12 mx-auto mb-4" />
+                <p className="font-black uppercase tracking-widest">لم يتم العثور على أقسام في Firestore</p>
+              </div>
+            )}
           </div>
         </main>
         
