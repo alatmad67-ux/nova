@@ -1,65 +1,85 @@
 
 {
   "entities": {
-    "Store": {
-      "title": "Store",
-      "description": "Represents a tenant/merchant shop in the SaaS platform.",
+    "Category": {
+      "title": "Category",
+      "description": "Product categories like Dresses, Skirts, etc.",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
-        "subdomain": { "type": "string" },
-        "merchantId": { "type": "string" },
-        "logoUrl": { "type": "string" },
-        "plan": { "type": "string", "enum": ["free", "pro", "enterprise"] },
-        "status": { "type": "string", "enum": ["active", "suspended", "trial"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "trialEndsAt": { "type": "string", "format": "date-time" }
+        "slug": { "type": "string" },
+        "image": { "type": "string" },
+        "order": { "type": "number" }
       },
-      "required": ["name", "merchantId", "subdomain"]
-    },
-    "UserProfile": {
-      "title": "User Profile",
-      "description": "User account details and roles.",
-      "type": "object",
-      "properties": {
-        "email": { "type": "string", "format": "email" },
-        "role": { "type": "string", "enum": ["super_admin", "merchant", "customer"] },
-        "storeId": { "type": "string", "description": "Associated store ID for merchants and customers." },
-        "displayName": { "type": "string" }
-      },
-      "required": ["email", "role"]
+      "required": ["name", "slug"]
     },
     "Product": {
       "title": "Product",
-      "description": "A product scoped to a specific store.",
+      "description": "Fashion product with variants and stock management.",
       "type": "object",
       "properties": {
-        "storeId": { "type": "string" },
         "name": { "type": "string" },
-        "price": { "type": "number" },
         "description": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
         "categoryId": { "type": "string" },
         "images": { "type": "array", "items": { "type": "string" } },
-        "stock": { "type": "number" }
+        "variants": { 
+          "type": "array", 
+          "items": {
+            "type": "object",
+            "properties": {
+              "color": { "type": "string" },
+              "size": { "type": "string" },
+              "stock": { "type": "number" },
+              "sku": { "type": "string" }
+            }
+          }
+        },
+        "status": { "type": "string", "enum": ["active", "draft", "out_of_stock"] },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["storeId", "name", "price"]
+      "required": ["name", "price", "categoryId"]
+    },
+    "Settings": {
+      "title": "Store Settings",
+      "description": "Global configuration for the brand.",
+      "type": "object",
+      "properties": {
+        "storeName": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "socialLinks": {
+          "type": "object",
+          "properties": {
+            "instagram": { "type": "string" },
+            "tiktok": { "type": "string" },
+            "facebook": { "type": "string" },
+            "snapchat": { "type": "string" }
+          }
+        },
+        "deliveryFees": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "lowStockThreshold": { "type": "number" }
+      }
     }
   },
   "auth": {
     "providers": ["google.com", "password"]
   },
   "firestore": {
-    "/stores/{storeId}": {
-      "schema": "Store",
-      "description": "Store configuration and metadata."
-    },
-    "/users/{userId}": {
-      "schema": "UserProfile",
-      "description": "User profiles and roles."
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Product categories."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "Global products collection scoped by storeId field."
+      "description": "Fashion products with variant stock."
+    },
+    "/settings/general": {
+      "schema": "Settings",
+      "description": "Global store settings."
     }
   }
 }

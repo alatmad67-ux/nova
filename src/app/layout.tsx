@@ -4,11 +4,10 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { StoreProvider } from '@/providers/store-provider';
-import { initializeFirebase } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'Nahrain Shop | متجر النهرين',
-  description: 'Premium Arabic E-commerce Shopping Experience in Iraq',
+  title: 'NOVA | أزياء نسائية فاخرة',
+  description: 'Nova Women Fashion - متجر الأزياء النسائية الفاخرة في العراق',
 };
 
 export default function RootLayout({
@@ -16,11 +15,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // In a real SaaS, storeId would be derived from the hostname/subdomain
-  // For the prototype, we use a default ID.
-  const mockStoreContext = {
-    storeId: 'default-store-id',
-    storeName: 'متجر النهرين',
+  const novaStoreContext = {
+    storeId: 'nova-official',
+    storeName: 'NOVA',
     isMerchant: false,
     isSuperAdmin: false
   };
@@ -32,9 +29,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-arabic antialiased bg-[#F7F9FC] pb-20 md:pb-0 text-slate-900">
+      <body className="font-arabic antialiased selection:bg-primary/30 selection:text-white">
         <FirebaseClientProvider>
-          <StoreProvider value={mockStoreContext}>
+          <StoreProvider value={novaStoreContext}>
             {children}
             <Toaster />
           </StoreProvider>
