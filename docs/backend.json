@@ -1,0 +1,65 @@
+
+{
+  "entities": {
+    "Store": {
+      "title": "Store",
+      "description": "Represents a tenant/merchant shop in the SaaS platform.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "subdomain": { "type": "string" },
+        "merchantId": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "plan": { "type": "string", "enum": ["free", "pro", "enterprise"] },
+        "status": { "type": "string", "enum": ["active", "suspended", "trial"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "trialEndsAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "merchantId", "subdomain"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User account details and roles.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["super_admin", "merchant", "customer"] },
+        "storeId": { "type": "string", "description": "Associated store ID for merchants and customers." },
+        "displayName": { "type": "string" }
+      },
+      "required": ["email", "role"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "A product scoped to a specific store.",
+      "type": "object",
+      "properties": {
+        "storeId": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "description": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "stock": { "type": "number" }
+      },
+      "required": ["storeId", "name", "price"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
+  "firestore": {
+    "/stores/{storeId}": {
+      "schema": "Store",
+      "description": "Store configuration and metadata."
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles and roles."
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Global products collection scoped by storeId field."
+    }
+  }
+}

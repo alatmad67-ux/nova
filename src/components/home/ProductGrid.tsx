@@ -1,55 +1,27 @@
 
-"use client";
+'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ProductCard } from './ProductCard';
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-
-const PRODUCTS = [
-  {
-    id: '1',
-    name: 'سماعات الرأس اللاسلكية برو',
-    category: 'إلكترونيات',
-    price: '125,000',
-    originalPrice: '150,000',
-    rating: 4.8,
-    reviews: 124,
-    image: PlaceHolderImages.find(p => p.id === 'prod-1')?.imageUrl || '',
-    badge: 'خصم 20%'
-  },
-  {
-    id: '2',
-    name: 'ساعة ذكية الإصدار السابع',
-    category: 'إلكترونيات',
-    price: '85,000',
-    rating: 4.5,
-    reviews: 89,
-    image: PlaceHolderImages.find(p => p.id === 'prod-2')?.imageUrl || '',
-    badge: 'جديد'
-  },
-  {
-    id: '3',
-    name: 'نظارات شمسية كلاسيكية',
-    category: 'أزياء',
-    price: '45,000',
-    rating: 4.2,
-    reviews: 45,
-    image: PlaceHolderImages.find(p => p.id === 'prod-3')?.imageUrl || '',
-  },
-  {
-    id: '4',
-    name: 'كمبيوتر محمول للألعاب',
-    category: 'كمبيوتر',
-    price: '1,450,000',
-    originalPrice: '1,600,000',
-    rating: 4.9,
-    reviews: 56,
-    image: PlaceHolderImages.find(p => p.id === 'prod-4')?.imageUrl || '',
-    badge: 'الأكثر مبيعاً'
-  }
-];
+import { useCollection, useFirestore } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { useStore } from '@/providers/store-provider';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function ProductGrid() {
+  const { storeId } = useStore();
+  const db = useFirestore();
+
+  const productsQuery = useMemo(() => {
+    if (!db) return null;
+    return query(
+      collection(db, 'products'),
+      where('storeId', '==', storeId)
+    );
+  }, [db, storeId]);
+
+  const { data: products, loading } = useCollection(productsQuery);
+
   return (
     <section className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
@@ -61,11 +33,36 @@ export function ProductGrid() {
           تصفية النتائج
         </button>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-        {PRODUCTS.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-[400px] w-full rounded-[1.5rem]" />
+          ))}
+        </div>
+      ) : products && products.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+          {products.map((product: any) => (
+            <ProductCard 
+              key={product.id} 
+              product={{
+                id: product.id,
+                name: product.name,
+                category: product.category || 'عام',
+                price: product.price.toLocaleString(),
+                image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/400',
+                rating: product.rating || 5.0,
+                reviews: product.reviews || 0,
+                badge: product.badge
+              }} 
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20 bg-white rounded-[2rem] shadow-premium">
+          <p className="text-slate-400 font-bold">لا توجد منتجات متوفرة لهذا المتجر حالياً.</p>
+        </div>
+      )}
     </section>
   );
 }
