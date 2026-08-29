@@ -23,6 +23,7 @@
         "price": { "type": "number" },
         "originalPrice": { "type": "number" },
         "categoryId": { "type": "string" },
+        "categoryName": { "type": "string" },
         "images": { "type": "array", "items": { "type": "string" } },
         "variants": { 
           "type": "array", 
@@ -41,6 +42,52 @@
       },
       "required": ["name", "price", "categoryId"]
     },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order details.",
+      "type": "object",
+      "properties": {
+        "orderNumber": { "type": "string" },
+        "customer": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "phone": { "type": "string" },
+            "province": { "type": "string" },
+            "region": { "type": "string" },
+            "address": { "type": "string" },
+            "landmark": { "type": "string" },
+            "notes": { "type": "string" }
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productId": { "type": "string" },
+              "name": { "type": "string" },
+              "price": { "type": "number" },
+              "quantity": { "type": "number" },
+              "color": { "type": "string" },
+              "size": { "type": "string" },
+              "sku": { "type": "string" }
+            }
+          }
+        },
+        "totals": {
+          "type": "object",
+          "properties": {
+            "subtotal": { "type": "number" },
+            "shipping": { "type": "number" },
+            "discount": { "type": "number" },
+            "total": { "type": "number" }
+          }
+        },
+        "status": { "type": "string", "enum": ["جديد", "تم التأكيد", "قيد التجهيز", "جاهز للشحن", "مع شركة التوصيل", "تم التسليم", "ملغي", "مرتجع"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "Settings": {
       "title": "Store Settings",
       "description": "Global configuration for the brand.",
@@ -54,7 +101,8 @@
             "instagram": { "type": "string" },
             "tiktok": { "type": "string" },
             "facebook": { "type": "string" },
-            "snapchat": { "type": "string" }
+            "snapchat": { "type": "string" },
+            "telegram": { "type": "string" }
           }
         },
         "deliveryFees": {
@@ -75,7 +123,11 @@
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "Fashion products with variant stock."
+      "description": "Fashion products."
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer orders."
     },
     "/settings/general": {
       "schema": "Settings",

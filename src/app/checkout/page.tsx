@@ -1,8 +1,9 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   ArrowRight, 
   MapPin, 
@@ -12,16 +13,20 @@ import {
   CreditCard,
   CheckCircle2,
   MessageCircle,
-  ChevronLeft
+  ChevronLeft,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useCart } from '@/providers/cart-provider';
+import { useDoc, useFirestore } from '@/firebase';
+import { doc, collection, addDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
 import { cn } from "@/lib/utils";
 
 const PROVINCES = [
@@ -29,53 +34,169 @@ const PROVINCES = [
 ];
 
 export default function CheckoutPage() {
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const { cart, clearCart } = useCart();
+  const db = useFirestore();
+  const settingsRef = useMemo(() => doc(db, 'settings', 'general'), [db]);
+  const { data: settings } = useDoc(settingsRef);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderResult, setOrderResult] = useState<{ id: string, number: string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     province: 'بغداد',
-    address: ''
+    region: '',
+    address: '',
+    landmark: '',
+    notes: ''
   });
 
-  const handlePlaceOrder = () => {
-    // Simple validation
-    if (!formData.name || !formData.phone || !formData.address) {
-      alert('يرجى ملء جميع الحقول المطلوبة');
+  const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const shippingFee = settings?.deliveryFees?.[formData.province] ?? 5000;
+  const total = subtotal + shippingFee;
+
+  const formatPrice = (price: number) => price.toLocaleString() + ' د.ع';
+
+  const handlePlaceOrder = async () => {
+    if (!formData.name || !formData.phone || !formData.address || !formData.region) {
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى ملء جميع الحقول المطلوبة للتوصيل" });
       return;
     }
-    setIsSuccess(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (cart.length === 0) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const orderNumber = `NOVA-${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      await runTransaction(db, async (transaction) => {
+        // 1. Check stock for all items
+        for (const item of cart) {
+          const productRef = doc(db, 'products', item.id);
+          const productDoc = await transaction.get(productRef);
+          
+          if (!productDoc.exists()) throw new Error(`المنتج ${item.name} غير موجود`);
+          
+          const productData = productDoc.data();
+          const variantIndex = productData.variants.findIndex((v: any) => v.sku === item.variant.sku);
+          
+          if (variantIndex === -1) throw new Error(`الخيار المختار لـ ${item.name} غير موجود`);
+          
+          const currentStock = productData.variants[variantIndex].stock;
+          if (currentStock < item.quantity) {
+            throw new Error(`عذراً، المخزون الحالي لـ ${item.name} لا يكفي`);
+          }
+
+          // 2. Prepare stock update
+          const newVariants = [...productData.variants];
+          newVariants[variantIndex].stock -= item.quantity;
+          transaction.update(productRef, { variants: newVariants });
+        }
+
+        // 3. Create Order
+        const orderData = {
+          orderNumber,
+          customer: formData,
+          items: cart.map(item => ({
+            productId: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            color: item.variant.color,
+            size: item.variant.size,
+            sku: item.variant.sku
+          })),
+          totals: {
+            subtotal,
+            shipping: shippingFee,
+            discount: 0,
+            total
+          },
+          status: 'جديد',
+          createdAt: serverTimestamp()
+        };
+
+        const ordersCol = collection(db, 'orders');
+        const newOrderRef = doc(ordersCol);
+        transaction.set(newOrderRef, orderData);
+        
+        setOrderResult({ id: newOrderRef.id, number: orderNumber });
+      });
+
+      toast({ title: "تم بنجاح", description: "تم استلام طلبك، شكراً لتسوقك من نوفا" });
+      clearCart();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error: any) {
+      console.error("Order error:", error);
+      toast({ variant: "destructive", title: "فشل الطلب", description: error.message || "حدث خطأ أثناء معالجة الطلب" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleWhatsAppCheckout = () => {
-    const message = `طلب جديد من متجر النهرين:\n\nالاسم: ${formData.name}\nالهاتف: ${formData.phone}\nالمحافظة: ${formData.province}\nالعنوان: ${formData.address}\nطريقة الدفع: ${paymentMethod === 'cod' ? 'الدفع عند الاستلام' : 'دفع إلكتروني'}\n\nيرجى التواصل لتأكيد الطلب.`;
-    window.open(`https://wa.me/9647701234567?text=${encodeURIComponent(message)}`, '_blank');
+  const handleWhatsAppNotify = () => {
+    if (!orderResult || !settings?.whatsapp) return;
+
+    const itemsText = cart.length > 0 
+      ? cart.map(i => `- ${i.name} (${i.variant.color}/${i.variant.size}) × ${i.quantity}`).join('\n')
+      : 'بيانات الطلب محفوظة في النظام';
+
+    const message = `🛍️ طلب جديد من NOVA
+
+رقم الطلب: ${orderResult.number}
+
+👤 العميل:
+${formData.name}
+
+📞 الهاتف:
+${formData.phone}
+
+📍 العنوان:
+${formData.province} - ${formData.region}
+${formData.address}
+نقطة دالة: ${formData.landmark || 'لا يوجد'}
+
+🛒 المنتجات:
+${itemsText}
+
+🚚 التوصيل:
+${formatPrice(shippingFee)}
+
+💰 الإجمالي:
+${formatPrice(total)}
+
+📝 ملاحظات:
+${formData.notes || 'لا يوجد'}`;
+
+    window.open(`https://wa.me/${settings.whatsapp.replace(/\+/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
-  if (isSuccess) {
+  if (orderResult) {
     return (
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col bg-black">
         <Header />
         <main className="flex-grow flex flex-col items-center justify-center p-6 text-center">
-          <div className="max-w-md w-full animate-in zoom-in-95 duration-500">
-            <div className="bg-green-500 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-green-500/20">
-              <CheckCircle2 className="h-12 w-12 text-white" />
+          <div className="max-w-md w-full celestial-glow p-12 rounded-[4rem] bg-white/5 border border-white/10">
+            <div className="bg-primary/20 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-primary/20">
+              <CheckCircle2 className="h-12 w-12 text-primary" />
             </div>
-            <h1 className="text-3xl font-black text-slate-900 mb-4">تم استلام طلبك بنجاح!</h1>
-            <p className="text-slate-500 mb-10 leading-relaxed text-lg">شكراً لتسوقك معنا. رقم طلبك هو <span className="font-bold text-slate-900">#NH-9284</span>. سنقوم بالتواصل معك قريباً لتأكيد الطلب وشحنه.</p>
+            <h1 className="text-3xl font-black text-white mb-4">تم استلام طلبك!</h1>
+            <p className="text-white/40 mb-10 font-light">
+              رقم طلبك هو <span className="text-primary font-bold">#{orderResult.number}</span>. 
+              سنقوم بالتواصل معك قريباً لتأكيد الشحن.
+            </p>
             
             <div className="space-y-4">
-              <Button asChild className="w-full h-14 rounded-2xl text-lg font-bold">
-                <Link href="/">العودة للرئيسية</Link>
-              </Button>
               <Button 
-                onClick={handleWhatsAppCheckout}
-                variant="outline" 
-                className="w-full h-14 rounded-2xl text-lg font-bold border-2 border-green-500 text-green-600 hover:bg-green-50 gap-3"
+                onClick={handleWhatsAppNotify}
+                className="w-full h-16 rounded-full text-lg font-black bg-primary text-black hover:scale-105 transition-all gap-3"
               >
-                <MessageCircle className="h-6 w-6 fill-green-600 text-white" />
-                متابعة الطلب عبر واتساب
+                <MessageCircle className="h-6 w-6" />
+                تأكيد عبر واتساب
+              </Button>
+              <Button asChild variant="ghost" className="w-full h-14 rounded-full text-white/40 hover:text-white">
+                <Link href="/">العودة للمتجر</Link>
               </Button>
             </div>
           </div>
@@ -86,49 +207,48 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F9FC]">
+    <div className="min-h-screen flex flex-col bg-black">
       <Header />
       
-      <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
-        <div className="flex items-center gap-2 text-slate-500 mb-8 overflow-hidden">
-          <Link href="/cart" className="hover:text-primary transition-colors flex items-center gap-1 font-bold">
+      <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
+        <div className="flex items-center gap-4 mb-12">
+          <Link href="/cart" className="text-white/40 hover:text-primary transition-colors flex items-center gap-2 font-bold">
             السلة
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5" />
           </Link>
-          <span className="text-slate-900 font-black">الدفع والشحن</span>
+          <h1 className="text-3xl md:text-5xl font-black text-white">إتمام الطلب</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Checkout Form */}
-          <div className="lg:col-span-7 space-y-8">
-            {/* Shipping Info */}
+          <div className="lg:col-span-7 space-y-12">
             <section>
-              <h2 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
+              <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
                 <MapPin className="h-6 w-6 text-primary" />
                 معلومات التوصيل
               </h2>
               
-              <Card className="p-8 border-none shadow-premium rounded-[2.5rem] bg-white space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-bold pr-1">الاسم الكامل *</Label>
+              <div className="nova-card p-8 md:p-12 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <Label className="text-white/60 font-black text-xs uppercase tracking-widest pr-2">الاسم الكامل *</Label>
                     <div className="relative group">
-                      <User className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                      <User className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
                       <Input 
-                        placeholder="أدخل اسمك بالكامل" 
-                        className="h-12 pr-12 bg-slate-50 border-none rounded-xl font-medium focus:bg-white transition-all"
+                        placeholder="أدخلي اسمكِ بالكامل" 
+                        className="h-14 pr-12 bg-white/5 border-white/10 rounded-2xl text-white font-bold focus:border-primary/50"
                         value={formData.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-bold pr-1">رقم الهاتف *</Label>
+                  <div className="space-y-3">
+                    <Label className="text-white/60 font-black text-xs uppercase tracking-widest pr-2">رقم الهاتف *</Label>
                     <div className="relative group">
-                      <Phone className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                      <Phone className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
                       <Input 
-                        placeholder="0770 123 4567" 
-                        className="h-12 pr-12 bg-slate-50 border-none rounded-xl font-medium focus:bg-white transition-all text-left dir-ltr"
+                        placeholder="0770 000 0000" 
+                        className="h-14 pr-12 bg-white/5 border-white/10 rounded-2xl text-white font-bold focus:border-primary/50 text-left dir-ltr"
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
                       />
@@ -136,139 +256,141 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-bold pr-1">المحافظة *</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <Label className="text-white/60 font-black text-xs uppercase tracking-widest pr-2">المحافظة *</Label>
                     <select 
-                      className="w-full h-12 px-4 bg-slate-50 border-none rounded-xl font-medium focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all outline-none appearance-none"
+                      className="w-full h-14 px-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:border-primary/50 outline-none appearance-none"
                       value={formData.province}
                       onChange={(e) => setFormData({...formData, province: e.target.value})}
                     >
-                      {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+                      {PROVINCES.map(p => <option key={p} value={p} className="bg-slate-900">{p}</option>)}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-bold pr-1">العنوان التفصيلي *</Label>
+                  <div className="space-y-3">
+                    <Label className="text-white/60 font-black text-xs uppercase tracking-widest pr-2">المنطقة / القضاء *</Label>
                     <Input 
-                      placeholder="اسم الحي، الزقاق، الدار، أو أقرب نقطة دالة" 
-                      className="h-12 bg-slate-50 border-none rounded-xl font-medium focus:bg-white transition-all"
-                      value={formData.address}
-                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                      placeholder="اسم الحي أو المنطقة" 
+                      className="h-14 bg-white/5 border-white/10 rounded-2xl text-white font-bold focus:border-primary/50"
+                      value={formData.region}
+                      onChange={(e) => setFormData({...formData, region: e.target.value})}
                     />
                   </div>
                 </div>
-              </Card>
+
+                <div className="space-y-3">
+                  <Label className="text-white/60 font-black text-xs uppercase tracking-widest pr-2">العنوان التفصيلي *</Label>
+                  <Input 
+                    placeholder="رقم الدار، الزقاق، أو تفاصيل الموقع" 
+                    className="h-14 bg-white/5 border-white/10 rounded-2xl text-white font-bold focus:border-primary/50"
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-white/60 font-black text-xs uppercase tracking-widest pr-2">أقرب نقطة دالة</Label>
+                  <Input 
+                    placeholder="مدرسة، جامع، أو محل معروف" 
+                    className="h-14 bg-white/5 border-white/10 rounded-2xl text-white font-bold focus:border-primary/50"
+                    value={formData.landmark}
+                    onChange={(e) => setFormData({...formData, landmark: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-white/60 font-black text-xs uppercase tracking-widest pr-2">ملاحظات الطلب</Label>
+                  <Textarea 
+                    placeholder="أي ملاحظات إضافية للمندوب..." 
+                    className="min-h-[100px] bg-white/5 border-white/10 rounded-2xl text-white font-bold focus:border-primary/50"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  />
+                </div>
+              </div>
             </section>
 
-            {/* Payment Method */}
             <section>
-              <h2 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
+              <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
                 <CreditCard className="h-6 w-6 text-primary" />
                 طريقة الدفع
               </h2>
               
-              <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className={cn(
-                  "relative flex items-center gap-4 p-6 rounded-[2rem] border-2 cursor-pointer transition-all bg-white",
-                  paymentMethod === 'cod' ? "border-primary shadow-lg shadow-primary/5" : "border-transparent shadow-premium grayscale opacity-70 hover:opacity-100 hover:grayscale-0"
-                )} onClick={() => setPaymentMethod('cod')}>
-                  <RadioGroupItem value="cod" id="cod" className="sr-only" />
-                  <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                    <Truck className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1">
-                    <Label htmlFor="cod" className="text-lg font-black block cursor-pointer">الدفع عند الاستلام</Label>
-                    <span className="text-xs text-slate-500 font-bold">ادفع نقداً للمندوب عند وصول طلبك</span>
-                  </div>
-                  {paymentMethod === 'cod' && <CheckCircle2 className="h-6 w-6 text-primary" />}
+              <div className="nova-card p-6 flex items-center gap-6 border-primary bg-primary/5">
+                <div className="h-16 w-16 bg-primary/20 rounded-full flex items-center justify-center text-primary shadow-xl shadow-primary/10">
+                  <Truck className="h-8 w-8" />
                 </div>
-
-                <div className={cn(
-                  "relative flex items-center gap-4 p-6 rounded-[2rem] border-2 cursor-pointer transition-all bg-white",
-                  paymentMethod === 'online' ? "border-primary shadow-lg shadow-primary/5" : "border-transparent shadow-premium grayscale opacity-70 hover:opacity-100 hover:grayscale-0"
-                )} onClick={() => setPaymentMethod('online')}>
-                  <RadioGroupItem value="online" id="online" className="sr-only" />
-                  <div className="h-12 w-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-600">
-                    <CreditCard className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1">
-                    <Label htmlFor="online" className="text-lg font-black block cursor-pointer">دفع إلكتروني</Label>
-                    <span className="text-xs text-slate-500 font-bold">بواسطة زين كاش أو ماستر كارد</span>
-                  </div>
-                  {paymentMethod === 'online' && <CheckCircle2 className="h-6 w-6 text-primary" />}
+                <div className="flex-1">
+                  <h4 className="text-xl font-black text-white">الدفع عند الاستلام</h4>
+                  <p className="text-sm text-white/40 font-light mt-1">خدمة الدفع نقداً للمندوب عند وصول طلبيتكِ</p>
                 </div>
-              </RadioGroup>
+                <CheckCircle2 className="h-8 w-8 text-primary" />
+              </div>
             </section>
           </div>
 
           {/* Sidebar Summary */}
           <div className="lg:col-span-5">
-            <div className="sticky top-28 space-y-6">
-              <Card className="p-8 border-none shadow-premium rounded-[2.5rem] bg-white">
-                <h3 className="text-xl font-black text-slate-900 mb-6 border-b border-slate-50 pb-4">موجز الطلب</h3>
+            <div className="sticky top-28 space-y-8">
+              <div className="nova-card p-10 celestial-glow">
+                <h3 className="text-2xl font-black text-white mb-10 border-b border-white/5 pb-6">ملخص الحقيبة</h3>
                 
-                {/* Items Preview */}
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl">
-                    <div className="h-16 w-16 relative rounded-xl overflow-hidden flex-shrink-0">
-                      <Image src={PlaceHolderImages.find(p => p.id === 'prod-1')?.imageUrl || ''} alt="Product" fill className="object-cover" />
+                {/* Items List */}
+                <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto no-scrollbar">
+                  {cart.map((item) => (
+                    <div key={item.variant.sku} className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <div className="h-20 w-16 relative rounded-xl overflow-hidden flex-shrink-0">
+                        <Image src={item.image} alt={item.name} fill className="object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-white text-sm truncate">{item.name}</p>
+                        <p className="text-xs text-white/40 mt-1">{item.variant.color} / {item.variant.size} × {item.quantity}</p>
+                      </div>
+                      <p className="font-black text-primary text-sm whitespace-nowrap">{formatPrice(item.price * item.quantity)}</p>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-slate-900 text-sm truncate">سماعات الرأس اللاسلكية برو</p>
-                      <p className="text-xs text-slate-500">الكمية: 1</p>
-                    </div>
-                    <p className="font-black text-slate-900 text-sm whitespace-nowrap">125,000 د.ع</p>
-                  </div>
+                  ))}
                 </div>
 
-                <div className="space-y-4 mb-8">
-                  <div className="flex justify-between text-slate-500 font-medium">
+                <div className="space-y-6 mb-10">
+                  <div className="flex justify-between text-white/40 font-bold">
                     <span>المجموع الفرعي</span>
-                    <span>125,000 د.ع</span>
+                    <span>{formatPrice(subtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-500 font-medium">
-                    <span>أجرة التوصيل</span>
-                    <span>5,000 د.ع</span>
+                  <div className="flex justify-between text-white/40 font-bold">
+                    <span>أجور التوصيل ({formData.province})</span>
+                    <span>{formatPrice(shippingFee)}</span>
                   </div>
-                  <div className="h-px bg-slate-50 my-4" />
-                  <div className="flex justify-between text-2xl font-black text-slate-900">
+                  <div className="h-px bg-white/5 my-6" />
+                  <div className="flex justify-between text-3xl font-black text-white">
                     <span>الإجمالي</span>
-                    <span className="text-primary">130,000 د.ع</span>
+                    <span className="gold-text">{formatPrice(total)}</span>
                   </div>
                 </div>
 
                 <Button 
+                  disabled={isSubmitting || cart.length === 0}
                   onClick={handlePlaceOrder}
                   size="lg" 
-                  className="w-full h-16 rounded-[1.25rem] text-xl font-black shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform mb-4"
+                  className="w-full h-20 rounded-full text-2xl font-black bg-primary text-black shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-all"
                 >
-                  تأكيد الطلب الآن
+                  {isSubmitting ? "جاري المعالجة..." : "تثبيت الطلب الآن"}
                 </Button>
 
-                <Button 
-                  onClick={handleWhatsAppCheckout}
-                  variant="outline"
-                  size="lg" 
-                  className="w-full h-16 rounded-[1.25rem] text-lg font-black border-2 border-green-500 text-green-600 hover:bg-green-50 gap-3"
-                >
-                  <MessageCircle className="h-6 w-6 fill-green-600 text-white" />
-                  طلب عبر واتساب
-                </Button>
-
-                <div className="mt-8 flex items-center justify-center gap-3 text-slate-400 grayscale opacity-60">
-                   <span className="text-[10px] font-bold">ضمان 100%</span>
-                   <div className="h-1 w-1 bg-slate-200 rounded-full" />
-                   <span className="text-[10px] font-bold">تشفير آمن</span>
-                   <div className="h-1 w-1 bg-slate-200 rounded-full" />
-                   <span className="text-[10px] font-bold">صنع في العراق</span>
+                <div className="mt-8 flex items-center justify-center gap-4 text-white/20">
+                   <div className="flex items-center gap-2">
+                     <AlertCircle className="h-4 w-4" />
+                     <span className="text-[10px] font-bold uppercase tracking-widest">تأمين نوفا</span>
+                   </div>
+                   <div className="h-1 w-1 bg-white/10 rounded-full" />
+                   <span className="text-[10px] font-bold uppercase tracking-widest">صنع في العراق</span>
                 </div>
-              </Card>
+              </div>
 
               {/* Promo Banner */}
-              <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-[2.5rem] text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -translate-y-16 translate-x-16 blur-3xl"></div>
-                <h4 className="text-lg font-black mb-2 relative z-10">توصيل سريع لكل العراق</h4>
-                <p className="text-sm text-slate-400 mb-0 relative z-10">استمتع بتوصيل لباب بيتك خلال 24-48 ساعة عمل فقط.</p>
+              <div className="bg-primary/5 border border-primary/20 p-10 rounded-[3rem] text-white relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full -translate-y-20 translate-x-20 blur-3xl group-hover:bg-primary/20 transition-all"></div>
+                <h4 className="text-xl font-black mb-3 relative z-10">توصيل سريع لكل العراق</h4>
+                <p className="text-sm text-white/40 leading-relaxed relative z-10">استمتعي بتوصيل ملكي لباب بيتكِ خلال 24-48 ساعة عمل فقط.</p>
               </div>
             </div>
           </div>
