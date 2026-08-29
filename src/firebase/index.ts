@@ -2,10 +2,12 @@
 'use client';
 
 /**
- * تهيئة Firebase وتصدير الخدمات
+ * تهيئة Firebase وتصدير الخدمات لمتجر NOVA
  * 
- * ملاحظة أمان: المجموعات العامة (المنتجات، الأقسام، المتاجر، الإعدادات) 
- * تتطلب صلاحية قراءة عامة في قواعد أمان Firestore.
+ * ملاحظة أمان هامة:
+ * المجموعات (products, categories, settings) يجب أن تكون عامة القراءة.
+ * المجموعات (orders, admins) يجب أن تكون محمية وخاصة بالإدارة.
+ * تم تحديث هذا الملف لتنشيط إعادة نشر Security Rules.
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';

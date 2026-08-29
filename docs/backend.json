@@ -140,6 +140,18 @@
         "role": { "type": "string", "enum": ["super_admin", "merchant"] },
         "storeId": { "type": "string" }
       }
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global store settings like delivery fees and contact info.",
+      "type": "object",
+      "properties": {
+        "storeName": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "socialLinks": { "type": "object" },
+        "deliveryFees": { "type": "object" },
+        "lowStockThreshold": { "type": "number" }
+      }
     }
   },
   "auth": {
