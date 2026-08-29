@@ -3,7 +3,7 @@
   "entities": {
     "Store": {
       "title": "Store",
-      "description": "Store configuration and subscription data.",
+      "description": "Store configuration and metadata.",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
@@ -103,32 +103,32 @@
     }
   },
   "auth": {
-    "providers": ["google.com", "password"]
+    "providers": ["password"]
   },
   "firestore": {
-    "/stores/{storeId}": {
-      "schema": "Store",
-      "description": "PUBLIC_READ: Publicly accessible store metadata."
-    },
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC_READ: Publicly accessible categories for the storefront."
+      "description": "PUBLIC_READ: Publicly accessible categories. ADMIN_WRITE: Only admin (07858833838@novafashion.iq) can modify."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC_READ: Publicly accessible products for the storefront."
+      "description": "PUBLIC_READ: Publicly accessible products. ADMIN_WRITE: Only admin (07858833838@novafashion.iq) can modify."
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "PUBLIC_CREATE/ADMIN_READ: Public can submit orders, only admins can view or update them."
+      "description": "PUBLIC_CREATE: Anyone can create orders. ADMIN_READ_WRITE: Only admin (07858833838@novafashion.iq) can list, read, update, or delete orders."
     },
     "/settings/{settingId}": {
       "schema": "Settings",
-      "description": "PUBLIC_READ: Global store settings accessible by everyone."
+      "description": "PUBLIC_READ: Publicly accessible settings. ADMIN_WRITE: Only admin (07858833838@novafashion.iq) can modify."
     },
     "/delivery-companies/{companyId}": {
       "schema": "DeliveryCompany",
-      "description": "ADMIN_ONLY: Only admins can manage delivery service providers."
+      "description": "ADMIN_ONLY: Only admin (07858833838@novafashion.iq) can access."
+    },
+    "/stores/{storeId}": {
+      "schema": "Store",
+      "description": "PUBLIC_READ: Public metadata. ADMIN_WRITE: Only admin can modify."
     }
   }
 }

@@ -5,14 +5,12 @@
  * NOVA FIREBASE INITIALIZATION & SECURITY SYNC
  * 
  * CRITICAL: This file triggers a redeployment of Security Rules.
- * Rules Version: 2026.03.02.v1
+ * Rules Version: 2026.03.02.v3 (FIXED SECURITY)
  * 
  * Access Policy:
- * - products: Public Read (Global)
- * - categories: Public Read (Global)
- * - settings: Public Read (Global)
- * - orders: Admin Read/Public Create
- * - delivery-companies: Admin Only
+ * - products, categories, settings: PUBLIC READ, ADMIN WRITE (07858833838@novafashion.iq)
+ * - orders: PUBLIC CREATE, ADMIN READ/WRITE (07858833838@novafashion.iq)
+ * - delivery-companies: ADMIN ONLY (07858833838@novafashion.iq)
  * 
  * Store Context: nova-official
  */

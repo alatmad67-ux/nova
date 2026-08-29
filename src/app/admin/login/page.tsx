@@ -22,12 +22,14 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ phone: '', password: '' });
 
+  const ADMIN_PHONE = '07858833838';
+  const ADMIN_EMAIL = `${ADMIN_PHONE}@novafashion.iq`;
+
   useEffect(() => {
-    // If user is already logged in as the specific admin, redirect
-    if (!userLoading && user?.email === '07858833838@novafashion.iq') {
+    if (!userLoading && user?.email === ADMIN_EMAIL) {
       router.push('/admin/dashboard');
     }
-  }, [user, userLoading, router]);
+  }, [user, userLoading, router, ADMIN_EMAIL]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,13 +43,14 @@ export default function AdminLoginPage() {
       return;
     }
 
+    if (phone !== ADMIN_PHONE) {
+      setError("رقم الهاتف هذا لا يمتلك صلاحيات إدارية");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Mapping phone to a virtual email for secure Password Auth
-      // As specified, the admin phone is 07858833838
-      const adminEmail = `${phone}@novafashion.iq`;
-      await signInWithEmailAndPassword(auth, adminEmail, password);
-      
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, password);
       toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بنجاح" });
       router.push('/admin/dashboard');
     } catch (err: any) {
@@ -55,9 +58,7 @@ export default function AdminLoginPage() {
       let message = "رقم الهاتف أو كلمة المرور غير صحيحة";
       
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        message = "معلومات الدخول غير صحيحة. يرجى التأكد من إنشاء الحساب في لوحة تحكم Firebase أولاً.";
-      } else if (err.code === 'auth/too-many-requests') {
-        message = "محاولات كثيرة خاطئة. يرجى المحاولة لاحقاً.";
+        message = "معلومات الدخول غير صحيحة. يرجى التأكد من الحساب في لوحة تحكم Firebase.";
       }
       
       setError(message);

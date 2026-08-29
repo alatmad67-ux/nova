@@ -16,6 +16,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading) {
       if (!user || user.email !== ADMIN_EMAIL) {
+        console.warn('Unauthorized access attempt to admin area');
         router.push('/admin/login');
       } else {
         setIsAuthorized(true);
