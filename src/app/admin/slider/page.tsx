@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, query, where, serverTimestamp } from 'firebase/firestore';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,8 @@ import {
   Plus, 
   Trash2, 
   X,
-  Save
+  Save,
+  Loader2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ImageUploadButton } from '@/components/ui/image-upload-button';
@@ -27,9 +28,14 @@ export default function AdminSliderPage() {
   const db = useFirestore();
   const { storeId } = useStore();
   const [isAdding, setIsAdding] = useState(false);
-  const [formData, setFormData] = useState({ title: '', subtitle: '', image: '', order: 0 });
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({ title: '', subtitle: '', image: '', order: 0, link: '' });
 
-  const sliderQuery = useMemo(() => query(collection(db, 'sliders'), where('storeId', '==', storeId)), [db, storeId]);
+  const sliderQuery = useMemo(() => query(
+    collection(db, 'sliders'), 
+    where('storeId', '==', storeId)
+  ), [db, storeId]);
+  
   const { data: slides, loading } = useCollection(sliderQuery);
 
   const sortedSlides = useMemo(() => {
@@ -39,23 +45,36 @@ export default function AdminSliderPage() {
 
   const handleSave = () => {
     if (!formData.image || !formData.title) {
-      toast({ variant: "destructive", title: "خطأ", description: "الصورة والعنوان مطلوبان" });
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "الصورة والعنوان مطلوبان" });
       return;
     }
 
-    addDoc(collection(db, 'sliders'), {
+    setIsSaving(true);
+    const sliderData = {
       ...formData,
       storeId,
       isActive: true,
-      createdAt: new Date().toISOString()
-    })
+      createdAt: serverTimestamp()
+    };
+
+    // إضافة الوثيقة مباشرة لمجموعة sliders
+    addDoc(collection(db, 'sliders'), sliderData)
       .then(() => {
-        toast({ title: "تم الحفظ", description: "تمت إضافة شريحة السلايدر بنجاح" });
-        setFormData({ title: '', subtitle: '', image: '', order: slides?.length || 0 });
+        toast({ title: "تم الحفظ بنجاح", description: "تمت إضافة شريحة السلايدر لقاعدة البيانات" });
+        setFormData({ title: '', subtitle: '', image: '', order: slides?.length || 0, link: '' });
         setIsAdding(false);
       })
-      .catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'sliders', operation: 'create' }));
+      .catch(async (serverError) => {
+        console.error("Firestore Save Error:", serverError);
+        const permissionError = new FirestorePermissionError({ 
+          path: 'sliders', 
+          operation: 'create',
+          requestResourceData: sliderData
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsSaving(false);
       });
   };
 
@@ -63,7 +82,7 @@ export default function AdminSliderPage() {
     if (!confirm('هل تريد حذف هذه الشريحة؟')) return;
     deleteDoc(doc(db, 'sliders', id))
       .then(() => {
-        toast({ title: "تم الحذف", description: "تم حذف الشريحة من السلايدر" });
+        toast({ title: "تم الحذف", description: "تم مسح الشريحة من قاعدة البيانات" });
       })
       .catch(async () => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `sliders/${id}`, operation: 'delete' }));
@@ -79,43 +98,67 @@ export default function AdminSliderPage() {
           <div className="flex items-center justify-between mb-12">
             <div>
               <h1 className="text-4xl font-black text-primary">إدارة السلايدر</h1>
-              <p className="text-primary/40 text-sm mt-1">تعديل الصور المتحركة في واجهة المتجر (Sliders)</p>
+              <p className="text-primary/40 text-sm mt-1">التحكم المباشر في صور واجهة المتجر الرئيسية</p>
             </div>
-            <Button onClick={() => setIsAdding(true)} className="h-12 px-8 rounded-2xl bg-primary text-white font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all">
-              <Plus className="ml-2 h-5 w-5" />
-              إضافة شريحة
-            </Button>
+            {!isAdding && (
+              <Button onClick={() => setIsAdding(true)} className="h-12 px-8 rounded-2xl bg-primary text-white font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+                <Plus className="ml-2 h-5 w-5" />
+                إضافة شريحة جديدة
+              </Button>
+            )}
           </div>
 
           {isAdding && (
             <div className="nova-card p-10 mb-12 border-primary/10 animate-in fade-in zoom-in-95 bg-white shadow-premium">
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-black text-primary">شريحة جديدة</h3>
-                <button onClick={() => setIsAdding(false)}><X className="h-6 w-6 text-primary/20 hover:text-primary" /></button>
+                <button onClick={() => setIsAdding(false)} disabled={isSaving}><X className="h-6 w-6 text-primary/20 hover:text-primary" /></button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-black text-primary/40">العنوان الرئيسي</Label>
-                    <Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="مثلاً: مجموعة الشتاء 2026" className="bg-accent/30 border-border h-12 text-primary font-bold" />
+                    <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">العنوان الرئيسي</Label>
+                    <Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="مثلاً: مجموعة الشتاء 2026" className="h-12 bg-accent/30 border-border rounded-xl text-primary font-bold" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-black text-primary/40">العنوان الفرعي</Label>
-                    <Input value={formData.subtitle} onChange={(e) => setFormData({...formData, subtitle: e.target.value})} placeholder="وصف قصير جذاب..." className="bg-accent/30 border-border h-12 text-primary font-bold" />
+                    <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">العنوان الفرعي</Label>
+                    <Input value={formData.subtitle} onChange={(e) => setFormData({...formData, subtitle: e.target.value})} placeholder="وصف قصير جذاب..." className="h-12 bg-accent/30 border-border rounded-xl text-primary font-bold" />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-black text-primary/40">الترتيب</Label>
-                    <Input type="number" value={formData.order} onChange={(e) => setFormData({...formData, order: parseInt(e.target.value) || 0})} className="bg-accent/30 border-border h-12 text-primary font-black" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">الترتيب</Label>
+                      <Input type="number" value={formData.order} onChange={(e) => setFormData({...formData, order: parseInt(e.target.value) || 0})} className="h-12 bg-accent/30 border-border rounded-xl text-primary font-black" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">الرابط (اختياري)</Label>
+                      <Input value={formData.link} onChange={(e) => setFormData({...formData, link: e.target.value})} placeholder="/shop" className="h-12 bg-accent/30 border-border rounded-xl text-primary font-bold" />
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-4 flex flex-col justify-center items-center">
-                  <div className="relative h-48 w-full max-w-sm rounded-2xl overflow-hidden bg-accent border border-border flex items-center justify-center">
+                  <div className="relative h-48 w-full max-w-sm rounded-3xl overflow-hidden bg-accent border-2 border-dashed border-primary/10 flex items-center justify-center">
                     {formData.image ? <Image src={formData.image} alt="Preview" fill className="object-cover" /> : <ImageIcon className="h-12 w-12 text-primary/10" />}
                   </div>
                   <ImageUploadButton onUploadComplete={(url) => setFormData({...formData, image: url})} label="رفع صورة السلايدر" className="w-full max-w-sm" />
                 </div>
               </div>
-              <Button onClick={handleSave} className="w-full mt-10 h-14 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20"><Save className="ml-2 h-5 w-5" /> تثبيت في السلايدر</Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={isSaving}
+                className="w-full mt-10 h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] transition-all"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                    جاري الحفظ في الفاير ستور...
+                  </>
+                ) : (
+                  <>
+                    <Save className="ml-2 h-5 w-5" />
+                    تثبيت في السلايدر الآن
+                  </>
+                )}
+              </Button>
             </div>
           )}
 
@@ -131,18 +174,20 @@ export default function AdminSliderPage() {
                     <h4 className="font-black text-lg text-white">{slide.title}</h4>
                     <p className="text-xs text-white/60 line-clamp-1 font-bold">{slide.subtitle}</p>
                   </div>
-                  <button onClick={() => handleDelete(slide.id)} className="absolute top-4 left-4 p-2 bg-red-50 rounded-lg text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => handleDelete(slide.id)} className="absolute top-4 left-4 p-2 bg-red-50 rounded-lg text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             ))}
             {sortedSlides.length === 0 && !loading && (
               <div className="col-span-full py-20 text-center opacity-20 border-2 border-dashed border-primary/20 rounded-[2.5rem] text-primary">
                 <ImageIcon className="h-12 w-12 mx-auto mb-4" />
-                <p className="font-black uppercase tracking-widest">السلايدر فارغ حالياً</p>
+                <p className="font-black uppercase tracking-widest">السلايدر فارغ حالياً في Firestore</p>
               </div>
             )}
             {loading && (
-              <div className="col-span-full py-20 text-center animate-pulse text-primary/20 font-black">جاري تحديث السلايدر...</div>
+              <div className="col-span-full py-20 text-center animate-pulse text-primary/20 font-black">جاري مزامنة السلايدر...</div>
             )}
           </div>
         </main>
