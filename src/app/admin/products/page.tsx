@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, query, doc, deleteDoc, updateDoc, where } from 'firebase/firestore';
 import { 
   Table, 
   TableBody, 
@@ -45,18 +45,27 @@ export default function AdminProductsPage() {
   const { storeId } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
 
+  // استعلام بسيط بدون orderBy لتجنب أخطاء الفهارس
   const productsQuery = useMemo(() => 
     query(
       collection(db, 'products'), 
-      where('storeId', '==', storeId),
-      orderBy('createdAt', 'desc')
+      where('storeId', '==', storeId)
     ), [db, storeId]);
     
   const { data: products, loading } = useCollection(productsQuery);
 
+  // الترتيب اليدوي والبحث
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    return products.filter((p: any) => 
+    
+    // الترتيب حسب التاريخ تنازلياً
+    const sorted = [...products].sort((a, b) => {
+      const dateA = a.createdAt?.seconds || 0;
+      const dateB = b.createdAt?.seconds || 0;
+      return dateB - dateA;
+    });
+
+    return sorted.filter((p: any) => 
       p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
     );

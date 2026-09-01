@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { ProductCard } from './ProductCard';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { useStore } from '@/providers/store-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package, AlertCircle } from 'lucide-react';
@@ -13,17 +13,27 @@ export function ProductGrid() {
   const { storeId } = useStore();
   const db = useFirestore();
 
+  // إزالة orderBy من الاستعلام لتجنب الحاجة لفهرس مركب
   const productsQuery = useMemo(() => {
     if (!db) return null;
     return query(
       collection(db, 'products'),
       where('storeId', '==', storeId),
-      where('status', '==', 'active'),
-      orderBy('createdAt', 'desc')
+      where('status', '==', 'active')
     );
   }, [db, storeId]);
 
   const { data: products, loading, error } = useCollection(productsQuery);
+
+  // القيام بالترتيب يدوياً في الكود بناءً على تاريخ الإنشاء تنازلياً
+  const sortedProducts = useMemo(() => {
+    if (!products) return [];
+    return [...products].sort((a, b) => {
+      const dateA = a.createdAt?.seconds || 0;
+      const dateB = b.createdAt?.seconds || 0;
+      return dateB - dateA;
+    });
+  }, [products]);
 
   if (error) {
     return (
@@ -35,9 +45,6 @@ export function ProductGrid() {
           </div>
           <p className="text-sm font-mono opacity-80 leading-relaxed whitespace-pre-wrap">
             {error.message}
-          </p>
-          <p className="mt-4 text-xs font-bold text-white/40">
-            Path: products | Store ID: {storeId}
           </p>
         </div>
       </div>
@@ -52,9 +59,9 @@ export function ProductGrid() {
             <Skeleton key={i} className="h-[400px] w-full rounded-[2.5rem] bg-white/5" />
           ))}
         </div>
-      ) : products && products.length > 0 ? (
+      ) : sortedProducts.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-          {products.map((product: any) => (
+          {sortedProducts.map((product: any) => (
             <ProductCard 
               key={product.id} 
               product={{

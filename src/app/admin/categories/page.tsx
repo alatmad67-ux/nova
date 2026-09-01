@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, orderBy, where } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AdminGuard } from '@/components/layout/AdminGuard';
@@ -17,8 +17,7 @@ import {
   Save, 
   X, 
   LayoutGrid, 
-  ImageIcon,
-  Move
+  ImageIcon
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -31,14 +30,20 @@ export default function AdminCategoriesPage() {
   const db = useFirestore();
   const { storeId } = useStore();
   
+  // استعلام بسيط بدون orderBy لتجنب أخطاء الفهارس
   const catQuery = useMemo(() => 
     query(
       collection(db, 'categories'), 
-      where('storeId', '==', storeId),
-      orderBy('order', 'asc')
+      where('storeId', '==', storeId)
     ), [db, storeId]);
     
-  const { data: categories, loading } = useCollection(catQuery);
+  const { data: rawCategories, loading } = useCollection(catQuery);
+
+  // الترتيب يدوياً في الكود حسب حقل order
+  const categories = useMemo(() => {
+    if (!rawCategories) return [];
+    return [...rawCategories].sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [rawCategories]);
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);

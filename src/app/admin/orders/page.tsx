@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, where } from 'firebase/firestore';
+import { collection, query, doc, updateDoc, where } from 'firebase/firestore';
 import { 
   Table, 
   TableBody, 
@@ -19,16 +19,14 @@ import {
   SelectItem, 
   SelectTrigger, 
   SelectValue 
-} from "@/select";
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { toast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 import Link from 'next/link';
-import { Eye, Truck, Search, Filter } from 'lucide-react';
+import { Eye, Truck, Search } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useStore } from '@/providers/store-provider';
 
@@ -42,18 +40,27 @@ export default function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  // استعلام بسيط لتجنب أخطاء الفهارس
   const ordersQuery = useMemo(() => 
     query(
       collection(db, 'orders'), 
-      where('storeId', '==', storeId),
-      orderBy('createdAt', 'desc')
+      where('storeId', '==', storeId)
     ), [db, storeId]);
     
   const { data: orders, loading } = useCollection(ordersQuery);
 
+  // الترتيب والفلترة يدوياً
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    return orders.filter((o: any) => {
+    
+    // الترتيب حسب التاريخ تنازلياً
+    const sorted = [...orders].sort((a, b) => {
+      const dateA = a.createdAt?.seconds || 0;
+      const dateB = b.createdAt?.seconds || 0;
+      return dateB - dateA;
+    });
+
+    return sorted.filter((o: any) => {
       const matchesSearch = o.orderNumber?.includes(searchTerm) || 
                            o.customer?.name?.includes(searchTerm) || 
                            o.customer?.phone?.includes(searchTerm);

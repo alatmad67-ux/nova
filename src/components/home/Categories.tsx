@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { useStore } from '@/providers/store-provider';
 import { AlertCircle } from 'lucide-react';
 
@@ -13,16 +13,22 @@ export function Categories() {
   const db = useFirestore();
   const { storeId } = useStore();
 
+  // استعلام بسيط بدون ترتيب لتجنب أخطاء الفهارس
   const catQuery = useMemo(() => {
     if (!db) return null;
     return query(
       collection(db, 'categories'),
-      where('storeId', '==', storeId),
-      orderBy('order', 'asc')
+      where('storeId', '==', storeId)
     );
   }, [db, storeId]);
 
   const { data: categories, loading, error } = useCollection(catQuery);
+
+  // الترتيب يدوياً في الكود حسب حقل order
+  const sortedCategories = useMemo(() => {
+    if (!categories) return [];
+    return [...categories].sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [categories]);
 
   if (error) {
     return (
@@ -49,7 +55,7 @@ export function Categories() {
   return (
     <section className="container mx-auto px-4 py-12 overflow-hidden">
       <div className="flex overflow-x-auto pb-8 gap-8 md:gap-16 no-scrollbar snap-x scroll-smooth justify-center md:justify-start">
-        {categories && categories.length > 0 ? categories.map((cat: any) => (
+        {sortedCategories.length > 0 ? sortedCategories.map((cat: any) => (
           <Link 
             key={cat.id} 
             href={`/category/${cat.slug}`}

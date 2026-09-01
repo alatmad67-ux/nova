@@ -15,7 +15,7 @@ import {
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useCollection, useFirestore, useAuth } from '@/firebase';
-import { collection, query, orderBy, where } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { 
   ResponsiveContainer,
@@ -40,17 +40,16 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { storeId } = useStore();
   
-  // Orders Query - Filtered by storeId
+  // استعلام الطلبات بدون orderBy لتجنب الحاجة لفهرس مركب
   const ordersQuery = useMemo(() => 
     query(
       collection(db, 'orders'), 
-      where('storeId', '==', storeId),
-      orderBy('createdAt', 'desc')
+      where('storeId', '==', storeId)
     ), [db, storeId]);
     
-  const { data: orders, loading: ordersLoading } = useCollection(ordersQuery);
+  const { data: rawOrders, loading: ordersLoading } = useCollection(ordersQuery);
   
-  // Products Query - Filtered by storeId
+  // استعلام المنتجات بدون orderBy
   const productsQuery = useMemo(() => 
     query(
       collection(db, 'products'),
@@ -58,6 +57,16 @@ export default function AdminDashboard() {
     ), [db, storeId]);
     
   const { data: products } = useCollection(productsQuery);
+
+  // الترتيب يدوياً للطلبات
+  const orders = useMemo(() => {
+    if (!rawOrders) return [];
+    return [...rawOrders].sort((a, b) => {
+      const dateA = a.createdAt?.seconds || 0;
+      const dateB = b.createdAt?.seconds || 0;
+      return dateB - dateA;
+    });
+  }, [rawOrders]);
 
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
