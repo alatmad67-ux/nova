@@ -19,18 +19,14 @@ import { AdminGuard } from '@/components/layout/AdminGuard';
 import { 
   Plus, 
   Search, 
-  Edit, 
   Trash2, 
   Eye, 
-  EyeOff, 
-  Package, 
-  MoreVertical 
+  EyeOff 
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { toast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import Link from 'next/link';
-import { cn } from "@/lib/utils";
 import { useStore } from '@/providers/store-provider';
 
 export default function AdminProductsPage() {
@@ -56,15 +52,23 @@ export default function AdminProductsPage() {
   }, [products, searchTerm]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('هل أنتِ متأكدة؟')) return;
-    await deleteDoc(doc(db, 'products', id));
-    toast({ title: "تم الحذف" });
+    if (!confirm('هل أنتِ متأكدة من حذف هذا المنتج نهائياً؟')) return;
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      toast({ title: "تم الحذف" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل الحذف" });
+    }
   };
 
   const toggleStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'draft' : 'active';
-    await updateDoc(doc(db, 'products', id), { status: newStatus });
-    toast({ title: "تم التحديث" });
+    try {
+      await updateDoc(doc(db, 'products', id), { status: newStatus });
+      toast({ title: "تم التحديث" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل التحديث" });
+    }
   };
 
   return (
@@ -89,7 +93,7 @@ export default function AdminProductsPage() {
             </div>
           </div>
 
-          <div className="nova-card overflow-hidden border-border bg-white">
+          <div className="nova-card overflow-hidden border-border bg-white shadow-sm">
             <Table>
               <TableHeader className="bg-accent/50">
                 <TableRow className="border-border">
@@ -100,10 +104,10 @@ export default function AdminProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
-                   <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold animate-pulse">جاري التحميل...</TableCell></TableRow>
-                ) : filteredProducts.map((product: any) => (
-                  <TableRow key={product.id} className="border-border hover:bg-accent/20 transition-colors">
+                {loading && filteredProducts.length === 0 ? (
+                   <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold animate-pulse text-primary/20">جاري تحميل مجموعة NOVA...</TableCell></TableRow>
+                ) : filteredProducts.map((product: any, idx: number) => (
+                  <TableRow key={`${product.id}-${idx}`} className="border-border hover:bg-accent/20 transition-colors">
                     <TableCell className="py-4">
                       <div className="flex items-center gap-4">
                         <div className="relative h-16 w-12 rounded-lg overflow-hidden border border-border flex-shrink-0 bg-accent">
@@ -119,11 +123,14 @@ export default function AdminProductsPage() {
                         <button onClick={() => toggleStatus(product.id, product.status)} className="p-2 bg-accent rounded-lg text-primary/40 hover:text-primary transition-all">
                           {product.status === 'active' ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         </button>
-                        <button onClick={() => handleDelete(product.id)} className="p-2 bg-red-50 rounded-lg text-white hover:bg-red-600 transition-all shadow-sm"><Trash2 className="h-4 w-4" /></button>
+                        <button onClick={() => handleDelete(product.id)} className="p-2 bg-red-50 rounded-lg text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm"><Trash2 className="h-4 w-4" /></button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
+                {filteredProducts.length === 0 && !loading && (
+                   <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold text-primary/20">لا توجد منتجات مطابقة للبحث</TableCell></TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

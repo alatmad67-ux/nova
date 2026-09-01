@@ -57,8 +57,12 @@ export default function AdminSliderPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('هل تريد حذف هذه الشريحة؟')) return;
-    await deleteDoc(doc(db, 'slider', id));
-    toast({ title: "تم الحذف", description: "تم حذف الشريحة من السلايدر" });
+    try {
+      await deleteDoc(doc(db, 'slider', id));
+      toast({ title: "تم الحذف", description: "تم حذف الشريحة من السلايدر" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل الحذف" });
+    }
   };
 
   return (
@@ -111,8 +115,8 @@ export default function AdminSliderPage() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {sortedSlides.map((slide: any) => (
-              <div key={slide.id} className="nova-card overflow-hidden group bg-white border-border shadow-sm">
+            {sortedSlides.map((slide: any, idx: number) => (
+              <div key={`${slide.id}-${idx}`} className="nova-card overflow-hidden group bg-white border-border shadow-sm">
                 <div className="relative h-56 w-full">
                   <Image src={slide.image} alt={slide.title} fill className="object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent p-6 flex flex-col justify-end">
@@ -122,7 +126,7 @@ export default function AdminSliderPage() {
                     <h4 className="font-black text-lg text-white">{slide.title}</h4>
                     <p className="text-xs text-white/60 line-clamp-1 font-bold">{slide.subtitle}</p>
                   </div>
-                  <button onClick={() => handleDelete(slide.id)} className="absolute top-4 left-4 p-2 bg-red-500 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => handleDelete(slide.id)} className="absolute top-4 left-4 p-2 bg-red-50 rounded-lg text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"><Trash2 className="h-4 w-4" /></button>
                 </div>
               </div>
             ))}
@@ -131,6 +135,9 @@ export default function AdminSliderPage() {
                 <ImageIcon className="h-12 w-12 mx-auto mb-4" />
                 <p className="font-black uppercase tracking-widest">السلايدر فارغ حالياً</p>
               </div>
+            )}
+            {loading && (
+              <div className="col-span-full py-20 text-center animate-pulse text-primary/20 font-black">جاري تحديث السلايدر...</div>
             )}
           </div>
         </main>

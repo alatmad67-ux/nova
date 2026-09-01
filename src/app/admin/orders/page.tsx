@@ -114,8 +114,8 @@ export default function AdminOrdersPage() {
           </div>
 
           <div className="nova-card overflow-hidden border-border bg-white shadow-premium">
-            {loading ? (
-              <div className="py-20 text-center text-primary animate-pulse font-black">جاري تحميل سجلات NOVA...</div>
+            {loading && filteredOrders.length === 0 ? (
+              <div className="py-20 text-center text-primary animate-pulse font-black opacity-20">جاري تحميل سجلات NOVA...</div>
             ) : (
               <Table>
                 <TableHeader className="bg-accent/50">
@@ -129,8 +129,8 @@ export default function AdminOrdersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order: any) => (
-                    <TableRow key={order.id} className="border-border hover:bg-accent/20 transition-colors">
+                  {filteredOrders.map((order: any, idx: number) => (
+                    <TableRow key={`${order.id}-${idx}`} className="border-border hover:bg-accent/20 transition-colors">
                       <TableCell className="font-black text-primary py-6">#{order.orderNumber}</TableCell>
                       <TableCell>
                         <div className="flex flex-col">
@@ -181,7 +181,7 @@ export default function AdminOrdersPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {filteredOrders.length === 0 && (
+                  {filteredOrders.length === 0 && !loading && (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-20 text-primary/20 font-bold italic">لا توجد طلبات مطابقة للبحث</TableCell>
                     </TableRow>
