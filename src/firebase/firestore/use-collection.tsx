@@ -14,11 +14,13 @@ import { FirestorePermissionError } from '../errors';
 export function useCollection(query: Query | null) {
   const [data, setData] = useState<DocumentData[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!query) {
       setData(null);
       setLoading(false);
+      setError(null);
       return;
     }
 
@@ -31,21 +33,22 @@ export function useCollection(query: Query | null) {
           ...doc.data()
         }));
         setData(docs);
+        setError(null);
         setLoading(false);
       },
       async (serverError: any) => {
-        // Robust way to identify path without relying on internal properties
-        // Try to get path from internal segments if available for better debugging
         const path = (query as any)._query?.path?.segments?.join('/') || 'collection_query';
-        
         console.error(`Firestore error on path ${path}:`, serverError);
 
+        setError(serverError);
+        
+        // Emit for global listener as well
         const permissionError = new FirestorePermissionError({
           path: path,
           operation: 'list',
         });
-        
         errorEmitter.emit('permission-error', permissionError);
+        
         setLoading(false);
       }
     );
@@ -53,5 +56,5 @@ export function useCollection(query: Query | null) {
     return () => unsubscribe();
   }, [query]);
 
-  return { data, loading };
+  return { data, loading, error };
 }

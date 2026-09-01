@@ -7,7 +7,7 @@ import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import { useStore } from '@/providers/store-provider';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Package } from 'lucide-react';
+import { Package, AlertCircle } from 'lucide-react';
 
 export function ProductGrid() {
   const { storeId } = useStore();
@@ -18,11 +18,31 @@ export function ProductGrid() {
     return query(
       collection(db, 'products'),
       where('storeId', '==', storeId),
-      where('status', '==', 'active')
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc')
     );
   }, [db, storeId]);
 
-  const { data: products, loading } = useCollection(productsQuery);
+  const { data: products, loading, error } = useCollection(productsQuery);
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="p-8 border border-red-500/20 bg-red-500/5 rounded-[2.5rem] text-red-500 celestial-glow">
+          <div className="flex items-center gap-4 mb-4">
+            <AlertCircle className="h-6 w-6" />
+            <h3 className="text-lg font-black uppercase tracking-widest">Firestore Connection Error</h3>
+          </div>
+          <p className="text-sm font-mono opacity-80 leading-relaxed whitespace-pre-wrap">
+            {error.message}
+          </p>
+          <p className="mt-4 text-xs font-bold text-white/40">
+            Path: products | Store ID: {storeId}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="container mx-auto px-4 py-8">

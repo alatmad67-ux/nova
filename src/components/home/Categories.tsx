@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import { useStore } from '@/providers/store-provider';
+import { AlertCircle } from 'lucide-react';
 
 export function Categories() {
   const db = useFirestore();
@@ -21,7 +22,21 @@ export function Categories() {
     );
   }, [db, storeId]);
 
-  const { data: categories, loading } = useCollection(catQuery);
+  const { data: categories, loading, error } = useCollection(catQuery);
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="p-6 border border-red-500/20 bg-red-500/5 rounded-2xl text-red-500 text-xs font-mono">
+          <div className="flex items-center gap-2 mb-2 font-black uppercase">
+            <AlertCircle className="h-4 w-4" />
+            Categories Query Failed
+          </div>
+          {error.message}
+        </div>
+      </div>
+    );
+  }
 
   if (loading) return (
     <div className="flex justify-center gap-8 py-12">
