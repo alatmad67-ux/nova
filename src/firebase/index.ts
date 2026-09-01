@@ -7,7 +7,7 @@
  * Target Project: studio-9674030533-5f5ae
  * Security Policy: RBAC (Admin: 07858833838@novafashion.iq)
  * Firestore Indices: storeId/createdAt (desc) and storeId/order (asc) enabled.
- * Version: 2026.03.02.v13
+ * Security Rules Sync Trigger: 2026.03.02.v14
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';

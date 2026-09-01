@@ -97,31 +97,31 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
+      "description": "Allows public read access for all visitors. Write access is restricted to the admin 07858833838@novafashion.iq."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
+      "description": "Allows public read access for all visitors. Write access is restricted to the admin 07858833838@novafashion.iq."
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "PUBLIC_CREATE: Customers. ADMIN_READ_WRITE: Only 07858833838@novafashion.iq."
+      "description": "Allows public creation by customers. Read and write access is restricted to the admin 07858833838@novafashion.iq."
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
+      "description": "Allows public read access for all visitors to fetch store identity and settings. Write access is restricted to the admin 07858833838@novafashion.iq."
     },
     "/slider/{sliderId}": {
       "schema": "SliderItem",
-      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
+      "description": "Allows public read access for all visitors to see promotion slides. Write access is restricted to the admin 07858833838@novafashion.iq."
     },
     "/delivery-companies/{companyId}": {
       "schema": "object",
-      "description": "ADMIN_READ_WRITE: Only 07858833838@novafashion.iq."
+      "description": "Full access restricted to the admin 07858833838@novafashion.iq."
     },
     "/stores/{storeId}": {
       "schema": "object",
-      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
+      "description": "Allows public read access. Write access is restricted to the admin 07858833838@novafashion.iq."
     }
   }
 }
