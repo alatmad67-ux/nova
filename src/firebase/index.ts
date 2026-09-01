@@ -5,9 +5,9 @@
  * NOVA FIREBASE CORE & SECURITY SYNC
  * 
  * Target Project: studio-9674030533-5f5ae
- * Security Policy: RBAC (Admin: 07858833838@novafashion.iq)
- * Public Access: Categories, Products, Settings, Slider (READ ONLY)
- * Rules Sync Trigger: 2026.03.02.v25 (EXPLICIT PUBLIC READ)
+ * Admin Identity: 07858833838@novafashion.iq
+ * Security Policy: Explicit Admin-Only Write / Public Read
+ * Rules Sync Trigger: 2026.03.02.v28 (ADMIN IDENTITY LOCK)
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';

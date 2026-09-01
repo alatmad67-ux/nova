@@ -4,30 +4,40 @@
 import { useEffect } from 'react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/firebase';
 
 export function FirebaseErrorListener() {
   const { toast } = useToast();
+  const { user } = useUser();
 
   useEffect(() => {
     const handlePermissionError = (error: any) => {
-      // We only show toast for real errors, and avoid confusing the user with login requirements
-      // unless they are explicitly trying to access admin routes.
+      // Check if we are on an admin route
       const is_admin_route = window.location.pathname.startsWith('/admin');
 
       if (is_admin_route) {
-        toast({
-          variant: "destructive",
-          title: "خطأ في الصلاحيات",
-          description: "يرجى تسجيل الدخول كمدير للوصول لهذه الصفحة.",
-        });
+        if (!user) {
+          toast({
+            variant: "destructive",
+            title: "تنبيه الأمان",
+            description: "يرجى تسجيل الدخول كمسؤولة للوصول لهذه الصفحة.",
+          });
+        } else if (user.email !== '07858833838@novafashion.iq') {
+          toast({
+            variant: "destructive",
+            title: "صلاحيات محدودة",
+            description: "هذا الحساب لا يمتلك صلاحيات إدارية في NOVA.",
+          });
+        } else {
+          // If user is correct but still getting error, it's likely a rules sync lag or query issue
+          console.warn('Firestore Permission Denied for Admin. Possible causes: Indexing or Rule Sync Lag.', error.context);
+        }
       }
-      // For public storefront, we suppress the console error to avoid dev overlays.
-      // The rules will eventually sync and the data will appear.
     };
 
     errorEmitter.on('permission-error', handlePermissionError);
     return () => errorEmitter.off('permission-error', handlePermissionError);
-  }, [toast]);
+  }, [toast, user]);
 
   return null;
 }

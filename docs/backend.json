@@ -98,31 +98,31 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "Public read access for all visitors. Write access restricted to admin 07858833838@novafashion.iq."
+      "description": "PUBLIC READ for all visitors. WRITE access ONLY for authenticated admin 07858833838@novafashion.iq."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "Public read access for all visitors. Write access restricted to admin 07858833838@novafashion.iq."
+      "description": "PUBLIC READ for all visitors. WRITE access ONLY for authenticated admin 07858833838@novafashion.iq."
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "Allows public creation by customers. Read and write access restricted to admin 07858833838@novafashion.iq."
+      "description": "PUBLIC CREATE (allow anonymous customers to place orders). READ/UPDATE/DELETE ONLY for authenticated admin 07858833838@novafashion.iq."
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "Public read access for all visitors to fetch store identity. Write access restricted to admin 07858833838@novafashion.iq."
+      "description": "PUBLIC READ for store logo and fees. WRITE access ONLY for authenticated admin 07858833838@novafashion.iq."
     },
     "/slider/{sliderId}": {
       "schema": "SliderItem",
-      "description": "Public read access for all visitors. Write access restricted to admin 07858833838@novafashion.iq."
+      "description": "PUBLIC READ for storefront display. WRITE access ONLY for authenticated admin 07858833838@novafashion.iq."
     },
     "/delivery-companies/{companyId}": {
       "schema": "object",
-      "description": "Full access restricted to admin 07858833838@novafashion.iq."
+      "description": "PRIVATE. Access ONLY for authenticated admin 07858833838@novafashion.iq."
     },
     "/stores/{storeId}": {
       "schema": "object",
-      "description": "Public read access. Write access restricted to admin 07858833838@novafashion.iq."
+      "description": "PUBLIC READ. WRITE access ONLY for authenticated admin 07858833838@novafashion.iq."
     }
   }
 }

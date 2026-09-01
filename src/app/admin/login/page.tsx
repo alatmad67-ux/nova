@@ -22,6 +22,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ phone: '', password: '' });
 
+  // CONSTANTS FIXED AS PER USER REQUIREMENTS
   const ADMIN_PHONE = '07858833838';
   const ADMIN_EMAIL = `${ADMIN_PHONE}@novafashion.iq`;
 
@@ -45,16 +46,17 @@ export default function AdminLoginPage() {
 
     if (phone !== ADMIN_PHONE) {
       setError("رقم الهاتف هذا لا يمتلك صلاحيات إدارية");
+      toast({ variant: "destructive", title: "دخول غير مصرح", description: "رقم الهاتف غير مخصص للإدارة" });
       return;
     }
 
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, ADMIN_EMAIL, password);
-      toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بنجاح" });
+      toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بصلاحيات المديرة" });
       router.push('/admin/dashboard');
     } catch (err: any) {
-      let message = "رقم الهاتف أو كلمة المرور غير صحيحة";
+      let message = "كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى";
       setError(message);
       toast({ variant: "destructive", title: "خطأ في الدخول", description: message });
     } finally {
@@ -62,7 +64,12 @@ export default function AdminLoginPage() {
     }
   };
 
-  if (userLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black animate-pulse">جاري التحقق من الهوية...</div>;
+  if (userLoading) return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center text-primary font-arabic">
+      <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+      <p className="font-black animate-pulse">جاري التحقق من الهوية...</p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-arabic">
@@ -94,7 +101,7 @@ export default function AdminLoginPage() {
               <div className="relative group">
                 <Phone className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
                 <Input 
-                  placeholder="078xxxxxxx" 
+                  placeholder="07858833838" 
                   className="h-14 pr-12 bg-accent/30 border-border rounded-2xl text-primary font-black text-left dir-ltr focus:border-primary/50"
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
