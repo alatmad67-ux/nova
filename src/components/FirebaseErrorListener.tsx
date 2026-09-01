@@ -10,17 +10,15 @@ export function FirebaseErrorListener() {
 
   useEffect(() => {
     const handlePermissionError = (error: any) => {
-      // In development, we let the global error handler show the detailed error screen.
-      // In production, we show a toast.
-      if (process.env.NODE_ENV === 'development') {
-        throw error;
-      } else {
-        toast({
-          variant: "destructive",
-          title: "خطأ في الصلاحيات",
-          description: "عذراً، ليس لديك الصلاحية الكافية لإتمام هذه العملية.",
-        });
-      }
+      // Avoid throwing in development as it can cause unmount/remount loops
+      // that crash the Firestore SDK internal state.
+      console.error('Firestore Permission Error:', error);
+      
+      toast({
+        variant: "destructive",
+        title: "خطأ في الصلاحيات",
+        description: "عذراً، حدث خطأ في الوصول للبيانات. يرجى التحقق من تسجيل الدخول.",
+      });
     };
 
     errorEmitter.on('permission-error', handlePermissionError);

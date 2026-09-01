@@ -7,12 +7,12 @@
  * Target Project: studio-9674030533-5f5ae
  * Security Policy: RBAC (Admin: 07858833838@novafashion.iq)
  * Firestore Indices: storeId/createdAt (desc) and storeId/order (asc) enabled.
- * Version: 2026.03.02.v12
+ * Version: 2026.03.02.v13
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
 export function initializeFirebase(): {
@@ -22,7 +22,15 @@ export function initializeFirebase(): {
 } {
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const db = getFirestore(app);
+  
+  // Use initializeFirestore with experimentalForceLongPolling for stability 
+  // in proxied development environments like Cloud Workstations.
+  const db = getApps().length > 0 
+    ? getFirestore(app) 
+    : initializeFirestore(app, {
+        experimentalForceLongPolling: true,
+      });
+
   return { app, auth, db };
 }
 

@@ -6,7 +6,8 @@ import {
   Query, 
   onSnapshot, 
   QuerySnapshot, 
-  DocumentData 
+  DocumentData,
+  CollectionReference
 } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
@@ -37,12 +38,12 @@ export function useCollection(query: Query | null) {
         setLoading(false);
       },
       async (serverError: any) => {
-        const path = (query as any)._query?.path?.segments?.join('/') || 'collection_query';
-        console.error(`Firestore error on path ${path}:`, serverError);
-
+        // Use safer way to get path if available (for CollectionReferences)
+        const path = (query as any).path || 'collection_query';
+        
         setError(serverError);
         
-        // Emit for global listener as well
+        // Emit for global listener
         const permissionError = new FirestorePermissionError({
           path: path,
           operation: 'list',
