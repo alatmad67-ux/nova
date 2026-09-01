@@ -7,7 +7,7 @@
  * Target Project: studio-9674030533-5f5ae
  * Admin Identity: 07858833838@novafashion.iq
  * Security Policy: Explicit Admin-Only Write / Public Read
- * Rules Sync Trigger: 2026.03.02.v29 (PERMISSION LOCK)
+ * Rules Sync Trigger: 2026.03.02.v30 (SLIDERS PLURAL SYNC)
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -23,8 +23,6 @@ export function initializeFirebase(): {
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   const auth = getAuth(app);
   
-  // Use initializeFirestore with experimentalForceLongPolling for stability 
-  // in proxied development environments like Cloud Workstations.
   const db = getApps().length > 0 
     ? getFirestore(app) 
     : initializeFirestore(app, {

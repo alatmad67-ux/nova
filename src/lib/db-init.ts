@@ -42,12 +42,12 @@ export async function initializeDatabase(db: Firestore, storeId: string) {
       });
     }
 
-    // 2. تهيئة السلايدر (Slider) - إضافة شريحة ترحيبية إذا كانت المجموعة فارغة
-    const sliderCol = collection(db, 'slider');
+    // 2. تهيئة السلايدر (Sliders) - إضافة شريحة ترحيبية إذا كانت المجموعة فارغة
+    const sliderCol = collection(db, 'sliders');
     const sliderSnap = await getDocs(query(sliderCol, limit(1)));
     
     if (sliderSnap.empty) {
-      console.log('Initializing slider collection...');
+      console.log('Initializing sliders collection...');
       await setDoc(doc(sliderCol), {
         title: 'أناقتكِ تبدأ من هنا',
         subtitle: 'اكتشفي أحدث تشكيلات الأزياء النسائية للموسم الجديد',

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -14,21 +15,21 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 export function HeroSlider() {
   const db = useFirestore();
   const { storeId } = useStore();
 
   const sliderQuery = useMemo(() => query(
-    collection(db, 'slider'), 
+    collection(db, 'sliders'), 
     where('storeId', '==', storeId), 
     where('isActive', '==', true)
   ), [db, storeId]);
   
-  const { data: slides } = useCollection(sliderQuery);
+  const { data: slides, loading } = useCollection(sliderQuery);
 
   const sortedSlides = useMemo(() => {
+    if (loading) return [];
     if (!slides || slides.length === 0) return [
       { 
         title: "أناقتكِ تبدأ من هنا", 
@@ -38,7 +39,13 @@ export function HeroSlider() {
       }
     ];
     return [...slides].sort((a, b) => (a.order || 0) - (b.order || 0));
-  }, [slides]);
+  }, [slides, loading]);
+
+  if (loading) return (
+    <section className="container mx-auto px-4 py-6 md:py-10">
+      <div className="w-full h-[400px] md:h-[600px] rounded-[2.5rem] bg-accent/20 animate-pulse" />
+    </section>
+  );
 
   return (
     <section className="container mx-auto px-4 py-6 md:py-10">
@@ -74,7 +81,6 @@ export function HeroSlider() {
                   <div className="absolute inset-0 bg-gradient-to-r from-accent/30 via-transparent to-transparent" />
                 </div>
 
-                {/* Mobile Background Image */}
                 <div className="md:hidden absolute inset-0 -z-0 opacity-20">
                   <Image src={slide.image} alt="bg" fill className="object-cover" />
                 </div>

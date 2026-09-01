@@ -98,31 +98,27 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq only."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq only."
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "Public CREATE only. Full READ and WRITE access for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public CREATE only. Full READ and WRITE access for authenticated admin 07858833838@novafashion.iq only."
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq only."
     },
-    "/slider/{sliderId}": {
+    "/sliders/{sliderId}": {
       "schema": "SliderItem",
-      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq only."
     },
     "/delivery-companies/{companyId}": {
       "schema": "object",
-      "description": "Private. No public access. Full READ and WRITE access for authenticated admin 07858833838@novafashion.iq."
-    },
-    "/stores/{storeId}": {
-      "schema": "object",
-      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq."
+      "description": "Private. No public access. Full READ and WRITE access for authenticated admin 07858833838@novafashion.iq only."
     }
   }
 }

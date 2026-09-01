@@ -29,7 +29,7 @@ export default function AdminSliderPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState({ title: '', subtitle: '', image: '', order: 0 });
 
-  const sliderQuery = useMemo(() => query(collection(db, 'slider'), where('storeId', '==', storeId)), [db, storeId]);
+  const sliderQuery = useMemo(() => query(collection(db, 'sliders'), where('storeId', '==', storeId)), [db, storeId]);
   const { data: slides, loading } = useCollection(sliderQuery);
 
   const sortedSlides = useMemo(() => {
@@ -43,7 +43,7 @@ export default function AdminSliderPage() {
       return;
     }
 
-    addDoc(collection(db, 'slider'), {
+    addDoc(collection(db, 'sliders'), {
       ...formData,
       storeId,
       isActive: true,
@@ -55,18 +55,18 @@ export default function AdminSliderPage() {
         setIsAdding(false);
       })
       .catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'slider', operation: 'create' }));
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'sliders', operation: 'create' }));
       });
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('هل تريد حذف هذه الشريحة؟')) return;
-    deleteDoc(doc(db, 'slider', id))
+    deleteDoc(doc(db, 'sliders', id))
       .then(() => {
         toast({ title: "تم الحذف", description: "تم حذف الشريحة من السلايدر" });
       })
       .catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `slider/${id}`, operation: 'delete' }));
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `sliders/${id}`, operation: 'delete' }));
       });
   };
 
@@ -79,7 +79,7 @@ export default function AdminSliderPage() {
           <div className="flex items-center justify-between mb-12">
             <div>
               <h1 className="text-4xl font-black text-primary">إدارة السلايدر</h1>
-              <p className="text-primary/40 text-sm mt-1">تعديل الصور المتحركة في واجهة المتجر</p>
+              <p className="text-primary/40 text-sm mt-1">تعديل الصور المتحركة في واجهة المتجر (Sliders)</p>
             </div>
             <Button onClick={() => setIsAdding(true)} className="h-12 px-8 rounded-2xl bg-primary text-white font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all">
               <Plus className="ml-2 h-5 w-5" />
@@ -105,7 +105,7 @@ export default function AdminSliderPage() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-black text-primary/40">الترتيب</Label>
-                    <Input type="number" value={formData.order} onChange={(e) => setFormData({...formData, order: parseInt(e.target.value)})} className="bg-accent/30 border-border h-12 text-primary font-black" />
+                    <Input type="number" value={formData.order} onChange={(e) => setFormData({...formData, order: parseInt(e.target.value) || 0})} className="bg-accent/30 border-border h-12 text-primary font-black" />
                   </div>
                 </div>
                 <div className="space-y-4 flex flex-col justify-center items-center">
