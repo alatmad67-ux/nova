@@ -26,7 +26,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-primary font-arabic">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-primary font-arabic">
         <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-6"></div>
         <p className="text-sm font-black tracking-widest uppercase animate-pulse">جاري التحقق من هوية NOVA...</p>
       </div>

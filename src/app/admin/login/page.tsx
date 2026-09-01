@@ -54,7 +54,6 @@ export default function AdminLoginPage() {
       toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بنجاح" });
       router.push('/admin/dashboard');
     } catch (err: any) {
-      console.error("Login error:", err.code, err.message);
       let message = "رقم الهاتف أو كلمة المرور غير صحيحة";
       setError(message);
       toast({ variant: "destructive", title: "خطأ في الدخول", description: message });
@@ -63,26 +62,26 @@ export default function AdminLoginPage() {
     }
   };
 
-  if (userLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black">جاري التحقق من الهوية...</div>;
+  if (userLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black animate-pulse">جاري التحقق من الهوية...</div>;
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-arabic">
       <Header />
       
-      <main className="flex-grow flex items-center justify-center p-6">
+      <main className="flex-grow flex items-center justify-center p-6 bg-accent/10">
         <div className="w-full max-w-md bg-white border border-border p-12 rounded-[3rem] shadow-premium">
           <div className="text-center mb-10">
             <div className="inline-flex p-4 bg-accent rounded-full mb-6 shadow-xl shadow-primary/5">
               <Sparkles className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-3xl font-black text-primary mb-2 uppercase tracking-widest">بوابة الإدارة</h1>
-            <p className="text-primary/40 text-sm font-medium">حصري لمديرة متجر NOVA</p>
+            <p className="text-primary/40 text-sm font-black">حصري لمديرة متجر NOVA</p>
           </div>
 
           {error && (
-            <Alert variant="destructive" className="mb-8 bg-red-50 border-red-100 text-red-500 rounded-2xl">
+            <Alert variant="destructive" className="mb-8 bg-red-50 border-red-100 text-red-600 rounded-2xl">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>خطأ في الدخول</AlertTitle>
+              <AlertTitle className="font-black">خطأ في الدخول</AlertTitle>
               <AlertDescription className="text-xs font-bold">
                 {error}
               </AlertDescription>
@@ -96,7 +95,7 @@ export default function AdminLoginPage() {
                 <Phone className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
                 <Input 
                   placeholder="078xxxxxxx" 
-                  className="h-14 pr-12 bg-accent/30 border-border rounded-2xl text-primary font-bold text-left dir-ltr focus:border-primary/50"
+                  className="h-14 pr-12 bg-accent/30 border-border rounded-2xl text-primary font-black text-left dir-ltr focus:border-primary/50"
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   disabled={loading}
@@ -111,7 +110,7 @@ export default function AdminLoginPage() {
                 <Input 
                   type="password"
                   placeholder="••••••••" 
-                  className="h-14 pr-12 bg-accent/30 border-border rounded-2xl text-primary font-bold text-left dir-ltr focus:border-primary/50"
+                  className="h-14 pr-12 bg-accent/30 border-border rounded-2xl text-primary font-black text-left dir-ltr focus:border-primary/50"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   disabled={loading}
