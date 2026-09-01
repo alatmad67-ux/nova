@@ -7,7 +7,7 @@
  * Target Project: studio-9674030533-5f5ae
  * Admin Identity: 07858833838@novafashion.iq
  * Security Policy: Explicit Admin-Only Write / Public Read
- * Rules Sync Trigger: 2026.03.02.v28 (ADMIN IDENTITY LOCK)
+ * Rules Sync Trigger: 2026.03.02.v29 (PERMISSION LOCK)
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';

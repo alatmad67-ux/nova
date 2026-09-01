@@ -13,12 +13,15 @@ import {
   ImageIcon, 
   Plus, 
   Trash2, 
-  X
+  X,
+  Save
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ImageUploadButton } from '@/components/ui/image-upload-button';
 import { useStore } from '@/providers/store-provider';
 import Image from 'next/image';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function AdminSliderPage() {
   const db = useFirestore();
@@ -34,35 +37,37 @@ export default function AdminSliderPage() {
     return [...slides].sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [slides]);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!formData.image || !formData.title) {
       toast({ variant: "destructive", title: "خطأ", description: "الصورة والعنوان مطلوبان" });
       return;
     }
 
-    try {
-      await addDoc(collection(db, 'slider'), {
-        ...formData,
-        storeId,
-        isActive: true,
-        createdAt: new Date().toISOString()
+    addDoc(collection(db, 'slider'), {
+      ...formData,
+      storeId,
+      isActive: true,
+      createdAt: new Date().toISOString()
+    })
+      .then(() => {
+        toast({ title: "تم الحفظ", description: "تمت إضافة شريحة السلايدر بنجاح" });
+        setFormData({ title: '', subtitle: '', image: '', order: slides?.length || 0 });
+        setIsAdding(false);
+      })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'slider', operation: 'create' }));
       });
-      toast({ title: "تم الحفظ", description: "تمت إضافة شريحة السلايدر بنجاح" });
-      setFormData({ title: '', subtitle: '', image: '', order: slides?.length || 0 });
-      setIsAdding(false);
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل في الحفظ" });
-    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('هل تريد حذف هذه الشريحة؟')) return;
-    try {
-      await deleteDoc(doc(db, 'slider', id));
-      toast({ title: "تم الحذف", description: "تم حذف الشريحة من السلايدر" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "فشل الحذف" });
-    }
+    deleteDoc(doc(db, 'slider', id))
+      .then(() => {
+        toast({ title: "تم الحذف", description: "تم حذف الشريحة من السلايدر" });
+      })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `slider/${id}`, operation: 'delete' }));
+      });
   };
 
   return (
@@ -110,7 +115,7 @@ export default function AdminSliderPage() {
                   <ImageUploadButton onUploadComplete={(url) => setFormData({...formData, image: url})} label="رفع صورة السلايدر" className="w-full max-w-sm" />
                 </div>
               </div>
-              <Button onClick={handleSave} className="w-full mt-10 h-14 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20">تثبيت في السلايدر</Button>
+              <Button onClick={handleSave} className="w-full mt-10 h-14 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20"><Save className="ml-2 h-5 w-5" /> تثبيت في السلايدر</Button>
             </div>
           )}
 

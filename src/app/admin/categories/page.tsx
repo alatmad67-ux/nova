@@ -21,6 +21,8 @@ import { toast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { ImageUploadButton } from '@/components/ui/image-upload-button';
 import { useStore } from '@/providers/store-provider';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function AdminCategoriesPage() {
   const db = useFirestore();
@@ -38,35 +40,47 @@ export default function AdminCategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', slug: '', image: '', order: 0 });
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!formData.name) return toast({ variant: "destructive", title: "الاسم مطلوب" });
 
     const data = { ...formData, storeId, slug: formData.name.toLowerCase().replace(/\s+/g, '-'), updatedAt: new Date().toISOString() };
 
-    try {
-      if (editingId) {
-        await updateDoc(doc(db, 'categories', editingId), data);
-        toast({ title: "تم التحديث" });
-      } else {
-        await addDoc(collection(db, 'categories'), { ...data, createdAt: new Date().toISOString(), order: categories.length + 1 });
-        toast({ title: "تمت الإضافة" });
-      }
-      setFormData({ name: '', slug: '', image: '', order: 0 });
-      setIsAdding(false);
-      setEditingId(null);
-    } catch (e) {
-      toast({ variant: "destructive", title: "فشل الحفظ" });
+    if (editingId) {
+      updateDoc(doc(db, 'categories', editingId), data)
+        .then(() => {
+          toast({ title: "تم التحديث" });
+          resetState();
+        })
+        .catch(async () => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `categories/${editingId}`, operation: 'update' }));
+        });
+    } else {
+      addDoc(collection(db, 'categories'), { ...data, createdAt: new Date().toISOString(), order: categories.length + 1 })
+        .then(() => {
+          toast({ title: "تمت الإضافة" });
+          resetState();
+        })
+        .catch(async () => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'categories', operation: 'create' }));
+        });
     }
+  };
+
+  const resetState = () => {
+    setFormData({ name: '', slug: '', image: '', order: 0 });
+    setIsAdding(false);
+    setEditingId(null);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('سيتم حذف القسم نهائياً، هل أنتِ متأكدة؟')) return;
-    try {
-      await deleteDoc(doc(db, 'categories', id));
-      toast({ title: "تم الحذف" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "فشل الحذف" });
-    }
+    deleteDoc(doc(db, 'categories', id))
+      .then(() => {
+        toast({ title: "تم الحذف" });
+      })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `categories/${id}`, operation: 'delete' }));
+      });
   };
 
   return (
@@ -87,7 +101,7 @@ export default function AdminCategoriesPage() {
             <div className="nova-card p-10 mb-12 border-primary/10 animate-in fade-in zoom-in-95 bg-white shadow-premium">
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-black text-primary">{editingId ? 'تعديل القسم' : 'قسم جديد'}</h3>
-                <button onClick={() => { setIsAdding(false); setEditingId(null); setFormData({ name: '', slug: '', image: '', order: 0 }); }}><X className="h-6 w-6 text-primary/20 hover:text-primary" /></button>
+                <button onClick={resetState}><X className="h-6 w-6 text-primary/20 hover:text-primary" /></button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div className="space-y-6">

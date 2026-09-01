@@ -98,31 +98,31 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC READ for all visitors. WRITE access ONLY for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC READ for all visitors. WRITE access ONLY for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq."
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "PUBLIC CREATE (allow anonymous customers to place orders). READ/UPDATE/DELETE ONLY for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public CREATE only. Full READ and WRITE access for authenticated admin 07858833838@novafashion.iq."
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "PUBLIC READ for store logo and fees. WRITE access ONLY for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq."
     },
     "/slider/{sliderId}": {
       "schema": "SliderItem",
-      "description": "PUBLIC READ for storefront display. WRITE access ONLY for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq."
     },
     "/delivery-companies/{companyId}": {
       "schema": "object",
-      "description": "PRIVATE. Access ONLY for authenticated admin 07858833838@novafashion.iq."
+      "description": "Private. No public access. Full READ and WRITE access for authenticated admin 07858833838@novafashion.iq."
     },
     "/stores/{storeId}": {
       "schema": "object",
-      "description": "PUBLIC READ. WRITE access ONLY for authenticated admin 07858833838@novafashion.iq."
+      "description": "Public READ. Full WRITE access for authenticated admin 07858833838@novafashion.iq."
     }
   }
 }
