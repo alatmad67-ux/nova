@@ -227,7 +227,7 @@ export default function AdminSettingsPage() {
                       placeholder="السعر"
                       className="w-24 h-9 bg-black/40 border-white/5 rounded-lg text-center font-black text-primary"
                       value={formData.deliveryFees[p] || ''}
-                      onChange={(e) => updateDeliveryFee(p, parseInt(e.target.value))}
+                      onChange={(e) => updateDeliveryFee(p, e.target.value === '' ? 0 : parseInt(e.target.value))}
                     />
                     <span className="text-[9px] text-white/30 font-bold">د.ع</span>
                   </div>

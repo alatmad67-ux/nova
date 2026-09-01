@@ -254,7 +254,7 @@ export default function NewProductPage() {
                         type="number"
                         className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold text-left dir-ltr"
                         value={productData.purchasePrice}
-                        onChange={(e) => setProductData({...productData, purchasePrice: parseFloat(e.target.value)})}
+                        onChange={(e) => setProductData({...productData, purchasePrice: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                       />
                     </div>
                     <div className="space-y-3">
@@ -263,7 +263,7 @@ export default function NewProductPage() {
                         type="number"
                         className="h-14 bg-white/5 border-white/10 rounded-2xl font-black text-primary text-left dir-ltr"
                         value={productData.price}
-                        onChange={(e) => setProductData({...productData, price: parseFloat(e.target.value)})}
+                        onChange={(e) => setProductData({...productData, price: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                       />
                     </div>
                     <div className="space-y-3">
@@ -272,7 +272,7 @@ export default function NewProductPage() {
                         type="number"
                         className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold text-white/40 text-left dir-ltr"
                         value={productData.originalPrice}
-                        onChange={(e) => setProductData({...productData, originalPrice: parseFloat(e.target.value)})}
+                        onChange={(e) => setProductData({...productData, originalPrice: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                       />
                     </div>
                   </div>
@@ -398,7 +398,7 @@ export default function NewProductPage() {
                                 value={v.stock}
                                 onChange={(e) => {
                                   const newVariants = [...productData.variants];
-                                  newVariants[idx].stock = parseInt(e.target.value) || 0;
+                                  newVariants[idx].stock = e.target.value === '' ? 0 : (parseInt(e.target.value) || 0);
                                   setProductData({...productData, variants: newVariants});
                                 }}
                               />
