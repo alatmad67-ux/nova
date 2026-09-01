@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -10,7 +11,6 @@ import {
   LayoutGrid,
   Image as ImageIcon,
   Settings as SettingsIcon,
-  ChevronLeft
 } from 'lucide-react';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { useCollection, useFirestore } from '@/firebase';
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Stats Grid - Inspired by the reference image */}
+          {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
               <div className="flex items-center justify-between mb-2">

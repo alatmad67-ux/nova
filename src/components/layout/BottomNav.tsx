@@ -12,14 +12,14 @@ const NAV_ITEMS = [
   { label: 'الأقسام', icon: Grid, href: '/categories' },
   { label: 'بحث', icon: Search, href: '/search' },
   { label: 'المفضلة', icon: Heart, href: '/wishlist' },
-  { label: 'حسابي', icon: User, href: '/admin/login' }, // Redirecting to admin for now as requested
+  { label: 'الإدارة', icon: User, href: '/admin/login' },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-white/80 backdrop-blur-xl border-t border-border/40 md:hidden animate-in fade-in slide-in-from-bottom-5">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-white/80 backdrop-blur-xl border-t border-border md:hidden animate-in fade-in slide-in-from-bottom-5">
       <div className="grid h-full grid-cols-5 items-center justify-items-center">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
@@ -30,7 +30,7 @@ export function BottomNav() {
               key={item.href} 
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1.5 transition-all duration-300 relative px-4",
+                "flex flex-col items-center gap-1.5 transition-all duration-300 relative px-2",
                 isActive ? "text-primary" : "text-primary/30 hover:text-primary/60"
               )}
             >

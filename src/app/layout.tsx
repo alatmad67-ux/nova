@@ -31,7 +31,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-arabic antialiased selection:bg-primary/30 selection:text-white overflow-x-hidden bg-black">
+      <body className="font-arabic antialiased selection:bg-primary/30 selection:text-white overflow-x-hidden bg-background text-foreground">
         <FirebaseClientProvider>
           <StoreProvider value={novaStoreContext}>
             <CartProvider>

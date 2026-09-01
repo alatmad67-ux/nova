@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingBag, User, Heart, Sparkles, Menu, X } from 'lucide-react';
+import { Search, ShoppingBag, User, Heart, Menu, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCart } from '@/providers/cart-provider';
@@ -21,10 +22,10 @@ export function Header() {
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-border/50">
+    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-border">
       {/* Top bar for delivery message */}
-      <div className="bg-accent py-2 text-center">
-        <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">
+      <div className="bg-accent py-2 text-center border-b border-border/50">
+        <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">
           شحن مجاني للطلبات فوق 75,000 د.ع ✨
         </p>
       </div>
@@ -48,14 +49,14 @@ export function Header() {
               <Input
                 type="search"
                 placeholder="ابحثي عن قطعتك..."
-                className="w-full h-11 pr-11 bg-muted/50 border-none focus:ring-1 focus:ring-primary/20 text-foreground rounded-xl text-sm"
+                className="w-full h-11 pr-11 bg-accent/50 border-none focus:ring-1 focus:ring-primary/20 text-primary rounded-xl text-sm font-bold"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
 
-          {/* Logo - Centered in image */}
+          {/* Logo - Centered */}
           <Link href="/" className="flex flex-col items-center group lg:absolute lg:left-1/2 lg:-translate-x-1/2">
             {settings?.logo ? (
               <div className="relative h-12 w-32">
@@ -101,11 +102,10 @@ export function Header() {
 
         {/* Desktop Navigation Menu */}
         <nav className="hidden lg:flex items-center justify-center gap-10 h-12 border-t border-border/30">
-          <Link href="/" className="text-xs font-bold text-primary hover:text-secondary transition-colors uppercase tracking-widest">الرئيسية</Link>
-          <Link href="/shop" className="text-xs font-bold text-primary/60 hover:text-primary transition-colors uppercase tracking-widest">الأقسام</Link>
-          <Link href="/new-arrivals" className="text-xs font-bold text-primary/60 hover:text-primary transition-colors uppercase tracking-widest">وصل حديثاً</Link>
-          <Link href="/offers" className="text-xs font-bold text-primary/60 hover:text-primary transition-colors uppercase tracking-widest">العروض</Link>
-          <Link href="/wishlist" className="text-xs font-bold text-primary/60 hover:text-primary transition-colors uppercase tracking-widest">المفضلة</Link>
+          <Link href="/" className="text-[10px] font-black text-primary hover:text-secondary transition-colors uppercase tracking-[0.2em]">الرئيسية</Link>
+          <Link href="/shop" className="text-[10px] font-black text-primary/60 hover:text-primary transition-colors uppercase tracking-[0.2em]">الأقسام</Link>
+          <Link href="/shop" className="text-[10px] font-black text-primary/60 hover:text-primary transition-colors uppercase tracking-[0.2em]">وصل حديثاً</Link>
+          <Link href="/wishlist" className="text-[10px] font-black text-primary/60 hover:text-primary transition-colors uppercase tracking-[0.2em]">المفضلة</Link>
         </nav>
       </div>
 
@@ -113,9 +113,9 @@ export function Header() {
       {isMenuOpen && (
         <div className="lg:hidden absolute top-full left-0 w-full bg-white border-b border-border shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex flex-col p-6 gap-4">
-            <Link href="/" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold p-2 text-primary">الرئيسية</Link>
-            <Link href="/shop" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold p-2 text-primary/60">الأقسام</Link>
-            <Link href="/wishlist" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold p-2 text-primary/60">المفضلة</Link>
+            <Link href="/" onClick={() => setIsMenuOpen(false)} className="text-sm font-black p-2 text-primary">الرئيسية</Link>
+            <Link href="/shop" onClick={() => setIsMenuOpen(false)} className="text-sm font-black p-2 text-primary/60">الأقسام</Link>
+            <Link href="/wishlist" onClick={() => setIsMenuOpen(false)} className="text-sm font-black p-2 text-primary/60">المفضلة</Link>
           </div>
         </div>
       )}
