@@ -1,3 +1,4 @@
+
 'use client';
 
 /**
@@ -6,7 +7,7 @@
  * Target Project: studio-9674030533-5f5ae
  * Security Policy: RBAC (Admin: 07858833838@novafashion.iq)
  * Firestore Indices: storeId/createdAt (desc) and storeId/order (asc) enabled.
- * Version: 2026.03.02.v11
+ * Version: 2026.03.02.v12
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';

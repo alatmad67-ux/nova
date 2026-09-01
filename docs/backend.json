@@ -114,6 +114,14 @@
     "/slider/{sliderId}": {
       "schema": "SliderItem",
       "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
+    },
+    "/delivery-companies/{companyId}": {
+      "schema": "object",
+      "description": "ADMIN_READ_WRITE: Only 07858833838@novafashion.iq."
+    },
+    "/stores/{storeId}": {
+      "schema": "object",
+      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
     }
   }
 }
