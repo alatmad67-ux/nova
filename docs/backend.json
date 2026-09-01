@@ -98,31 +98,31 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "Allows public read access for all visitors. Write access is restricted to the admin 07858833838@novafashion.iq."
+      "description": "Public read access for all visitors. Write access restricted to admin 07858833838@novafashion.iq."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "Allows public read access for all visitors. Write access is restricted to the admin 07858833838@novafashion.iq."
+      "description": "Public read access for all visitors. Write access restricted to admin 07858833838@novafashion.iq."
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "Allows public creation by customers. Read and write access is restricted to the admin 07858833838@novafashion.iq."
+      "description": "Allows public creation by customers. Read and write access restricted to admin 07858833838@novafashion.iq."
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "Allows public read access for all visitors to fetch store identity and settings. Write access is restricted to the admin 07858833838@novafashion.iq."
+      "description": "Public read access for all visitors to fetch store identity. Write access restricted to admin 07858833838@novafashion.iq."
     },
     "/slider/{sliderId}": {
       "schema": "SliderItem",
-      "description": "Allows public read access for all visitors to see promotion slides. Write access is restricted to the admin 07858833838@novafashion.iq."
+      "description": "Public read access for all visitors. Write access restricted to admin 07858833838@novafashion.iq."
     },
     "/delivery-companies/{companyId}": {
       "schema": "object",
-      "description": "Full access restricted to the admin 07858833838@novafashion.iq."
+      "description": "Full access restricted to admin 07858833838@novafashion.iq."
     },
     "/stores/{storeId}": {
       "schema": "object",
-      "description": "Allows public read access. Write access is restricted to the admin 07858833838@novafashion.iq."
+      "description": "Public read access. Write access restricted to admin 07858833838@novafashion.iq."
     }
   }
 }

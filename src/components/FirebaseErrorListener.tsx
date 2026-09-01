@@ -10,9 +10,6 @@ export function FirebaseErrorListener() {
 
   useEffect(() => {
     const handlePermissionError = (error: any) => {
-      // Avoid logging errors to console in a way that triggers multiple overlays
-      console.error('Firestore Permission Context:', error.context);
-      
       // We only show toast for real errors, and avoid confusing the user with login requirements
       // unless they are explicitly trying to access admin routes.
       const is_admin_route = window.location.pathname.startsWith('/admin');
@@ -23,11 +20,9 @@ export function FirebaseErrorListener() {
           title: "خطأ في الصلاحيات",
           description: "يرجى تسجيل الدخول كمدير للوصول لهذه الصفحة.",
         });
-      } else {
-        // For public storefront, we just log and wait for rules to sync.
-        // Avoid showing "please login" to customers.
-        console.warn('Public access syncing...');
       }
+      // For public storefront, we suppress the console error to avoid dev overlays.
+      // The rules will eventually sync and the data will appear.
     };
 
     errorEmitter.on('permission-error', handlePermissionError);

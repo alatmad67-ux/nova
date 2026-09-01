@@ -7,7 +7,7 @@
  * Target Project: studio-9674030533-5f5ae
  * Security Policy: RBAC (Admin: 07858833838@novafashion.iq)
  * Public Access: Categories, Products, Settings, Slider (READ ONLY)
- * Security Rules Sync Trigger: 2026.03.02.v18
+ * Rules Sync Trigger: 2026.03.02.v25 (EXPLICIT PUBLIC READ)
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
