@@ -55,7 +55,7 @@ export default function AdminCategoriesPage() {
       setIsAdding(false);
       setEditingId(null);
     } catch (e) {
-      toast({ variant: "destructive", title: "فشل الحفظ", description: "يرجى التحقق من الصلاحيات" });
+      toast({ variant: "destructive", title: "فشل الحفظ" });
     }
   };
 
@@ -89,19 +89,28 @@ export default function AdminCategoriesPage() {
                 <h3 className="text-xl font-black text-primary">{editingId ? 'تعديل القسم' : 'قسم جديد'}</h3>
                 <button onClick={() => { setIsAdding(false); setEditingId(null); setFormData({ name: '', slug: '', image: '', order: 0 }); }}><X className="h-6 w-6 text-primary/20 hover:text-primary" /></button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label className="text-xs font-black text-primary/40 uppercase">اسم القسم</Label>
-                    <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="h-12 bg-accent/30 border-border rounded-xl text-primary font-bold" />
+                    <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">اسم القسم</Label>
+                    <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="h-14 bg-accent/30 border-border rounded-2xl text-primary font-bold focus:border-primary/50" />
                   </div>
-                  <Button onClick={handleSave} className="w-full h-12 bg-primary text-white font-black rounded-xl shadow-lg shadow-primary/20"><Save className="ml-2 h-4 w-4" /> حفظ القسم</Button>
+                  <Button onClick={handleSave} className="w-full h-14 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20"><Save className="ml-2 h-5 w-5" /> حفظ القسم</Button>
                 </div>
-                <div className="flex flex-col items-center justify-center gap-4">
-                  <div className="relative h-24 w-24 rounded-2xl overflow-hidden bg-accent border border-border">
-                    {formData.image ? <Image src={formData.image} alt="Preview" fill className="object-cover" /> : <ImageIcon className="h-full w-full p-6 text-primary/10" />}
+                
+                <div className="flex flex-col items-center gap-6">
+                  <div className="relative h-32 w-32 rounded-3xl overflow-hidden bg-accent border-2 border-dashed border-primary/10 flex items-center justify-center">
+                    {formData.image ? (
+                      <Image src={formData.image} alt="Preview" fill className="object-cover" />
+                    ) : (
+                      <ImageIcon className="h-12 w-12 text-primary/10" />
+                    )}
                   </div>
-                  <ImageUploadButton onUploadComplete={(url) => setFormData({...formData, image: url})} label="رفع صورة القسم" />
+                  <ImageUploadButton 
+                    onUploadComplete={(url) => setFormData({...formData, image: url})} 
+                    label="تغيير صورة القسم" 
+                    className="max-w-[200px]"
+                  />
                 </div>
               </div>
             </div>
