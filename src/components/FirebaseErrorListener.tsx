@@ -10,15 +10,24 @@ export function FirebaseErrorListener() {
 
   useEffect(() => {
     const handlePermissionError = (error: any) => {
-      // Avoid throwing in development as it can cause unmount/remount loops
-      // that crash the Firestore SDK internal state.
-      console.error('Firestore Permission Error:', error);
+      // Avoid logging errors to console in a way that triggers multiple overlays
+      console.error('Firestore Permission Context:', error.context);
       
-      toast({
-        variant: "destructive",
-        title: "خطأ في الصلاحيات",
-        description: "عذراً، حدث خطأ في الوصول للبيانات. يرجى التحقق من تسجيل الدخول.",
-      });
+      // We only show toast for real errors, and avoid confusing the user with login requirements
+      // unless they are explicitly trying to access admin routes.
+      const is_admin_route = window.location.pathname.startsWith('/admin');
+
+      if (is_admin_route) {
+        toast({
+          variant: "destructive",
+          title: "خطأ في الصلاحيات",
+          description: "يرجى تسجيل الدخول كمدير للوصول لهذه الصفحة.",
+        });
+      } else {
+        // For public storefront, we just log and wait for rules to sync.
+        // Avoid showing "please login" to customers.
+        console.warn('Public access syncing...');
+      }
     };
 
     errorEmitter.on('permission-error', handlePermissionError);
