@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "Store": {
@@ -133,27 +132,27 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC_READ: Anyone can see collections. ADMIN_WRITE: Only 07858833838@novafashion.iq can manage."
+      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq. Index: storeId ASC, order ASC."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC_READ: Active products visible to all. ADMIN_WRITE: Secure management for Admin."
+      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq. Index: storeId ASC, createdAt DESC."
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "PUBLIC_CREATE: Customers can place orders. ADMIN_READ_WRITE: Full order management for Admin."
+      "description": "PUBLIC_CREATE: Customers. ADMIN_READ_WRITE: Only 07858833838@novafashion.iq. Index: storeId ASC, createdAt DESC."
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "PUBLIC_READ: Metadata. ADMIN_WRITE: Secure store settings."
+      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
     },
     "/customers/{customerId}": {
       "schema": "Customer",
-      "description": "ADMIN_ONLY: Sensitive customer history."
+      "description": "ADMIN_ONLY: Only 07858833838@novafashion.iq."
     },
     "/delivery-companies/{companyId}": {
       "schema": "DeliveryCompany",
-      "description": "ADMIN_ONLY."
+      "description": "ADMIN_ONLY: Only 07858833838@novafashion.iq."
     }
   }
 }
