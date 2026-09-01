@@ -1,12 +1,14 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { Sparkles, LogOut, LayoutGrid, ShoppingBag, Package, Settings, Image as ImageIcon } from 'lucide-react';
+import { LogOut, LayoutGrid, ShoppingBag, Package, Settings, Image as ImageIcon } from 'lucide-react';
 import { useAuth, useDoc, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { doc } from 'firebase/firestore';
 
 export function AdminHeader() {
   const auth = useAuth();
@@ -63,8 +65,4 @@ export function AdminHeader() {
       </div>
     </header>
   );
-}
-
-function doc(db: any, arg1: string, arg2: string): any {
-  throw new Error('Function not implemented.');
 }
