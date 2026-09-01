@@ -2,17 +2,11 @@
 'use client';
 
 /**
- * NOVA FIREBASE INITIALIZATION & SECURITY SYNC
+ * NOVA FIREBASE CORE & SECURITY SYNC
  * 
- * CRITICAL: This file triggers a redeployment of Security Rules.
- * Rules Version: 2026.03.02.v4 (ENFORCED ADMIN & PUBLIC ACCESS)
- * 
- * Access Policy:
- * - products, categories, settings: PUBLIC READ & LIST, ADMIN WRITE (07858833838@novafashion.iq)
- * - orders: PUBLIC CREATE, ADMIN FULL ACCESS (07858833838@novafashion.iq)
- * - delivery-companies: ADMIN ONLY ACCESS (07858833838@novafashion.iq)
- * 
- * Target Store: NOVA (nova-official)
+ * Target: studio-9674030533-5f5ae
+ * Rules Context: Public Storefront + Secure Admin (07858833838@novafashion.iq)
+ * Version: 2026.03.02.v9 (FULL SCHEMA ENFORCEMENT)
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
