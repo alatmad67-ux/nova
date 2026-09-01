@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, doc, updateDoc, query } from 'firebase/firestore';
+import { collection, doc, updateDoc, query, where } from 'firebase/firestore';
 import { 
   Table, 
   TableBody, 
@@ -20,10 +20,15 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from '@/hooks/use-toast';
 import { Package, Search, Save, AlertCircle, Filter } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { useStore } from '@/providers/store-provider';
 
 export default function InventoryPage() {
   const db = useFirestore();
-  const productsQuery = useMemo(() => query(collection(db, 'products')), [db]);
+  const { storeId } = useStore();
+  const productsQuery = useMemo(() => query(
+    collection(db, 'products'),
+    where('storeId', '==', storeId)
+  ), [db, storeId]);
   const { data: products, loading } = useCollection(productsQuery);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLowStock, setFilterLowStock] = useState(false);

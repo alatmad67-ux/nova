@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, doc, deleteDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, query, doc, deleteDoc, updateDoc, where, orderBy } from 'firebase/firestore';
 import { 
   Table, 
   TableBody, 
@@ -39,18 +39,17 @@ export default function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const productsQuery = useMemo(() => 
-    query(collection(db, 'products'), where('storeId', '==', storeId)), [db, storeId]);
+    query(
+      collection(db, 'products'), 
+      where('storeId', '==', storeId),
+      orderBy('createdAt', 'desc')
+    ), [db, storeId]);
     
   const { data: products, loading } = useCollection(productsQuery);
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    const sorted = [...products].sort((a, b) => {
-      const dateA = a.createdAt?.seconds || 0;
-      const dateB = b.createdAt?.seconds || 0;
-      return dateB - dateA;
-    });
-    return sorted.filter((p: any) => 
+    return products.filter((p: any) => 
       p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -90,7 +89,7 @@ export default function AdminProductsPage() {
             </div>
           </div>
 
-          <div className="nova-card overflow-hidden border-border">
+          <div className="nova-card overflow-hidden border-border bg-white">
             <Table>
               <TableHeader className="bg-accent/50">
                 <TableRow className="border-border">
@@ -101,7 +100,9 @@ export default function AdminProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product: any) => (
+                {loading ? (
+                   <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold animate-pulse">جاري التحميل...</TableCell></TableRow>
+                ) : filteredProducts.map((product: any) => (
                   <TableRow key={product.id} className="border-border hover:bg-accent/20 transition-colors">
                     <TableCell className="py-4">
                       <div className="flex items-center gap-4">

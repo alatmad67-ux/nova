@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, doc, updateDoc, where } from 'firebase/firestore';
+import { collection, query, doc, updateDoc, where, orderBy } from 'firebase/firestore';
 import { 
   Table, 
   TableBody, 
@@ -42,7 +42,8 @@ export default function AdminOrdersPage() {
   const ordersQuery = useMemo(() => 
     query(
       collection(db, 'orders'), 
-      where('storeId', '==', storeId)
+      where('storeId', '==', storeId),
+      orderBy('createdAt', 'desc')
     ), [db, storeId]);
     
   const { data: orders, loading } = useCollection(ordersQuery);
@@ -50,13 +51,7 @@ export default function AdminOrdersPage() {
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
     
-    const sorted = [...orders].sort((a, b) => {
-      const dateA = a.createdAt?.seconds || 0;
-      const dateB = b.createdAt?.seconds || 0;
-      return dateB - dateA;
-    });
-
-    return sorted.filter((o: any) => {
+    return orders.filter((o: any) => {
       const search = searchTerm.toLowerCase();
       const matchesSearch = (o.orderNumber?.toLowerCase().includes(search)) || 
                            (o.customer?.name?.toLowerCase().includes(search)) || 

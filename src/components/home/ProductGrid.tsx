@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { ProductCard } from './ProductCard';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { useStore } from '@/providers/store-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package, AlertCircle } from 'lucide-react';
@@ -13,27 +13,17 @@ export function ProductGrid() {
   const { storeId } = useStore();
   const db = useFirestore();
 
-  // إزالة orderBy من الاستعلام لتجنب الحاجة لفهرس مركب
   const productsQuery = useMemo(() => {
     if (!db) return null;
     return query(
       collection(db, 'products'),
       where('storeId', '==', storeId),
-      where('status', '==', 'active')
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc')
     );
   }, [db, storeId]);
 
   const { data: products, loading, error } = useCollection(productsQuery);
-
-  // القيام بالترتيب يدوياً في الكود بناءً على تاريخ الإنشاء تنازلياً
-  const sortedProducts = useMemo(() => {
-    if (!products) return [];
-    return [...products].sort((a, b) => {
-      const dateA = a.createdAt?.seconds || 0;
-      const dateB = b.createdAt?.seconds || 0;
-      return dateB - dateA;
-    });
-  }, [products]);
 
   if (error) {
     return (
@@ -46,6 +36,9 @@ export function ProductGrid() {
           <p className="text-sm font-mono opacity-80 leading-relaxed whitespace-pre-wrap">
             {error.message}
           </p>
+          <div className="mt-4 text-xs opacity-60">
+            Path: products | Store: {storeId}
+          </div>
         </div>
       </div>
     );
@@ -56,12 +49,12 @@ export function ProductGrid() {
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-[400px] w-full rounded-[2.5rem] bg-white/5" />
+            <Skeleton key={i} className="h-[400px] w-full rounded-[2.5rem] bg-accent/50" />
           ))}
         </div>
-      ) : sortedProducts.length > 0 ? (
+      ) : products && products.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-          {sortedProducts.map((product: any) => (
+          {products.map((product: any) => (
             <ProductCard 
               key={product.id} 
               product={{
@@ -78,10 +71,10 @@ export function ProductGrid() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-32 nova-card celestial-glow">
+        <div className="text-center py-32 nova-card celestial-glow bg-accent/10 border-dashed">
           <Package className="h-16 w-16 mx-auto mb-6 text-primary opacity-20" />
-          <h3 className="text-2xl font-black text-white mb-2">لا توجد منتجات في Firestore حالياً</h3>
-          <p className="text-white/40 font-light">بانتظار إضافة المجموعات الجديدة من لوحة التحكم</p>
+          <h3 className="text-2xl font-black text-primary mb-2">لا توجد منتجات في Firestore حالياً</h3>
+          <p className="text-primary/40 font-light">بانتظار إضافة المجموعات الجديدة من لوحة التحكم</p>
         </div>
       )}
     </section>

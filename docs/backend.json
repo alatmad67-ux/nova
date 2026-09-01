@@ -104,7 +104,7 @@
       "description": "Allows public read access for all visitors. Write access is restricted to the admin 07858833838@novafashion.iq."
     },
     "/orders/{orderId}": {
-      "schema": "Order",
+      "schema": "object",
       "description": "Allows public creation by customers. Read and write access is restricted to the admin 07858833838@novafashion.iq."
     },
     "/settings/{settingId}": {
