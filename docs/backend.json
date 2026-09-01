@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Store": {
@@ -16,6 +17,20 @@
         "deliveryFees": { "type": "object" },
         "lowStockThreshold": { "type": "number", "default": 5 },
         "returnPolicy": { "type": "string" },
+        "storeId": { "type": "string" }
+      }
+    },
+    "SliderItem": {
+      "title": "Slider Item",
+      "description": "Items for the homepage hero slider.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "image": { "type": "string" },
+        "link": { "type": "string" },
+        "order": { "type": "number" },
+        "isActive": { "type": "boolean" },
         "storeId": { "type": "string" }
       }
     },
@@ -74,56 +89,6 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "price", "categoryId", "storeId"]
-    },
-    "Order": {
-      "title": "Order",
-      "description": "Customer order details for NOVA.",
-      "type": "object",
-      "properties": {
-        "orderNumber": { "type": "string" },
-        "customer": {
-          "type": "object",
-          "properties": {
-            "name": { "type": "string" },
-            "phone": { "type": "string" },
-            "province": { "type": "string" },
-            "region": { "type": "string" },
-            "address": { "type": "string" },
-            "landmark": { "type": "string" },
-            "notes": { "type": "string" }
-          }
-        },
-        "items": { "type": "array", "items": { "type": "object" } },
-        "totals": { 
-          "type": "object",
-          "properties": {
-            "subtotal": { "type": "number" },
-            "shipping": { "type": "number" },
-            "discount": { "type": "number" },
-            "total": { "type": "number" }
-          }
-        },
-        "status": { "type": "string" },
-        "shippingInfo": { "type": "object" },
-        "storeId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Customer": {
-      "title": "Customer",
-      "description": "Unified customer profile.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "phone": { "type": "string" },
-        "province": { "type": "string" },
-        "orderCount": { "type": "number" },
-        "totalPurchases": { "type": "number" },
-        "lastOrder": { "type": "string" },
-        "storeId": { "type": "string" },
-        "createdAt": { "type": "string" }
-      }
     }
   },
   "auth": {
@@ -132,27 +97,23 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq. Index: storeId ASC, order ASC."
+      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq. Index: storeId ASC, createdAt DESC."
+      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "PUBLIC_CREATE: Customers. ADMIN_READ_WRITE: Only 07858833838@novafashion.iq. Index: storeId ASC, createdAt DESC."
+      "description": "PUBLIC_CREATE: Customers. ADMIN_READ_WRITE: Only 07858833838@novafashion.iq."
     },
     "/settings/{settingId}": {
       "schema": "Store",
       "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
     },
-    "/customers/{customerId}": {
-      "schema": "Customer",
-      "description": "ADMIN_ONLY: Only 07858833838@novafashion.iq."
-    },
-    "/delivery-companies/{companyId}": {
-      "schema": "DeliveryCompany",
-      "description": "ADMIN_ONLY: Only 07858833838@novafashion.iq."
+    "/slider/{sliderId}": {
+      "schema": "SliderItem",
+      "description": "PUBLIC_READ: Everyone. ADMIN_WRITE: Only 07858833838@novafashion.iq."
     }
   }
 }
