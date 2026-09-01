@@ -98,27 +98,27 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "Public READ. FULL WRITE (create, update, delete) for authenticated admin 07858833838@novafashion.iq only."
+      "description": "Allow Public READ (get, list). Allow FULL WRITE (create, update, delete) ONLY if request.auth.token.email == '07858833838@novafashion.iq'."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "Public READ. FULL WRITE (create, update, delete) for authenticated admin 07858833838@novafashion.iq only."
+      "description": "Allow Public READ (get, list). Allow FULL WRITE (create, update, delete) ONLY if request.auth.token.email == '07858833838@novafashion.iq'."
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "Public CREATE only. FULL READ and WRITE (list, update, delete) for authenticated admin 07858833838@novafashion.iq only."
+      "description": "Allow Public CREATE. Allow FULL READ and WRITE (list, get, update, delete) ONLY if request.auth.token.email == '07858833838@novafashion.iq'."
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "Public READ. FULL WRITE (create, update, delete) for authenticated admin 07858833838@novafashion.iq only."
+      "description": "Allow Public READ (get, list). Allow FULL WRITE (create, update, delete) ONLY if request.auth.token.email == '07858833838@novafashion.iq'."
     },
     "/sliders/{sliderId}": {
       "schema": "SliderItem",
-      "description": "Public READ. FULL WRITE (create, update, delete) for authenticated admin 07858833838@novafashion.iq only."
+      "description": "Allow Public READ (get, list). Allow FULL WRITE (create, update, delete) ONLY if request.auth.token.email == '07858833838@novafashion.iq'."
     },
     "/delivery-companies/{companyId}": {
       "schema": "object",
-      "description": "Private. No public access. FULL READ and WRITE for authenticated admin 07858833838@novafashion.iq only."
+      "description": "Allow FULL READ and WRITE ONLY if request.auth.token.email == '07858833838@novafashion.iq'. No public access."
     }
   }
 }
