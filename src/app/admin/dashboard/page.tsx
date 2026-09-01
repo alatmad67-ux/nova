@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { 
   TrendingUp, 
   ShoppingBag, 
@@ -30,16 +30,32 @@ import { ar } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/providers/store-provider';
+import { initializeDatabase } from '@/lib/db-init';
 
 export default function AdminDashboard() {
   const db = useFirestore();
   const router = useRouter();
   const { storeId } = useStore();
   
-  const ordersQuery = useMemo(() => query(collection(db, 'orders'), where('storeId', '==', storeId)), [db, storeId]);
+  // تفعيل نظام تهيئة قاعدة البيانات عند دخول الإدارة
+  useEffect(() => {
+    if (db && storeId) {
+      initializeDatabase(db, storeId);
+    }
+  }, [db, storeId]);
+  
+  const ordersQuery = useMemo(() => query(
+    collection(db, 'orders'), 
+    where('storeId', '==', storeId)
+  ), [db, storeId]);
+  
   const { data: rawOrders } = useCollection(ordersQuery);
   
-  const productsQuery = useMemo(() => query(collection(db, 'products'), where('storeId', '==', storeId)), [db, storeId]);
+  const productsQuery = useMemo(() => query(
+    collection(db, 'products'), 
+    where('storeId', '==', storeId)
+  ), [db, storeId]);
+  
   const { data: products } = useCollection(productsQuery);
 
   const orders = useMemo(() => {
@@ -108,12 +124,10 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
               <div className="flex items-center justify-between mb-2">
                 <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><ShoppingBag className="h-5 w-5" /></div>
-                <span className="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">+12%</span>
               </div>
               <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">إجمالي المبيعات</p>
               <p className="text-2xl font-black text-primary">{stats.todaySales.toLocaleString()} د.ع</p>
@@ -121,7 +135,6 @@ export default function AdminDashboard() {
             <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
               <div className="flex items-center justify-between mb-2">
                 <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><TrendingUp className="h-5 w-5" /></div>
-                <span className="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">+8%</span>
               </div>
               <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">إجمالي الطلبات</p>
               <p className="text-2xl font-black text-primary">{stats.totalOrders}</p>
@@ -129,7 +142,6 @@ export default function AdminDashboard() {
             <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
               <div className="flex items-center justify-between mb-2">
                 <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><Users className="h-5 w-5" /></div>
-                <span className="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">+15%</span>
               </div>
               <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">العملاء</p>
               <p className="text-2xl font-black text-primary">{stats.totalCustomers}</p>
@@ -148,10 +160,6 @@ export default function AdminDashboard() {
               <div className="bg-white p-10 rounded-[2.5rem] border border-border shadow-sm">
                 <div className="flex items-center justify-between mb-10">
                   <h3 className="text-xl font-black text-primary">المبيعات</h3>
-                  <select className="bg-muted px-4 py-2 rounded-xl text-xs font-bold outline-none border-none">
-                    <option>هذا الأسبوع</option>
-                    <option>هذا الشهر</option>
-                  </select>
                 </div>
                 <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">

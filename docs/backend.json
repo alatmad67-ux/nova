@@ -71,12 +71,13 @@
         "variants": { 
           "type": "array", 
           "items": {
-            "type": "object",
-            "properties": {
-              "color": { "type": "string" },
-              "size": { "type": "string" },
-              "stock": { "type": "number" },
-              "sku": { "type": "string" }
+            "object": {
+              "properties": {
+                "color": { "type": "string" },
+                "size": { "type": "string" },
+                "stock": { "type": "number" },
+                "sku": { "type": "string" }
+              }
             }
           }
         },
