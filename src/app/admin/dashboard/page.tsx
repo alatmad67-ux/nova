@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -7,7 +6,6 @@ import {
   ShoppingBag, 
   Users, 
   Package, 
-  Clock,
   Sparkles,
   LayoutGrid,
   Image as ImageIcon,
@@ -32,7 +30,6 @@ import { ar } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/providers/store-provider';
-import { Badge } from '@/components/ui/badge';
 
 export default function AdminDashboard() {
   const db = useFirestore();
@@ -40,7 +37,7 @@ export default function AdminDashboard() {
   const { storeId } = useStore();
   
   const ordersQuery = useMemo(() => query(collection(db, 'orders'), where('storeId', '==', storeId)), [db, storeId]);
-  const { data: rawOrders, loading: ordersLoading } = useCollection(ordersQuery);
+  const { data: rawOrders } = useCollection(ordersQuery);
   
   const productsQuery = useMemo(() => query(collection(db, 'products'), where('storeId', '==', storeId)), [db, storeId]);
   const { data: products } = useCollection(productsQuery);
@@ -61,9 +58,10 @@ export default function AdminDashboard() {
       todaySales,
       totalOrders: validOrders.length,
       newOrders: validOrders.filter(o => o.status === 'جديد').length,
-      totalCustomers: new Set(validOrders.map(o => o.customer?.phone)).size
+      totalCustomers: new Set(validOrders.map(o => o.customer?.phone)).size,
+      totalProducts: products?.length || 0
     };
-  }, [orders]);
+  }, [orders, products]);
 
   const chartData = useMemo(() => {
     const data = [];
@@ -82,61 +80,94 @@ export default function AdminDashboard() {
 
   const QUICK_ACTIONS = [
     { label: 'إضافة منتج', icon: ShoppingBag, href: '/admin/products/new', color: 'bg-primary' },
-    { label: 'إدارة الأقسام', icon: LayoutGrid, href: '/admin/categories', color: 'bg-blue-500' },
-    { label: 'السلايدر المتحرك', icon: ImageIcon, href: '/admin/slider', color: 'bg-purple-500' },
-    { label: 'إعدادات المتجر', icon: SettingsIcon, href: '/admin/settings', color: 'bg-orange-500' },
+    { label: 'إدارة الأقسام', icon: LayoutGrid, href: '/admin/categories', color: 'bg-secondary' },
+    { label: 'السلايدر', icon: ImageIcon, href: '/admin/slider', color: 'bg-primary/60' },
+    { label: 'الإعدادات', icon: SettingsIcon, href: '/admin/settings', color: 'bg-secondary/60' },
   ];
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-black text-white flex flex-col font-arabic">
+      <div className="min-h-screen bg-background text-foreground flex flex-col font-arabic">
         <AdminHeader />
         
         <main className="flex-grow container mx-auto px-4 py-12">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-5 w-5 text-primary" />
+                <Sparkles className="h-5 w-5 text-secondary" />
                 <span className="text-xs font-black tracking-widest uppercase text-primary">نظام إدارة NOVA</span>
               </div>
-              <h1 className="text-4xl font-black gold-text">لوحة التحكم</h1>
+              <h1 className="text-4xl font-black text-primary">لوحة التحكم</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <img src="https://picsum.photos/seed/admin/100/100" className="h-10 w-10 rounded-full border-2 border-primary/10" alt="Admin" />
+              <div className="text-right">
+                <p className="text-xs font-bold text-primary">مرحباً، Admin</p>
+                <p className="text-[10px] text-primary/40">مدير المتجر</p>
+              </div>
             </div>
           </div>
 
-          {/* Quick Actions Grid */}
+          {/* Stats Grid - Inspired by the reference image */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {QUICK_ACTIONS.map((action, i) => (
-              <button 
-                key={i} 
-                onClick={() => router.push(action.href)}
-                className="nova-card p-6 flex flex-col items-center gap-4 hover:scale-105 transition-all group"
-              >
-                <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center text-white shadow-lg", action.color)}>
-                  <action.icon className="h-6 w-6" />
-                </div>
-                <span className="text-sm font-black uppercase tracking-widest text-white/60 group-hover:text-white">{action.label}</span>
-              </button>
-            ))}
+            <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><ShoppingBag className="h-5 w-5" /></div>
+                <span className="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">+12%</span>
+              </div>
+              <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">إجمالي المبيعات</p>
+              <p className="text-2xl font-black text-primary">{stats.todaySales.toLocaleString()} د.ع</p>
+            </div>
+            <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><TrendingUp className="h-5 w-5" /></div>
+                <span className="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">+8%</span>
+              </div>
+              <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">إجمالي الطلبات</p>
+              <p className="text-2xl font-black text-primary">{stats.totalOrders}</p>
+            </div>
+            <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><Users className="h-5 w-5" /></div>
+                <span className="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">+15%</span>
+              </div>
+              <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">العملاء</p>
+              <p className="text-2xl font-black text-primary">{stats.totalCustomers}</p>
+            </div>
+            <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><Package className="h-5 w-5" /></div>
+              </div>
+              <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">المنتجات</p>
+              <p className="text-2xl font-black text-primary">{stats.totalProducts}</p>
+            </div>
           </div>
 
-          {/* Stats & Chart */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <div className="nova-card p-10">
-                <h3 className="text-xl font-black text-white mb-10 flex items-center justify-between">أداء المبيعات (أسبوع) <TrendingUp className="h-5 w-5 text-primary" /></h3>
+              <div className="bg-white p-10 rounded-[2.5rem] border border-border shadow-sm">
+                <div className="flex items-center justify-between mb-10">
+                  <h3 className="text-xl font-black text-primary">المبيعات</h3>
+                  <select className="bg-muted px-4 py-2 rounded-xl text-xs font-bold outline-none border-none">
+                    <option>هذا الأسبوع</option>
+                    <option>هذا الشهر</option>
+                  </select>
+                </div>
                 <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData}>
                       <defs>
                         <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
                           <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={10} axisLine={false} tickLine={false} />
-                      <YAxis stroke="rgba(255,255,255,0.3)" fontSize={10} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem' }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                      <XAxis dataKey="name" stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
+                      <YAxis stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #eee', borderRadius: '1rem', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }} 
+                      />
                       <Area type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -145,19 +176,20 @@ export default function AdminDashboard() {
             </div>
 
             <div className="space-y-6">
-              <div className="nova-card p-8 flex items-center gap-6">
-                <div className="h-14 w-14 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-500 border border-green-500/20"><TrendingUp className="h-6 w-6" /></div>
-                <div>
-                  <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">مبيعات اليوم</p>
-                  <p className="text-xl font-black text-white">{stats.todaySales.toLocaleString()} د.ع</p>
-                </div>
-              </div>
-              <div className="nova-card p-8 flex items-center gap-6">
-                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><ShoppingBag className="h-6 w-6" /></div>
-                <div>
-                  <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">طلبات جديدة</p>
-                  <p className="text-xl font-black text-white">{stats.newOrders} طلب</p>
-                </div>
+              <h3 className="text-lg font-black text-primary px-2">روابط سريعة</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {QUICK_ACTIONS.map((action, i) => (
+                  <button 
+                    key={i} 
+                    onClick={() => router.push(action.href)}
+                    className="bg-white p-6 rounded-3xl border border-border hover:border-primary/30 transition-all flex flex-col items-center gap-3 group"
+                  >
+                    <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center text-white shadow-lg", action.color)}>
+                      <action.icon className="h-5 w-5" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60 group-hover:text-primary">{action.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
