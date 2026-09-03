@@ -18,17 +18,23 @@ import { AdminHeader } from '@/components/layout/AdminHeader';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { Badge } from "@/components/ui/badge";
 import { toast } from '@/hooks/use-toast';
-import { Package, Search, Save, AlertCircle, Filter } from 'lucide-react';
+import { Package, Search, Save, AlertCircle, Filter, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useStore } from '@/providers/store-provider';
 
 export default function InventoryPage() {
   const db = useFirestore();
   const { storeId } = useStore();
-  const productsQuery = useMemo(() => query(
-    collection(db, 'products'),
-    where('storeId', '==', storeId)
-  ), [db, storeId]);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const productsQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'products'),
+      where('storeId', '==', storeId)
+    );
+  }, [db, storeId]);
+
   const { data: products, loading } = useCollection(productsQuery);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLowStock, setFilterLowStock] = useState(false);
@@ -74,27 +80,34 @@ export default function InventoryPage() {
     });
   }, [products, searchTerm, filterLowStock]);
 
-  const handleUpdateStock = async (productId: string, variantIndex: number, newStock: number, variants: any[]) => {
+  const handleUpdateStock = (productId: string, variantIndex: number, newStock: number, variants: any[]) => {
     if (newStock < 0) {
       toast({ variant: "destructive", title: "خطأ", description: "لا يمكن أن يكون المخزون سالباً" });
       return;
     }
 
-    try {
-      const productRef = doc(db, 'products', productId);
-      if (variantIndex === -1) {
-        toast({ title: "تنبيه", description: "هذا المنتج لا يحتوي على خيارات متطورة" });
-        return;
-      }
-      
-      const updatedVariants = [...variants];
-      updatedVariants[variantIndex].stock = newStock;
-      
-      await updateDoc(productRef, { variants: updatedVariants });
-      toast({ title: "تم التحديث", description: "تم تحديث كمية المخزون بنجاح" });
-    } catch (error) {
-      toast({ variant: "destructive", title: "فشل التحديث", description: "حدث خطأ أثناء تحديث المخزون" });
+    const uniqueId = `${productId}-${variantIndex}`;
+    setUpdatingId(uniqueId);
+
+    const productRef = doc(db, 'products', productId);
+    if (variantIndex === -1) {
+      toast({ title: "تنبيه", description: "هذا المنتج لا يحتوي على خيارات متطورة" });
+      setUpdatingId(null);
+      return;
     }
+    
+    const updatedVariants = [...variants];
+    updatedVariants[variantIndex].stock = newStock;
+    
+    updateDoc(productRef, { variants: updatedVariants })
+      .then(() => {
+        toast({ title: "تم التحديث", description: "تم تحديث كمية المخزون في الفاير ستور" });
+      })
+      .catch((err) => {
+        console.error(err);
+        toast({ variant: "destructive", title: "فشل التحديث", description: "تأكدي من الاتصال بالإنترنت" });
+      })
+      .finally(() => setUpdatingId(null));
   };
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black animate-pulse">جاري جرد المخزن الملكي...</div>;
@@ -151,62 +164,63 @@ export default function InventoryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {flattenedInventory.map((item, idx) => (
-                  <TableRow key={idx} className="border-border hover:bg-accent/20 transition-colors">
-                    <TableCell className="py-6">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-primary">{item.productName}</span>
-                        <span className="text-[10px] text-primary/30 uppercase font-black">{item.category}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-primary/40 text-xs font-mono font-bold">{item.sku}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Badge variant="outline" className="border-border text-primary font-bold bg-accent/50">{item.color}</Badge>
-                        <Badge variant="outline" className="border-border text-primary font-black bg-accent/50">{item.size}</Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {item.stock === 0 ? (
-                        <Badge className="bg-red-50 text-red-500 border-none font-black text-[10px] animate-pulse">نفد المخزون</Badge>
-                      ) : item.stock <= 5 ? (
-                        <Badge className="bg-yellow-50 text-yellow-600 border-none font-black text-[10px] flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          منخفض
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-green-50 text-green-600 border-none font-black text-[10px]">متوفر</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Input 
-                        type="number"
-                        defaultValue={item.stock}
-                        className="w-24 h-10 bg-accent/30 border-border text-center font-black text-primary"
-                        id={`stock-${item.productId}-${item.variantIndex}`}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        size="sm"
-                        variant="ghost"
-                        className="text-primary hover:bg-primary hover:text-white h-10 rounded-xl gap-2 font-black transition-all"
-                        onClick={() => {
-                          const input = document.getElementById(`stock-${item.productId}-${item.variantIndex}`) as HTMLInputElement;
-                          handleUpdateStock(item.productId, item.variantIndex, parseInt(input.value), item.allVariants);
-                        }}
-                      >
-                        <Save className="h-4 w-4" />
-                        حفظ
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {flattenedInventory.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-20 text-primary/20 font-bold italic">المستودع فارغ أو لا توجد نتائج</TableCell>
-                  </TableRow>
-                )}
+                {flattenedInventory.map((item, idx) => {
+                  const uniqueId = `${item.productId}-${item.variantIndex}`;
+                  const isUpdating = updatingId === uniqueId;
+
+                  return (
+                    <TableRow key={idx} className="border-border hover:bg-accent/20 transition-colors">
+                      <TableCell className="py-6">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-primary">{item.productName}</span>
+                          <span className="text-[10px] text-primary/30 uppercase font-black">{item.category}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-primary/40 text-xs font-mono font-bold">{item.sku}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Badge variant="outline" className="border-border text-primary font-bold bg-accent/50">{item.color}</Badge>
+                          <Badge variant="outline" className="border-border text-primary font-black bg-accent/50">{item.size}</Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {item.stock === 0 ? (
+                          <Badge className="bg-red-50 text-red-500 border-none font-black text-[10px] animate-pulse">نفد المخزون</Badge>
+                        ) : item.stock <= 5 ? (
+                          <Badge className="bg-yellow-50 text-yellow-600 border-none font-black text-[10px] flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            منخفض
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-green-50 text-green-600 border-none font-black text-[10px]">متوفر</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Input 
+                          type="number"
+                          defaultValue={item.stock}
+                          className="w-24 h-10 bg-accent/30 border-border text-center font-black text-primary"
+                          id={`stock-${item.productId}-${item.variantIndex}`}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          size="sm"
+                          variant="ghost"
+                          disabled={isUpdating}
+                          className="text-primary hover:bg-primary hover:text-white h-10 rounded-xl gap-2 font-black transition-all min-w-[80px]"
+                          onClick={() => {
+                            const input = document.getElementById(`stock-${item.productId}-${item.variantIndex}`) as HTMLInputElement;
+                            handleUpdateStock(item.productId, item.variantIndex, parseInt(input.value), item.allVariants);
+                          }}
+                        >
+                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                          {isUpdating ? "" : "حفظ"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

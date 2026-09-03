@@ -9,7 +9,6 @@ import { AdminGuard } from '@/components/layout/AdminGuard';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { 
   Truck, 
   Plus, 
@@ -18,11 +17,9 @@ import {
   Save, 
   X, 
   Phone, 
-  Globe, 
   Loader2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { cn } from "@/lib/utils";
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useStore } from '@/providers/store-provider';
@@ -53,7 +50,7 @@ export default function DeliveryCompaniesPage() {
 
   const handleSave = () => {
     if (!formData.name) {
-      toast({ variant: "destructive", title: "بيانات ناقصة", description: "اسم الشركة مطلوب" });
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى إدخال اسم الشركة" });
       return;
     }
 
@@ -67,42 +64,48 @@ export default function DeliveryCompaniesPage() {
     if (editingId) {
       updateDoc(doc(db, 'delivery-companies', editingId), companyData)
         .then(() => {
-          toast({ title: "تم التحديث", description: "تم تحديث بيانات الشركة بنجاح" });
+          toast({ title: "تم التحديث بنجاح", description: `تم حفظ تعديلات شركة ${formData.name}` });
           resetForm();
         })
-        .catch(async () => {
+        .catch(async (error) => {
+          console.error("Update Error:", error);
           errorEmitter.emit('permission-error', new FirestorePermissionError({ 
             path: `delivery-companies/${editingId}`, 
             operation: 'update',
             requestResourceData: companyData
           }));
+          toast({ variant: "destructive", title: "فشل التحديث", description: "تأكدي من صلاحيات الوصول" });
         })
         .finally(() => setIsSaving(false));
     } else {
       addDoc(collection(db, 'delivery-companies'), { ...companyData, createdAt: serverTimestamp() })
         .then(() => {
-          toast({ title: "تمت الإضافة", description: "تمت إضافة شركة التوصيل لقاعدة البيانات" });
+          toast({ title: "تمت الإضافة بنجاح", description: `تمت إضافة شركة ${formData.name} للمنظومة` });
           resetForm();
         })
-        .catch(async () => {
+        .catch(async (error) => {
+          console.error("Create Error:", error);
           errorEmitter.emit('permission-error', new FirestorePermissionError({ 
             path: 'delivery-companies', 
             operation: 'create',
             requestResourceData: companyData
           }));
+          toast({ variant: "destructive", title: "فشل الإضافة", description: "حدث خطأ أثناء الاتصال بقاعدة البيانات" });
         })
         .finally(() => setIsSaving(false));
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('هل أنتِ متأكدة من حذف هذه الشركة؟')) return;
+  const handleDelete = (id: string, name: string) => {
+    if (!window.confirm(`هل أنتِ متأكدة من حذف شركة ${name}؟`)) return;
+    
     deleteDoc(doc(db, 'delivery-companies', id))
       .then(() => {
-        toast({ title: "تم الحذف" });
+        toast({ title: "تم الحذف", description: "تم مسح بيانات الشركة بنجاح" });
       })
       .catch(async () => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `delivery-companies/${id}`, operation: 'delete' }));
+        toast({ variant: "destructive", title: "فشل الحذف" });
       });
   };
 
@@ -193,8 +196,17 @@ export default function DeliveryCompaniesPage() {
                     onClick={handleSave}
                     disabled={isSaving}
                   >
-                    {isSaving ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : <Save className="ml-2 h-5 w-5" />}
-                    حفظ البيانات
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                        جاري الحفظ...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="ml-2 h-5 w-5" />
+                        حفظ البيانات
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -219,7 +231,7 @@ export default function DeliveryCompaniesPage() {
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => startEdit(company)} className="p-2 text-primary/20 hover:text-primary transition-colors"><Edit className="h-4 w-4" /></button>
-                      <button onClick={() => handleDelete(company.id)} className="p-2 text-primary/20 hover:text-red-500 transition-colors"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => handleDelete(company.id, company.name)} className="p-2 text-primary/20 hover:text-red-500 transition-colors"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
                   {company.phone && (

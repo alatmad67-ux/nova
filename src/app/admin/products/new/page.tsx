@@ -16,7 +16,8 @@ import {
   Trash2, 
   Image as ImageIcon, 
   Tag, 
-  Palette
+  Palette,
+  Loader2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useStore } from '@/providers/store-provider';
@@ -34,7 +35,11 @@ export default function NewProductPage() {
   const { storeId } = useStore();
   const [loading, setLoading] = useState(false);
   
-  const categoriesQuery = useMemo(() => collection(db, 'categories'), [db]);
+  const categoriesQuery = useMemo(() => {
+    if (!db) return null;
+    return collection(db, 'categories');
+  }, [db]);
+
   const { data: categories } = useCollection(categoriesQuery);
 
   const [productData, setProductData] = useState({
@@ -60,11 +65,32 @@ export default function NewProductPage() {
       return;
     }
 
+    if (productData.images.length === 0) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إضافة صورة واحدة على الأقل للمنتج" });
+      return;
+    }
+
     setLoading(true);
     const selectedCat = categories?.find(c => c.id === productData.categoryId);
     
+    // توليد الـ variants بناءً على الألوان والقياسات المختارة
+    const generatedVariants = [];
+    for (const color of productData.colors) {
+      if (!color.name) continue;
+      for (const size of productData.selectedSizes) {
+        generatedVariants.push({
+          color: color.name,
+          colorCode: color.code,
+          size: size,
+          stock: 10, // قيمة افتراضية
+          sku: `${productData.sku || 'P'}-${color.name}-${size}`
+        });
+      }
+    }
+
     const finalProduct = {
       ...productData,
+      variants: generatedVariants,
       categoryName: selectedCat?.name || '',
       storeId,
       createdAt: serverTimestamp(),
@@ -73,12 +99,14 @@ export default function NewProductPage() {
 
     addDoc(collection(db, 'products'), finalProduct)
       .then(() => {
-        toast({ title: "تم بنجاح", description: "تمت إضافة المنتج الجديد" });
+        toast({ title: "تم بنجاح ✨", description: `تمت إضافة منتج ${productData.name} لمجموعة NOVA` });
         router.push('/admin/products');
       })
       .catch(async (error) => {
+        console.error("Product Save Error:", error);
         setLoading(false);
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'products', operation: 'create' }));
+        toast({ variant: "destructive", title: "فشل الحفظ", description: "حدث خطأ أثناء الاتصال بالفاير ستور" });
       });
   };
 
@@ -98,7 +126,12 @@ export default function NewProductPage() {
               disabled={loading}
               className="h-14 px-12 rounded-2xl bg-primary text-white font-black hover:scale-105 transition-all shadow-xl shadow-primary/20"
             >
-              {loading ? "جاري الحفظ..." : "حفظ المنتج"}
+              {loading ? (
+                <>
+                  <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                  جاري الحفظ...
+                </>
+              ) : "حفظ المنتج"}
             </Button>
           </div>
 
@@ -113,11 +146,21 @@ export default function NewProductPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                   <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">اسم المنتج *</Label>
-                  <Input value={productData.name} onChange={(e) => setProductData({...productData, name: e.target.value})} className="h-14 bg-accent/30 border-border rounded-2xl font-bold text-primary" />
+                  <Input 
+                    value={productData.name} 
+                    onChange={(e) => setProductData({...productData, name: e.target.value})} 
+                    className="h-14 bg-accent/30 border-border rounded-2xl font-bold text-primary" 
+                    disabled={loading}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">القسم *</Label>
-                  <select className="w-full h-14 px-4 bg-accent/30 border border-border rounded-2xl text-primary font-bold outline-none appearance-none cursor-pointer" value={productData.categoryId} onChange={(e) => setProductData({...productData, categoryId: e.target.value})}>
+                  <select 
+                    className="w-full h-14 px-4 bg-accent/30 border border-border rounded-2xl text-primary font-bold outline-none appearance-none cursor-pointer" 
+                    value={productData.categoryId} 
+                    onChange={(e) => setProductData({...productData, categoryId: e.target.value})}
+                    disabled={loading}
+                  >
                     <option value="">اختر القسم</option>
                     {categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
@@ -127,17 +170,34 @@ export default function NewProductPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                   <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">سعر البيع (د.ع) *</Label>
-                  <Input type="number" value={productData.price || ''} onChange={(e) => setProductData({...productData, price: e.target.value === '' ? 0 : parseFloat(e.target.value)})} className="h-14 bg-accent/30 border-border rounded-2xl font-black text-primary" />
+                  <Input 
+                    type="number" 
+                    value={productData.price || ''} 
+                    onChange={(e) => setProductData({...productData, price: e.target.value === '' ? 0 : parseFloat(e.target.value)})} 
+                    className="h-14 bg-accent/30 border-border rounded-2xl font-black text-primary" 
+                    disabled={loading}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">السعر قبل الخصم</Label>
-                  <Input type="number" value={productData.originalPrice || ''} onChange={(e) => setProductData({...productData, originalPrice: e.target.value === '' ? 0 : parseFloat(e.target.value)})} className="h-14 bg-accent/30 border-border rounded-2xl text-primary/40" />
+                  <Input 
+                    type="number" 
+                    value={productData.originalPrice || ''} 
+                    onChange={(e) => setProductData({...productData, originalPrice: e.target.value === '' ? 0 : parseFloat(e.target.value)})} 
+                    className="h-14 bg-accent/30 border-border rounded-2xl text-primary/40" 
+                    disabled={loading}
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">وصف المنتج</Label>
-                <Textarea value={productData.description} onChange={(e) => setProductData({...productData, description: e.target.value})} className="min-h-[150px] bg-accent/30 border-border rounded-3xl p-6 text-primary font-medium" />
+                <Textarea 
+                  value={productData.description} 
+                  onChange={(e) => setProductData({...productData, description: e.target.value})} 
+                  className="min-h-[150px] bg-accent/30 border-border rounded-3xl p-6 text-primary font-medium" 
+                  disabled={loading}
+                />
               </div>
             </div>
 
@@ -165,7 +225,6 @@ export default function NewProductPage() {
                   label="إضافة صورة" 
                 />
               </div>
-              <p className="text-[10px] text-primary/40 font-bold uppercase tracking-widest">يمكنكِ رفع عدة صور لكل منتج</p>
             </div>
 
             {/* Options */}

@@ -15,7 +15,8 @@ import {
   Edit, 
   Save, 
   X, 
-  ImageIcon
+  ImageIcon,
+  Loader2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -27,8 +28,13 @@ import { FirestorePermissionError } from '@/firebase/errors';
 export default function AdminCategoriesPage() {
   const db = useFirestore();
   const { storeId } = useStore();
+  const [isSaving, setIsSaving] = useState(false);
   
-  const catQuery = useMemo(() => query(collection(db, 'categories'), where('storeId', '==', storeId)), [db, storeId]);
+  const catQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(collection(db, 'categories'), where('storeId', '==', storeId));
+  }, [db, storeId]);
+
   const { data: rawCategories, loading } = useCollection(catQuery);
 
   const categories = useMemo(() => {
@@ -43,26 +49,41 @@ export default function AdminCategoriesPage() {
   const handleSave = () => {
     if (!formData.name) return toast({ variant: "destructive", title: "الاسم مطلوب" });
 
-    const data = { ...formData, storeId, slug: formData.name.toLowerCase().replace(/\s+/g, '-'), updatedAt: new Date().toISOString() };
+    setIsSaving(true);
+    const data = { 
+      ...formData, 
+      storeId, 
+      slug: formData.name.toLowerCase().replace(/\s+/g, '-'), 
+      updatedAt: new Date().toISOString() 
+    };
 
     if (editingId) {
       updateDoc(doc(db, 'categories', editingId), data)
         .then(() => {
-          toast({ title: "تم التحديث" });
+          toast({ title: "تم التحديث بنجاح", description: `تم حفظ تعديلات قسم ${formData.name}` });
           resetState();
         })
         .catch(async () => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `categories/${editingId}`, operation: 'update' }));
-        });
+          toast({ variant: "destructive", title: "فشل الحفظ" });
+        })
+        .finally(() => setIsSaving(false));
     } else {
-      addDoc(collection(db, 'categories'), { ...data, createdAt: new Date().toISOString(), order: categories.length + 1 })
+      addDoc(collection(db, 'categories'), { 
+        ...data, 
+        createdAt: new Date().toISOString(), 
+        order: categories.length + 1,
+        isActive: true
+      })
         .then(() => {
-          toast({ title: "تمت الإضافة" });
+          toast({ title: "تمت إضافة القسم", description: `أصبح قسم ${formData.name} متاحاً الآن في المتجر` });
           resetState();
         })
         .catch(async () => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'categories', operation: 'create' }));
-        });
+          toast({ variant: "destructive", title: "فشل الإضافة" });
+        })
+        .finally(() => setIsSaving(false));
     }
   };
 
@@ -72,14 +93,15 @@ export default function AdminCategoriesPage() {
     setEditingId(null);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('سيتم حذف القسم نهائياً، هل أنتِ متأكدة؟')) return;
+  const handleDelete = (id: string, name: string) => {
+    if (!confirm(`هل أنتِ متأكدة من حذف قسم ${name}؟ سيؤدي ذلك لإزالته من المتجر.`)) return;
     deleteDoc(doc(db, 'categories', id))
       .then(() => {
-        toast({ title: "تم الحذف" });
+        toast({ title: "تم الحذف بنجاح" });
       })
       .catch(async () => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `categories/${id}`, operation: 'delete' }));
+        toast({ variant: "destructive", title: "فشل الحذف" });
       });
   };
 
@@ -94,22 +116,47 @@ export default function AdminCategoriesPage() {
               <h1 className="text-4xl font-black text-primary">إدارة الأقسام</h1>
               <p className="text-primary/40 text-sm mt-1">تنسيق تصنيفات الملابس في NOVA</p>
             </div>
-            <Button onClick={() => setIsAdding(true)} className="h-12 px-8 rounded-2xl bg-primary text-white font-black hover:scale-105 transition-all shadow-lg shadow-primary/20"><Plus className="ml-2 h-5 w-5" /> إضافة قسم</Button>
+            {!isAdding && (
+              <Button onClick={() => setIsAdding(true)} className="h-12 px-8 rounded-2xl bg-primary text-white font-black hover:scale-105 transition-all shadow-lg shadow-primary/20">
+                <Plus className="ml-2 h-5 w-5" /> إضافة قسم
+              </Button>
+            )}
           </div>
 
           {isAdding && (
             <div className="nova-card p-10 mb-12 border-primary/10 animate-in fade-in zoom-in-95 bg-white shadow-premium">
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-black text-primary">{editingId ? 'تعديل القسم' : 'قسم جديد'}</h3>
-                <button onClick={resetState}><X className="h-6 w-6 text-primary/20 hover:text-primary" /></button>
+                <button onClick={resetState} disabled={isSaving}><X className="h-6 w-6 text-primary/20 hover:text-primary" /></button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">اسم القسم</Label>
-                    <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="h-14 bg-accent/30 border-border rounded-2xl text-primary font-bold focus:border-primary/50" />
+                    <Input 
+                      value={formData.name} 
+                      onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                      className="h-14 bg-accent/30 border-border rounded-2xl text-primary font-bold focus:border-primary/50" 
+                      disabled={isSaving}
+                    />
                   </div>
-                  <Button onClick={handleSave} className="w-full h-14 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20"><Save className="ml-2 h-5 w-5" /> حفظ القسم</Button>
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={isSaving}
+                    className="w-full h-14 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                        جاري الحفظ...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="ml-2 h-5 w-5" /> 
+                        حفظ القسم
+                      </>
+                    )}
+                  </Button>
                 </div>
                 
                 <div className="flex flex-col items-center gap-6">
@@ -140,7 +187,7 @@ export default function AdminCategoriesPage() {
                   <h4 className="font-black text-primary">{cat.name}</h4>
                   <div className="mt-2 flex gap-2">
                     <button onClick={() => { setFormData(cat); setEditingId(cat.id); setIsAdding(true); }} className="text-primary/20 hover:text-primary transition-colors p-1"><Edit className="h-4 w-4" /></button>
-                    <button onClick={() => handleDelete(cat.id)} className="text-primary/20 hover:text-red-500 transition-colors p-1"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => handleDelete(cat.id, cat.name)} className="text-primary/20 hover:text-red-500 transition-colors p-1"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </div>
               </div>
