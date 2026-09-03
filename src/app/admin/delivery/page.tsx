@@ -32,10 +32,13 @@ export default function DeliveryCompaniesPage() {
   const { storeId } = useStore();
   const [isSaving, setIsSaving] = useState(false);
   
-  const companiesQuery = useMemo(() => query(
-    collection(db, 'delivery-companies'),
-    where('storeId', '==', storeId)
-  ), [db, storeId]);
+  const companiesQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'delivery-companies'),
+      where('storeId', '==', storeId)
+    );
+  }, [db, storeId]);
   
   const { data: companies, loading } = useCollection(companiesQuery);
 
@@ -45,9 +48,6 @@ export default function DeliveryCompaniesPage() {
     name: '',
     phone: '',
     apiUrl: '',
-    apiKey: '',
-    apiSecret: '',
-    notes: '',
     isActive: true
   });
 
@@ -70,28 +70,36 @@ export default function DeliveryCompaniesPage() {
           toast({ title: "تم التحديث", description: "تم تحديث بيانات الشركة بنجاح" });
           resetForm();
         })
-        .catch(async (error) => {
-          errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `delivery-companies/${editingId}`, operation: 'update' }));
+        .catch(async () => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({ 
+            path: `delivery-companies/${editingId}`, 
+            operation: 'update',
+            requestResourceData: companyData
+          }));
         })
         .finally(() => setIsSaving(false));
     } else {
       addDoc(collection(db, 'delivery-companies'), { ...companyData, createdAt: serverTimestamp() })
         .then(() => {
-          toast({ title: "تمت الإضافة", description: "تمت إضافة شركة التوصيل للفاير ستور" });
+          toast({ title: "تمت الإضافة", description: "تمت إضافة شركة التوصيل لقاعدة البيانات" });
           resetForm();
         })
-        .catch(async (error) => {
-          errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'delivery-companies', operation: 'create' }));
+        .catch(async () => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({ 
+            path: 'delivery-companies', 
+            operation: 'create',
+            requestResourceData: companyData
+          }));
         })
         .finally(() => setIsSaving(false));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('هل أنتِ متأكدة من حذف هذه الشركة من قاعدة البيانات؟')) return;
+    if (!window.confirm('هل أنتِ متأكدة من حذف هذه الشركة؟')) return;
     deleteDoc(doc(db, 'delivery-companies', id))
       .then(() => {
-        toast({ title: "تم الحذف", description: "تم مسح بيانات الشركة نهائياً" });
+        toast({ title: "تم الحذف" });
       })
       .catch(async () => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `delivery-companies/${id}`, operation: 'delete' }));
@@ -99,15 +107,7 @@ export default function DeliveryCompaniesPage() {
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      phone: '',
-      apiUrl: '',
-      apiKey: '',
-      apiSecret: '',
-      notes: '',
-      isActive: true
-    });
+    setFormData({ name: '', phone: '', apiUrl: '', isActive: true });
     setIsAdding(false);
     setEditingId(null);
   };
@@ -117,16 +117,11 @@ export default function DeliveryCompaniesPage() {
       name: company.name,
       phone: company.phone || '',
       apiUrl: company.apiUrl || '',
-      apiKey: company.apiKey || '',
-      apiSecret: company.apiSecret || '',
-      notes: company.notes || '',
       isActive: company.isActive ?? true
     });
     setEditingId(company.id);
     setIsAdding(true);
   };
-
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black animate-pulse">جاري فحص قائمة الموردين اللوجستيين...</div>;
 
   return (
     <AdminGuard>
@@ -138,7 +133,7 @@ export default function DeliveryCompaniesPage() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Truck className="h-5 w-5 text-primary" />
-                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">شركاء الشحن</span>
+                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">الشركاء اللوجستيين</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-black text-primary">شركات التوصيل</h1>
             </div>
@@ -163,111 +158,85 @@ export default function DeliveryCompaniesPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <div className="space-y-3">
-                  <Label className="text-xs font-black text-primary/40 tracking-widest uppercase">اسم الشركة *</Label>
-                  <div className="relative">
-                    <Truck className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20" />
-                    <Input 
-                      placeholder="مثلاً: شركة النور للتوصيل"
-                      className="h-12 pr-10 bg-accent/30 border-border rounded-xl text-primary font-bold"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    />
-                  </div>
+                  <Label className="text-xs font-black text-primary/40 uppercase">اسم الشركة *</Label>
+                  <Input 
+                    placeholder="مثلاً: شركة النور للتوصيل"
+                    className="h-12 bg-accent/30 border-border rounded-xl font-bold"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  />
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-xs font-black text-primary/40 tracking-widest uppercase">رقم الهاتف</Label>
-                  <div className="relative">
-                    <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20" />
-                    <Input 
-                      placeholder="0770 000 0000"
-                      className="h-12 pr-10 bg-accent/30 border-border rounded-xl text-primary font-bold dir-ltr"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    />
-                  </div>
+                  <Label className="text-xs font-black text-primary/40 uppercase">رقم الهاتف</Label>
+                  <Input 
+                    placeholder="0770 000 0000"
+                    className="h-12 bg-accent/30 border-border rounded-xl font-bold dir-ltr"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  />
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-xs font-black text-primary/40 tracking-widest uppercase">رابط الـ API (اختياري)</Label>
-                  <div className="relative">
-                    <Globe className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20" />
-                    <Input 
-                      placeholder="https://api.delivery.com"
-                      className="h-12 pr-10 bg-accent/30 border-border rounded-xl text-primary font-bold dir-ltr"
-                      value={formData.apiUrl}
-                      onChange={(e) => setFormData({...formData, apiUrl: e.target.value})}
-                    />
-                  </div>
+                  <Label className="text-xs font-black text-primary/40 uppercase">رابط الـ API (إن وجد)</Label>
+                  <Input 
+                    placeholder="https://api.delivery.com"
+                    className="h-12 bg-accent/30 border-border rounded-xl font-bold dir-ltr"
+                    value={formData.apiUrl}
+                    onChange={(e) => setFormData({...formData, apiUrl: e.target.value})}
+                  />
                 </div>
 
-                <div className="flex items-end gap-4 lg:col-span-3">
+                <div className="flex items-end lg:col-span-3">
                   <Button 
-                    className="w-full md:w-auto px-12 h-14 bg-primary text-white font-black rounded-xl shadow-lg shadow-primary/20" 
+                    className="w-full md:w-auto px-12 h-14 bg-primary text-white font-black rounded-xl" 
                     onClick={handleSave}
                     disabled={isSaving}
                   >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="ml-2 h-5 w-5 animate-spin" />
-                        جاري الحفظ في Firestore...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="ml-2 h-5 w-5" />
-                        حفظ بيانات الشركة
-                      </>
-                    )}
+                    {isSaving ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : <Save className="ml-2 h-5 w-5" />}
+                    حفظ البيانات
                   </Button>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {companies?.map((company: any) => (
-              <div key={company.id} className="nova-card p-8 group hover:border-primary/30 transition-all bg-white shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 bg-accent rounded-2xl flex items-center justify-center border border-border text-primary">
-                      <Truck className="h-6 w-6" />
+          {loading ? (
+            <div className="py-20 text-center font-black animate-pulse text-primary/20">جاري تحميل القائمة...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {companies?.map((company: any) => (
+                <div key={company.id} className="nova-card p-8 bg-white border-border shadow-sm group">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 bg-accent rounded-xl flex items-center justify-center text-primary border border-border">
+                        <Truck className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-primary text-lg">{company.name}</h4>
+                        <span className="text-[10px] font-bold text-primary/40 uppercase">{company.isActive ? 'نشطة' : 'معطلة'}</span>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-black text-primary text-xl">{company.name}</h4>
-                      <Badge variant="outline" className={cn(
-                        "text-[10px] font-black uppercase tracking-widest px-2 py-0.5",
-                        company.isActive ? "border-green-100 text-green-600 bg-green-50" : "border-red-100 text-red-600 bg-red-50"
-                      )}>
-                        {company.isActive ? 'نشطة' : 'معطلة'}
-                      </Badge>
+                    <div className="flex gap-2">
+                      <button onClick={() => startEdit(company)} className="p-2 text-primary/20 hover:text-primary transition-colors"><Edit className="h-4 w-4" /></button>
+                      <button onClick={() => handleDelete(company.id)} className="p-2 text-primary/20 hover:text-red-500 transition-colors"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <button onClick={() => startEdit(company)} className="p-2 text-primary/20 hover:text-primary transition-colors">
-                      <Edit className="h-5 w-5" />
-                    </button>
-                    <button onClick={() => handleDelete(company.id)} className="p-2 text-primary/20 hover:text-red-500 transition-colors">
-                      <Trash2 className="h-5 w-5" />
-                    </button>
-                  </div>
+                  {company.phone && (
+                    <div className="flex items-center gap-2 text-sm font-bold text-primary/60 dir-ltr">
+                      <Phone className="h-3 w-3" /> {company.phone}
+                    </div>
+                  )}
                 </div>
-                {company.phone && (
-                   <p className="text-sm font-bold text-primary/40 dir-ltr flex items-center gap-2">
-                     <Phone className="h-3 w-3" />
-                     {company.phone}
-                   </p>
-                )}
-              </div>
-            ))}
-
-            {companies?.length === 0 && !loading && (
-              <div className="col-span-full py-20 text-center opacity-20 text-primary">
-                <Truck className="h-16 w-16 mx-auto mb-4" />
-                <p className="font-black">لم يتم إضافة أي شركات توصيل لقاعدة البيانات بعد</p>
-              </div>
-            )}
-          </div>
+              ))}
+              {companies?.length === 0 && (
+                <div className="col-span-full py-20 text-center opacity-20 text-primary">
+                  <Truck className="h-16 w-16 mx-auto mb-4" />
+                  <p className="font-black">لا توجد شركات توصيل مضافة حالياً</p>
+                </div>
+              )}
+            </div>
+          )}
         </main>
       </div>
     </AdminGuard>

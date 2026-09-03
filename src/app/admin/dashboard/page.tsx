@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useEffect } from 'react';
@@ -10,6 +11,7 @@ import {
   LayoutGrid,
   Image as ImageIcon,
   Settings as SettingsIcon,
+  Truck
 } from 'lucide-react';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { useCollection, useFirestore } from '@/firebase';
@@ -42,18 +44,24 @@ export default function AdminDashboard() {
     }
   }, [db, storeId]);
   
-  const ordersQuery = useMemo(() => query(
-    collection(db, 'orders'), 
-    where('storeId', '==', storeId),
-    orderBy('createdAt', 'desc')
-  ), [db, storeId]);
+  const ordersQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'orders'), 
+      where('storeId', '==', storeId),
+      orderBy('createdAt', 'desc')
+    );
+  }, [db, storeId]);
   
   const { data: rawOrders } = useCollection(ordersQuery);
   
-  const productsQuery = useMemo(() => query(
-    collection(db, 'products'), 
-    where('storeId', '==', storeId)
-  ), [db, storeId]);
+  const productsQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'products'), 
+      where('storeId', '==', storeId)
+    );
+  }, [db, storeId]);
   
   const { data: products } = useCollection(productsQuery);
 
@@ -71,7 +79,6 @@ export default function AdminDashboard() {
     return {
       todaySales,
       totalOrders: orders.length,
-      newOrders: orders.filter(o => o.status === 'جديد').length,
       totalCustomers: new Set(orders.map(o => o.customer?.phone).filter(Boolean)).size,
       totalProducts: products?.length || 0
     };
@@ -99,6 +106,7 @@ export default function AdminDashboard() {
   const QUICK_ACTIONS = [
     { label: 'إضافة منتج', icon: ShoppingBag, href: '/admin/products/new', color: 'bg-primary' },
     { label: 'إدارة الأقسام', icon: LayoutGrid, href: '/admin/categories', color: 'bg-secondary' },
+    { label: 'شركات التوصيل', icon: Truck, href: '/admin/delivery', color: 'bg-green-600' },
     { label: 'السلايدر', icon: ImageIcon, href: '/admin/slider', color: 'bg-primary/60' },
     { label: 'الإعدادات', icon: SettingsIcon, href: '/admin/settings', color: 'bg-secondary/60' },
   ];
@@ -117,52 +125,27 @@ export default function AdminDashboard() {
               </div>
               <h1 className="text-4xl font-black text-primary">لوحة التحكم</h1>
             </div>
-            <div className="flex items-center gap-3">
-              <img src="https://picsum.photos/seed/admin/100/100" className="h-10 w-10 rounded-full border-2 border-primary/10" alt="Admin" />
-              <div className="text-right">
-                <p className="text-xs font-bold text-primary">مرحباً، المديرة</p>
-                <p className="text-[10px] text-primary/40">التحكم الملكي</p>
-              </div>
-            </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><ShoppingBag className="h-5 w-5" /></div>
+            {[
+              { label: 'مبيعات اليوم', val: `${stats.todaySales.toLocaleString()} د.ع`, icon: ShoppingBag },
+              { label: 'إجمالي الطلبات', val: stats.totalOrders, icon: TrendingUp },
+              { label: 'العملاء', val: stats.totalCustomers, icon: Users },
+              { label: 'المنتجات', val: stats.totalProducts, icon: Package },
+            ].map((s, i) => (
+              <div key={i} className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
+                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><s.icon className="h-5 w-5" /></div>
+                <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">{s.label}</p>
+                <p className="text-xl md:text-2xl font-black text-primary">{s.val}</p>
               </div>
-              <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">مبيعات اليوم</p>
-              <p className="text-xl md:text-2xl font-black text-primary">{stats.todaySales.toLocaleString()} د.ع</p>
-            </div>
-            <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><TrendingUp className="h-5 w-5" /></div>
-              </div>
-              <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">إجمالي الطلبات</p>
-              <p className="text-2xl font-black text-primary">{stats.totalOrders}</p>
-            </div>
-            <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><Users className="h-5 w-5" /></div>
-              </div>
-              <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">العملاء</p>
-              <p className="text-2xl font-black text-primary">{stats.totalCustomers}</p>
-            </div>
-            <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><Package className="h-5 w-5" /></div>
-              </div>
-              <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">المنتجات</p>
-              <p className="text-2xl font-black text-primary">{stats.totalProducts}</p>
-            </div>
+            ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="bg-white p-6 md:p-10 rounded-[2.5rem] border border-border shadow-sm">
-                <div className="flex items-center justify-between mb-10">
-                  <h3 className="text-xl font-black text-primary">المبيعات (آخر 7 أيام)</h3>
-                </div>
+                <h3 className="text-xl font-black text-primary mb-10">المبيعات (آخر 7 أيام)</h3>
                 <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData}>
@@ -175,9 +158,7 @@ export default function AdminDashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                       <XAxis dataKey="name" stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
                       <YAxis stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #eee', borderRadius: '1rem', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }} 
-                      />
+                      <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #eee', borderRadius: '1rem' }} />
                       <Area type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
                     </AreaChart>
                   </ResponsiveContainer>

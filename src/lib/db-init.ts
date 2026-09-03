@@ -17,12 +17,13 @@ import {
 /**
  * وظيفة تهيئة قاعدة البيانات الملكية لنوفا (Idempotent DB Initialization)
  * تضمن وجود الوثائق والمجموعات الأساسية دون مسح البيانات الحالية.
+ * تم التحديث لتشمل شركة التوصيل الافتراضية.
  */
 export async function initializeDatabase(db: Firestore, storeId: string) {
   try {
     console.log('Initiating Secure DB Setup for:', storeId);
 
-    // 1. تهيئة الإعدادات (Settings) - وثيقة ثابتة بالمعرف general
+    // 1. تهيئة الإعدادات (Settings)
     const settingsRef = doc(db, 'settings', 'general');
     const settingsSnap = await getDoc(settingsRef);
     if (!settingsSnap.exists()) {
@@ -72,10 +73,10 @@ export async function initializeDatabase(db: Firestore, storeId: string) {
 
     // 4. تهيئة شركات التوصيل (Delivery Companies)
     const deliveryCol = collection(db, 'delivery-companies');
-    const deliverySnap = await getDocs(query(deliveryCol, limit(1)));
+    const deliverySnap = await getDocs(query(deliveryCol, where('storeId', '==', storeId), limit(1)));
     if (deliverySnap.empty) {
       await setDoc(doc(deliveryCol), {
-        name: 'شركة النور اللوجستية',
+        name: 'النور اللوجستية',
         phone: '0770 000 0000',
         isActive: true,
         storeId,
