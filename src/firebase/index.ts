@@ -7,7 +7,7 @@
  * Target Project: studio-9674030533-5f5ae
  * Admin Identity: 07858833838@novafashion.iq
  * Security Policy: Admin-Only Full Write / Public Read (Idempotent Architecture)
- * Rules Sync Trigger: 2026.03.04.v45 (UNIFIED_DATA_LAYER_ENABLED)
+ * Rules Sync Trigger: 2026.03.04.v46 (STABLE_CONNECTION_INIT)
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -15,11 +15,23 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
+// منع تكرار التهيئة باستخدام Singleton Pattern
+let initializedServices: {
+  app: FirebaseApp;
+  auth: Auth;
+  db: Firestore;
+} | null = null;
+
 export function initializeFirebase(): {
   app: FirebaseApp;
   auth: Auth;
   db: Firestore;
 } {
+  // إذا تم التهيئة مسبقاً، قم بإرجاع الخدمات الحالية فوراً
+  if (initializedServices) {
+    return initializedServices;
+  }
+
   // Initialize Firebase App
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   
@@ -28,22 +40,21 @@ export function initializeFirebase(): {
   
   /**
    * Initialize Firestore with Long Polling.
-   * This is CRITICAL for the Firebase Studio environment to prevent 
-   * "Could not reach Cloud Firestore backend" errors.
+   * يتم استخدام initializeFirestore فقط إذا لم تكن هناك نسخة مسبقة لتجنب "Internal Assertion Failed"
    */
   let db: Firestore;
   try {
-    // Attempt to initialize with specific settings
     db = initializeFirestore(app, {
       experimentalForceLongPolling: true,
-      experimentalAutoDetectLongPolling: true,
+      // نكتفي بـ force long polling لضمان الاستقرار في بيئة Studio
     });
   } catch (e) {
-    // If already initialized, fallback to getting the existing instance
+    // في حال فشل initializeFirestore (مثلاً بسبب تهيئة مسبقة مخفية)، نستخدم getFirestore
     db = getFirestore(app);
   }
 
-  return { app, auth, db };
+  initializedServices = { app, auth, db };
+  return initializedServices;
 }
 
 export * from './provider';
