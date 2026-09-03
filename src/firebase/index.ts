@@ -2,8 +2,10 @@
 'use client';
 
 /**
- * NOVA FIREBASE CORE - ULTRA STABLE (v80)
- * Fixed Assertion Failed (ID: ca9) using global singleton pattern.
+ * NOVA FIREBASE CORE - ULTRA STABLE (v81)
+ * FIXED: Assertion Failed (ID: ca9) using a strictly guarded global instance pattern.
+ * This pattern ensures that Firebase is only initialized once per browser session,
+ * even across Hot Module Replacements (HMR).
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -17,48 +19,52 @@ interface NovaFirebaseServices {
   db: Firestore;
 }
 
-// Global variable to persist through HMR and avoid ID: ca9
-declare global {
-  var __NOVA_INSTANCE__: NovaFirebaseServices | undefined;
-}
-
-export function initializeFirebase(): NovaFirebaseServices {
+/**
+ * Strictly guarded singleton initialization.
+ * Using 'window' as a persistent storage across HMR events.
+ */
+function getNovaServices(): NovaFirebaseServices {
   if (typeof window === 'undefined') {
     return {} as any;
   }
 
-  // If already initialized globally, return it immediately to prevent assertion errors
-  if (globalThis.__NOVA_INSTANCE__) {
-    return globalThis.__NOVA_INSTANCE__;
+  // Use a unique key on the window object to store the instances
+  const GLOBAL_KEY = '__NOVA_FIREBASE_SERVICES__';
+  const anyWindow = window as any;
+
+  if (anyWindow[GLOBAL_KEY]) {
+    return anyWindow[GLOBAL_KEY];
   }
 
+  // 1. Initialize Firebase App
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   
+  // 2. Initialize Firestore with Long Polling (Required for Cloud Workstations)
   let db: Firestore;
-  
-  // Strict check to avoid re-initializing Firestore with conflicting settings
   try {
-    const existingDb = getFirestore(app);
-    if (existingDb) {
-      db = existingDb;
-    } else {
-      db = initializeFirestore(app, {
-        experimentalForceLongPolling: true,
-      });
-    }
+    // initializeFirestore can only be called ONCE per app instance.
+    // In HMR, the app might persist while the module is re-evaluated.
+    db = initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+    });
   } catch (e) {
-    // If initializeFirestore fails because it's already initialized, fallback to getFirestore
+    // Fallback if already initialized (common in development)
     db = getFirestore(app);
   }
 
+  // 3. Initialize Auth
   const auth = getAuth(app);
 
   const services = { app, auth, db };
   
-  // Store in global and module level
-  globalThis.__NOVA_INSTANCE__ = services;
+  // Seal the services in the global object
+  anyWindow[GLOBAL_KEY] = services;
 
   return services;
+}
+
+export function initializeFirebase(): NovaFirebaseServices {
+  return getNovaServices();
 }
 
 export * from './provider';

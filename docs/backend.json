@@ -92,27 +92,27 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC_READ_ACCESS: allow get, list. ADMIN_WRITE_ACCESS: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_80"
+      "description": "PUBLIC_READ_ACCESS: allow get, list. ADMIN_WRITE_ACCESS: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_81"
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC_READ_ACCESS: allow get, list. ADMIN_WRITE_ACCESS: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_80"
+      "description": "PUBLIC_READ_ACCESS: allow get, list. ADMIN_WRITE_ACCESS: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_81"
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "PUBLIC_CREATE_ONLY: allow create. ADMIN_FULL_ACCESS: allow get, list, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_80"
+      "description": "PUBLIC_CREATE_ONLY: allow create. ADMIN_FULL_ACCESS: allow get, list, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_81"
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "PUBLIC_READ_ACCESS: allow get, list. ADMIN_WRITE_ACCESS: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_80"
+      "description": "PUBLIC_READ_ACCESS: allow get, list. ADMIN_WRITE_ACCESS: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_81"
     },
     "/sliders/{sliderId}": {
       "schema": "SliderItem",
-      "description": "PUBLIC_READ_ACCESS: allow get, list. ADMIN_WRITE_ACCESS: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_80"
+      "description": "PUBLIC_READ_ACCESS: allow get, list. ADMIN_WRITE_ACCESS: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_81"
     },
     "/delivery-companies/{companyId}": {
       "schema": "DeliveryCompany",
-      "description": "ADMIN_FULL_MANAGEMENT: allow read, create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. NO_PUBLIC_ACCESS. VERSION_80"
+      "description": "ADMIN_FULL_MANAGEMENT: allow read, create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. NO_PUBLIC_ACCESS. VERSION_81"
     }
   }
 }
