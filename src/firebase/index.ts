@@ -2,8 +2,8 @@
 'use client';
 
 /**
- * NOVA FIREBASE CORE - ULTRA STABLE (v70)
- * Uses a single verified instance shared across the app to prevent Assertion Errors.
+ * NOVA FIREBASE CORE - ULTRA STABLE (v75)
+ * Uses a module-level singleton to prevent "Assertion Failed: Unexpected state (ID: ca9)".
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -17,37 +17,44 @@ interface NovaFirebaseServices {
   db: Firestore;
 }
 
+// Persistent reference to survive HMR in dev environment
+let cachedServices: NovaFirebaseServices | null = null;
+
 export function initializeFirebase(): NovaFirebaseServices {
   if (typeof window === 'undefined') {
     return null as any;
   }
 
-  const win = window as any;
-  
-  // Return existing services if already initialized in this session
-  if (win.__NOVA_SERVICES__) {
-    return win.__NOVA_SERVICES__;
+  // If services are already initialized, return them immediately
+  if (cachedServices) {
+    return cachedServices;
   }
 
+  // Check if app exists or initialize it
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   
   let db: Firestore;
   try {
-    // Try to initialize with settings first
+    /**
+     * We only call initializeFirestore ONCE. 
+     * This is critical to avoid "INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9)".
+     */
     db = initializeFirestore(app, {
       experimentalForceLongPolling: true,
     });
   } catch (e) {
-    // Fallback to getFirestore if already initialized
+    // If already initialized (common during Hot Module Replacement), get the existing instance
     db = getFirestore(app);
   }
 
   const auth = getAuth(app);
 
-  const services = { app, auth, db };
-  win.__NOVA_SERVICES__ = services;
+  cachedServices = { app, auth, db };
 
-  return services;
+  // Global backup for debugging
+  (window as any).__NOVA_FIREBASE__ = cachedServices;
+
+  return cachedServices;
 }
 
 export * from './provider';

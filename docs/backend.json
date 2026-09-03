@@ -92,27 +92,27 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC READ. ALLOW CREATE, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). RULES_VERSION_70"
+      "description": "PUBLIC_READ: allow get, list. ADMIN_WRITE: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. RULES_VERSION_75"
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC READ. ALLOW CREATE, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). RULES_VERSION_70"
+      "description": "PUBLIC_READ: allow get, list. ADMIN_WRITE: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. RULES_VERSION_75"
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "PUBLIC CREATE ACCESS. ALLOW READ, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). RULES_VERSION_70"
+      "description": "PUBLIC_CREATE: allow create. ADMIN_ACCESS: allow get, list, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. RULES_VERSION_75"
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "PUBLIC READ. ALLOW CREATE, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). RULES_VERSION_70"
+      "description": "PUBLIC_READ: allow get, list. ADMIN_WRITE: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. RULES_VERSION_75"
     },
     "/sliders/{sliderId}": {
       "schema": "SliderItem",
-      "description": "PUBLIC READ. ALLOW CREATE, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). RULES_VERSION_70"
+      "description": "PUBLIC_READ: allow get, list. ADMIN_WRITE: allow create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. RULES_VERSION_75"
     },
     "/delivery-companies/{companyId}": {
       "schema": "DeliveryCompany",
-      "description": "ALLOW READ, CREATE, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). NO PUBLIC ACCESS. RULES_VERSION_70"
+      "description": "ADMIN_FULL_ACCESS: allow read, create, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. NO_PUBLIC_ACCESS. RULES_VERSION_75"
     }
   }
 }
