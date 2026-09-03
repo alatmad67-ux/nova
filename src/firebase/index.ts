@@ -1,11 +1,11 @@
+
 'use client';
 
 /**
- * NOVA FIREBASE CORE - ATOMIC INITIALIZATION (FIX V2)
+ * NOVA FIREBASE CORE - FINAL STABLE INITIALIZATION (v60)
  * 
- * Targeted Fix: Firestore 11.9.0 Internal Assertion Failed (ID: ca9 / ID: b815)
- * This error occurs when initializeFirestore or onSnapshot calls collide during HMR.
- * We implement a strict double-layered singleton to ensure one and only one instance.
+ * Fixes the "INTERNAL ASSERTION FAILED" by strictly managing the Firestore singleton
+ * and ensuring only one configuration call is made per session.
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -19,7 +19,7 @@ interface NovaFirebaseServices {
   db: Firestore;
 }
 
-// Layer 1: Module-level cache
+// Global cache to prevent multiple initializations across HMR and page loads
 let cachedServices: NovaFirebaseServices | null = null;
 
 export function initializeFirebase(): NovaFirebaseServices {
@@ -27,38 +27,35 @@ export function initializeFirebase(): NovaFirebaseServices {
     return null as any;
   }
 
-  // Check module cache first
-  if (cachedServices) return cachedServices;
-
-  // Layer 2: Window-level cache to survive Hot Module Replacement (HMR)
+  // Check if we already have the services in memory
   const win = window as any;
-  if (win._novaFirebase) {
-    cachedServices = win._novaFirebase;
-    return win._novaFirebase;
+  if (win.__NOVA_FIREBASE__) {
+    return win.__NOVA_FIREBASE__;
   }
 
+  // 1. Initialize Firebase App
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   
+  // 2. Initialize Firestore (Only once with experimental settings)
   let db: Firestore;
   try {
-    /**
-     * We attempt to initialize Firestore with specific settings exactly once.
-     * experimentalForceLongPolling is required for Google Cloud Workstations proxies.
-     */
+    // Attempt initialization with forced long polling for proxy stability
     db = initializeFirestore(app, {
       experimentalForceLongPolling: true,
       experimentalAutoDetectLongPolling: false
     });
-  } catch (e) {
-    // If already initialized, fetch the existing instance without re-applying settings
+  } catch (e: any) {
+    // If already initialized, just get the existing instance
     db = getFirestore(app);
   }
 
+  // 3. Initialize Auth
   const auth = getAuth(app);
+
   const services = { app, auth, db };
   
-  // Persist in both caches
-  win._novaFirebase = services;
+  // Save to global window object to survive Hot Module Replacement (HMR)
+  win.__NOVA_FIREBASE__ = services;
   cachedServices = services;
 
   return services;

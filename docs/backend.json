@@ -91,27 +91,27 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC READ. ADMIN (07858833838@novafashion.iq) WRITE ACCESS."
+      "description": "PUBLIC READ. FULL WRITE ACCESS FOR ADMIN (07858833838@novafashion.iq). RULES_VERSION_60"
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC READ. ADMIN (07858833838@novafashion.iq) WRITE ACCESS."
+      "description": "PUBLIC READ. FULL WRITE ACCESS FOR ADMIN (07858833838@novafashion.iq). RULES_VERSION_60"
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "PUBLIC CREATE. ADMIN (07858833838@novafashion.iq) READ/WRITE ACCESS."
+      "description": "PUBLIC CREATE. FULL READ/WRITE ACCESS FOR ADMIN (07858833838@novafashion.iq). RULES_VERSION_60"
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "PUBLIC READ. ADMIN (07858833838@novafashion.iq) WRITE ACCESS."
+      "description": "PUBLIC READ. FULL WRITE ACCESS FOR ADMIN (07858833838@novafashion.iq). RULES_VERSION_60"
     },
     "/sliders/{sliderId}": {
       "schema": "SliderItem",
-      "description": "PUBLIC READ. ADMIN (07858833838@novafashion.iq) WRITE ACCESS."
+      "description": "PUBLIC READ. FULL WRITE ACCESS FOR ADMIN (07858833838@novafashion.iq). RULES_VERSION_60"
     },
     "/delivery-companies/{companyId}": {
       "schema": "DeliveryCompany",
-      "description": "ADMIN (07858833838@novafashion.iq) FULL READ/WRITE ACCESS. NO PUBLIC ACCESS. RULES_VERSION_50"
+      "description": "FULL READ/WRITE ACCESS ONLY FOR ADMIN (07858833838@novafashion.iq). NO PUBLIC ACCESS. RULES_VERSION_60"
     }
   }
 }

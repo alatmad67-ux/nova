@@ -67,7 +67,7 @@ export default function DeliveryCompaniesPage() {
           toast({ title: "تم التحديث بنجاح", description: `تم حفظ تعديلات شركة ${formData.name}` });
           resetForm();
         })
-        .catch(async (error) => {
+        .catch(async (error: any) => {
           console.error("Update Error:", error);
           errorEmitter.emit('permission-error', new FirestorePermissionError({ 
             path: `delivery-companies/${editingId}`, 
@@ -83,14 +83,16 @@ export default function DeliveryCompaniesPage() {
           toast({ title: "تمت الإضافة بنجاح", description: `تمت إضافة شركة ${formData.name} للمنظومة` });
           resetForm();
         })
-        .catch(async (error) => {
+        .catch(async (error: any) => {
           console.error("Create Error:", error);
-          errorEmitter.emit('permission-error', new FirestorePermissionError({ 
+          // Create the rich, contextual error asynchronously and emit it.
+          const permissionError = new FirestorePermissionError({ 
             path: 'delivery-companies', 
             operation: 'create',
             requestResourceData: companyData
-          }));
-          toast({ variant: "destructive", title: "فشل الإضافة", description: "حدث خطأ أثناء الاتصال بقاعدة البيانات" });
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          toast({ variant: "destructive", title: "فشل الإضافة", description: "خطأ في الصلاحيات أو الاتصال" });
         })
         .finally(() => setIsSaving(false));
     }
@@ -192,7 +194,7 @@ export default function DeliveryCompaniesPage() {
 
                 <div className="flex items-end lg:col-span-3">
                   <Button 
-                    className="w-full md:w-auto px-12 h-14 bg-primary text-white font-black rounded-xl" 
+                    className="w-full md:w-auto px-12 h-14 bg-primary text-white font-black rounded-xl shadow-lg" 
                     onClick={handleSave}
                     disabled={isSaving}
                   >
