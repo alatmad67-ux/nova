@@ -7,7 +7,7 @@
  * Target Project: studio-9674030533-5f5ae
  * Admin Identity: 07858833838@novafashion.iq
  * Security Policy: Explicit Admin-Only Full Write / Public Read (get and list)
- * Rules Sync Trigger: 2026.03.02.v32 (STRICT_ADMIN_VALIDATION_ENABLED)
+ * Rules Sync Trigger: 2026.03.04.v40 (STABILITY_OPTIMIZATION_ENABLED)
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -20,14 +20,28 @@ export function initializeFirebase(): {
   auth: Auth;
   db: Firestore;
 } {
+  // Initialize Firebase App
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  
+  // Initialize Auth
   const auth = getAuth(app);
   
-  const db = getApps().length > 0 
-    ? getFirestore(app) 
-    : initializeFirestore(app, {
-        experimentalForceLongPolling: true,
-      });
+  /**
+   * Initialize Firestore with Long Polling.
+   * This is CRITICAL for the Firebase Studio environment to prevent 
+   * "Could not reach Cloud Firestore backend" errors.
+   */
+  let db: Firestore;
+  try {
+    // Attempt to initialize with specific settings
+    db = initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+      experimentalAutoDetectLongPolling: true,
+    });
+  } catch (e) {
+    // If already initialized, fallback to getting the existing instance
+    db = getFirestore(app);
+  }
 
   return { app, auth, db };
 }

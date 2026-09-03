@@ -6,8 +6,7 @@ import {
   Query, 
   onSnapshot, 
   QuerySnapshot, 
-  DocumentData,
-  CollectionReference
+  DocumentData
 } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
@@ -38,18 +37,22 @@ export function useCollection(query: Query | null) {
         setLoading(false);
       },
       async (serverError: any) => {
-        // Use safer way to get path if available (for CollectionReferences)
+        // Safe path extraction for reporting
         const path = (query as any).path || 'collection_query';
         
+        // Handle 'unavailable' error silently or with warning to avoid app crash
+        if (serverError.code === 'unavailable') {
+          console.warn("Firestore connection unavailable, operating in offline mode.");
+        } else {
+          // Emit for global permission listener only if it's a permission issue
+          const permissionError = new FirestorePermissionError({
+            path: path,
+            operation: 'list',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        }
+        
         setError(serverError);
-        
-        // Emit for global listener
-        const permissionError = new FirestorePermissionError({
-          path: path,
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        
         setLoading(false);
       }
     );
