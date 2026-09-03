@@ -58,7 +58,7 @@ export default function DeliveryCompaniesPage() {
     setIsSaving(true);
     const companyData = {
       ...formData,
-      storeId, // REQUIRED by schema
+      storeId,
       updatedAt: serverTimestamp()
     };
 
@@ -70,7 +70,6 @@ export default function DeliveryCompaniesPage() {
           resetForm();
         })
         .catch(async (error: any) => {
-          console.error("Update Error Details:", error);
           errorEmitter.emit('permission-error', new FirestorePermissionError({ 
             path: docRef.path, 
             operation: 'update',
@@ -82,11 +81,10 @@ export default function DeliveryCompaniesPage() {
       const colRef = collection(db, 'delivery-companies');
       addDoc(colRef, { ...companyData, createdAt: serverTimestamp() })
         .then(() => {
-          toast({ title: "تمت الإضافة بنجاح", description: `تمت إضافة شركة ${formData.name} للمنظومة` });
+          toast({ title: "تمت الإضافة بنجاح", description: `تمت إضافة شركة ${formData.name}` });
           resetForm();
         })
         .catch(async (error: any) => {
-          console.error("Create Error Details:", error);
           errorEmitter.emit('permission-error', new FirestorePermissionError({ 
             path: 'delivery-companies', 
             operation: 'create',
@@ -136,7 +134,7 @@ export default function DeliveryCompaniesPage() {
           {queryError && (
             <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-600">
               <AlertCircle className="h-5 w-5" />
-              <p className="font-bold text-sm">خطأ في الاتصال: يرجى التأكد من تسجيل الدخول كمسؤولة.</p>
+              <p className="font-bold text-sm">خطأ في الصلاحيات أو الاتصال بالخادم.</p>
             </div>
           )}
 
@@ -161,7 +159,7 @@ export default function DeliveryCompaniesPage() {
           </div>
 
           {isAdding && (
-            <div className="nova-card p-10 mb-12 border-primary/10 animate-in fade-in zoom-in-95 bg-white shadow-premium">
+            <div className="nova-card p-10 mb-12 border-primary/10 bg-white shadow-premium animate-in fade-in zoom-in-95">
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-black text-primary">{editingId ? 'تعديل بيانات الشركة' : 'شركة توصيل جديدة'}</h3>
                 <button onClick={resetForm} className="text-primary/20 hover:text-primary"><X className="h-6 w-6" /></button>

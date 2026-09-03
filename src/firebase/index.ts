@@ -2,9 +2,8 @@
 'use client';
 
 /**
- * NOVA FIREBASE CORE - ATOMIC STABLE (v83)
- * FIXED: Assertion Failed (ID: ca9) by ensuring initializeFirestore is NEVER 
- * called twice and callbacks are handled synchronously.
+ * NOVA FIREBASE CORE - ATOMIC STABLE (v84)
+ * حل نهائي لمشكلة Assertion Failed (ID: ca9)
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -19,47 +18,46 @@ interface NovaFirebaseServices {
 }
 
 /**
- * Robust singleton initialization using module-level variable and global persistence.
+ * استخدام Singleton مع حماية مطلقة ضد إعادة التهيئة
  */
-let cachedServices: NovaFirebaseServices | null = null;
-
 function getNovaServices(): NovaFirebaseServices {
-  // SSR Safety
   if (typeof window === 'undefined') {
     return {} as any;
   }
 
-  // Use globalThis as a persistent store to survive HMR in development
   const anyGlobal = (globalThis as any);
-  if (anyGlobal.__NOVA_FIREBASE_SERVICES__) {
-    return anyGlobal.__NOVA_FIREBASE_SERVICES__;
+
+  // إذا كانت الخدمات موجودة مسبقاً، لا تقم بأي فعل، فقط أرجعها
+  if (anyGlobal.__NOVA_SERVICES__) {
+    return anyGlobal.__NOVA_SERVICES__;
   }
 
-  if (cachedServices) return cachedServices;
-
-  // 1. Initialize Firebase App
+  // 1. تهيئة التطبيق
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   
-  // 2. Initialize Firestore
-  // We must handle the case where it might already be initialized.
+  // 2. تهيئة Firestore مرة واحدة فقط وبدون تعقيدات
   let db: Firestore;
-  try {
-    db = initializeFirestore(app, {
-      experimentalForceLongPolling: true,
-    });
-  } catch (e: any) {
-    // If already initialized, initializeFirestore throws. 
-    // In that case, getFirestore returns the existing instance.
-    db = getFirestore(app);
+  if (!anyGlobal.__NOVA_DB__) {
+    try {
+      db = initializeFirestore(app, {
+        experimentalForceLongPolling: true,
+      });
+      anyGlobal.__NOVA_DB__ = db;
+    } catch (e) {
+      db = getFirestore(app);
+      anyGlobal.__NOVA_DB__ = db;
+    }
+  } else {
+    db = anyGlobal.__NOVA_DB__;
   }
 
-  // 3. Initialize Auth
+  // 3. تهيئة Auth
   const auth = getAuth(app);
 
-  cachedServices = { app, auth, db };
-  anyGlobal.__NOVA_FIREBASE_SERVICES__ = cachedServices;
+  const services = { app, auth, db };
+  anyGlobal.__NOVA_SERVICES__ = services;
 
-  return cachedServices;
+  return services;
 }
 
 export function initializeFirebase(): NovaFirebaseServices {
