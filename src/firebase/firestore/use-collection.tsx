@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -16,11 +17,9 @@ export function useCollection(query: Query | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
-  // Track current query to avoid stale subscription updates
   const activeQueryRef = useRef<Query | null>(null);
 
   useEffect(() => {
-    // If no query, or it's the same query as before, don't re-subscribe
     if (!query) {
       setData(null);
       setLoading(false);
@@ -35,7 +34,6 @@ export function useCollection(query: Query | null) {
     const unsubscribe = onSnapshot(
       query,
       (snapshot: QuerySnapshot) => {
-        // Ensure we only update state for the current active query
         if (activeQueryRef.current !== query) return;
 
         const docs = snapshot.docs.map(doc => ({
@@ -46,7 +44,8 @@ export function useCollection(query: Query | null) {
         setError(null);
         setLoading(false);
       },
-      async (serverError: any) => {
+      (serverError: any) => {
+        // IMPORTANT: Callback must be synchronous to avoid internal SDK state corruption (ID: ca9)
         if (activeQueryRef.current !== query) return;
 
         let path = 'unknown';
@@ -76,7 +75,7 @@ export function useCollection(query: Query | null) {
     return () => {
       unsubscribe();
     };
-  }, [query]); // Reference stability is handled via useMemo in pages
+  }, [query]);
 
   return { data, loading, error };
 }

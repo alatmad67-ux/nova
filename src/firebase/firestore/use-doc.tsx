@@ -17,7 +17,7 @@ export function useDoc(docRef: DocumentReference | null) {
 
   useEffect(() => {
     if (!docRef) {
-      setData(null); // مسح البيانات إذا كان المرجع فارغاً
+      setData(null);
       setLoading(false);
       return;
     }
@@ -30,7 +30,8 @@ export function useDoc(docRef: DocumentReference | null) {
         setData(newData);
         setLoading(false);
       },
-      async (serverError: any) => {
+      (serverError: any) => {
+        // IMPORTANT: Callback must be synchronous to avoid internal SDK state corruption (ID: ca9)
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'get',
@@ -41,7 +42,7 @@ export function useDoc(docRef: DocumentReference | null) {
     );
 
     return () => unsubscribe();
-  }, [docRef]); // سيعمل الـ useEffect فقط عند تغير هوية المرجع (لذا نستخدم useMemo في المكونات)
+  }, [docRef]);
 
   return { data, loading };
 }
