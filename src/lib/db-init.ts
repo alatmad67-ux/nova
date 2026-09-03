@@ -10,71 +10,59 @@ import {
   getDocs, 
   serverTimestamp,
   query,
-  limit
+  limit,
+  where
 } from 'firebase/firestore';
 
 /**
- * وظيفة تهيئة قاعدة البيانات (Idempotent DB Initialization)
- * تقوم بإنشاء المجموعات والوثائق الأساسية إذا لم تكن موجودة.
- * لا تقوم بمسح أو تبديل أي بيانات حالية.
+ * وظيفة تهيئة قاعدة البيانات الملكية لنوفا (Idempotent DB Initialization)
+ * تضمن وجود الوثائق والمجموعات الأساسية دون مسح البيانات الحالية.
  */
 export async function initializeDatabase(db: Firestore, storeId: string) {
   try {
-    console.log('Starting DB Initialization for:', storeId);
+    console.log('Initiating Secure DB Setup for:', storeId);
 
-    // 1. تهيئة إعدادات المتجر العامة (Settings)
+    // 1. تهيئة الإعدادات (Settings) - وثيقة ثابتة بالمعرف general
     const settingsRef = doc(db, 'settings', 'general');
     const settingsSnap = await getDoc(settingsRef);
-    
     if (!settingsSnap.exists()) {
-      console.log('Initializing general settings...');
       await setDoc(settingsRef, {
-        storeName: 'NOVA',
-        storeId: storeId,
-        lowStockThreshold: 5,
+        storeName: 'NOVA Official',
+        storeId,
         whatsapp: '9647858833838',
-        deliveryFees: {
-          'بغداد': 5000,
-          'البصرة': 7000,
-          'أربيل': 7000
-        },
+        lowStockThreshold: 5,
+        deliveryFees: { 'بغداد': 5000, 'البصرة': 7000, 'أربيل': 7000 },
         updatedAt: serverTimestamp()
       });
     }
 
-    // 2. تهيئة السلايدر (Sliders) - إضافة شريحة ترحيبية إذا كانت المجموعة فارغة
-    const sliderCol = collection(db, 'sliders');
-    const sliderSnap = await getDocs(query(sliderCol, limit(1)));
-    
-    if (sliderSnap.empty) {
-      console.log('Initializing sliders collection...');
-      await setDoc(doc(sliderCol), {
+    // 2. تهيئة السلايدر (Sliders)
+    const slidersCol = collection(db, 'sliders');
+    const slidersSnap = await getDocs(query(slidersCol, where('storeId', '==', storeId), limit(1)));
+    if (slidersSnap.empty) {
+      await setDoc(doc(slidersCol), {
         title: 'أناقتكِ تبدأ من هنا',
-        subtitle: 'اكتشفي أحدث تشكيلات الأزياء النسائية للموسم الجديد',
+        subtitle: 'اكتشفي أحدث تشكيلات الأزياء للموسم الجديد',
         image: 'https://picsum.photos/seed/nova-init/1200/800',
         order: 1,
         isActive: true,
-        storeId: storeId,
+        storeId,
         createdAt: serverTimestamp()
       });
     }
 
-    // 3. تهيئة الأقسام (Categories) - إضافة أقسام افتراضية إذا كانت فارغة
+    // 3. تهيئة الأقسام (Categories)
     const catCol = collection(db, 'categories');
-    const catSnap = await getDocs(query(catCol, limit(1)));
-    
+    const catSnap = await getDocs(query(catCol, where('storeId', '==', storeId), limit(1)));
     if (catSnap.empty) {
-      console.log('Initializing categories collection...');
       const defaultCats = [
-        { name: 'فساتين', slug: 'dresses', order: 1 },
-        { name: 'أطقم', slug: 'sets', order: 2 },
-        { name: 'تنانير', slug: 'skirts', order: 3 }
+        { name: 'فساتين سهرة', slug: 'evening-dresses', order: 1 },
+        { name: 'أطقم كلاسيك', slug: 'classic-sets', order: 2 }
       ];
-      
       for (const cat of defaultCats) {
         await setDoc(doc(catCol), {
           ...cat,
-          storeId: storeId,
+          storeId,
           isActive: true,
           image: `https://picsum.photos/seed/${cat.slug}/800/1000`,
           createdAt: serverTimestamp()
@@ -82,10 +70,23 @@ export async function initializeDatabase(db: Firestore, storeId: string) {
       }
     }
 
-    console.log('DB Initialization complete.');
+    // 4. تهيئة شركات التوصيل (Delivery Companies)
+    const deliveryCol = collection(db, 'delivery-companies');
+    const deliverySnap = await getDocs(query(deliveryCol, limit(1)));
+    if (deliverySnap.empty) {
+      await setDoc(doc(deliveryCol), {
+        name: 'شركة النور اللوجستية',
+        phone: '0770 000 0000',
+        isActive: true,
+        storeId,
+        createdAt: serverTimestamp()
+      });
+    }
+
+    console.log('Database Architecture is Verified and Ready.');
     return true;
   } catch (error) {
-    console.error('DB Initialization failed:', error);
+    console.error('Database Verification Failed:', error);
     return false;
   }
 }

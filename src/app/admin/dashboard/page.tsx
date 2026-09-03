@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { 
   ResponsiveContainer,
@@ -37,7 +37,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { storeId } = useStore();
   
-  // تفعيل نظام تهيئة قاعدة البيانات عند دخول الإدارة
+  // التأكد من تهيئة قاعدة البيانات بكافة مجموعاتها عند دخول الإدارة
   useEffect(() => {
     if (db && storeId) {
       initializeDatabase(db, storeId);
@@ -46,7 +46,8 @@ export default function AdminDashboard() {
   
   const ordersQuery = useMemo(() => query(
     collection(db, 'orders'), 
-    where('storeId', '==', storeId)
+    where('storeId', '==', storeId),
+    orderBy('createdAt', 'desc')
   ), [db, storeId]);
   
   const { data: rawOrders } = useCollection(ordersQuery);
@@ -60,14 +61,17 @@ export default function AdminDashboard() {
 
   const orders = useMemo(() => {
     if (!rawOrders) return [];
-    return [...rawOrders].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    return [...rawOrders];
   }, [rawOrders]);
 
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
     const validOrders = orders || [];
     const todaySales = validOrders
-      .filter(o => (o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : new Date()) >= today && o.status !== 'ملغي')
+      .filter(o => {
+        const oDate = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : new Date();
+        return oDate >= today && o.status !== 'ملغي';
+      })
       .reduce((acc, o) => acc + (o.totals?.total || 0), 0);
 
     return {

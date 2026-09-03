@@ -3,12 +3,13 @@
 
 import React, { useState, useMemo } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, query } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { 
   Truck, 
   Plus, 
@@ -18,15 +19,24 @@ import {
   X, 
   Phone, 
   Globe, 
-  Key,
-  ShieldCheck
+  Loader2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn } from "@/lib/utils";
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { useStore } from '@/providers/store-provider';
 
 export default function DeliveryCompaniesPage() {
   const db = useFirestore();
-  const companiesQuery = useMemo(() => query(collection(db, 'delivery-companies')), [db]);
+  const { storeId } = useStore();
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const companiesQuery = useMemo(() => query(
+    collection(db, 'delivery-companies'),
+    where('storeId', '==', storeId)
+  ), [db, storeId]);
+  
   const { data: companies, loading } = useCollection(companiesQuery);
 
   const [isAdding, setIsAdding] = useState(false);
@@ -41,34 +51,51 @@ export default function DeliveryCompaniesPage() {
     isActive: true
   });
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!formData.name) {
-      toast({ variant: "destructive", title: "خطأ", description: "اسم الشركة مطلوب" });
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "اسم الشركة مطلوب" });
       return;
     }
 
-    try {
-      if (editingId) {
-        await updateDoc(doc(db, 'delivery-companies', editingId), formData);
-        toast({ title: "تم التحديث", description: "تم تحديث بيانات الشركة بنجاح" });
-      } else {
-        await addDoc(collection(db, 'delivery-companies'), formData);
-        toast({ title: "تمت الإضافة", description: "تمت إضافة شركة التوصيل الجديدة" });
-      }
-      resetForm();
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ بيانات الشركة" });
+    setIsSaving(true);
+    const companyData = {
+      ...formData,
+      storeId,
+      updatedAt: serverTimestamp()
+    };
+
+    if (editingId) {
+      updateDoc(doc(db, 'delivery-companies', editingId), companyData)
+        .then(() => {
+          toast({ title: "تم التحديث", description: "تم تحديث بيانات الشركة بنجاح" });
+          resetForm();
+        })
+        .catch(async (error) => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `delivery-companies/${editingId}`, operation: 'update' }));
+        })
+        .finally(() => setIsSaving(false));
+    } else {
+      addDoc(collection(db, 'delivery-companies'), { ...companyData, createdAt: serverTimestamp() })
+        .then(() => {
+          toast({ title: "تمت الإضافة", description: "تمت إضافة شركة التوصيل للفاير ستور" });
+          resetForm();
+        })
+        .catch(async (error) => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'delivery-companies', operation: 'create' }));
+        })
+        .finally(() => setIsSaving(false));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('هل أنتِ متأكدة من حذف هذه الشركة؟')) return;
-    try {
-      await deleteDoc(doc(db, 'delivery-companies', id));
-      toast({ title: "تم الحذف", description: "تم حذف الشركة بنجاح" });
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل حذف الشركة" });
-    }
+    if (!window.confirm('هل أنتِ متأكدة من حذف هذه الشركة من قاعدة البيانات؟')) return;
+    deleteDoc(doc(db, 'delivery-companies', id))
+      .then(() => {
+        toast({ title: "تم الحذف", description: "تم مسح بيانات الشركة نهائياً" });
+      })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `delivery-companies/${id}`, operation: 'delete' }));
+      });
   };
 
   const resetForm = () => {
@@ -99,7 +126,7 @@ export default function DeliveryCompaniesPage() {
     setIsAdding(true);
   };
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black animate-pulse">جاري تحميل شركات التوصيل...</div>;
+  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black animate-pulse">جاري فحص قائمة الموردين اللوجستيين...</div>;
 
   return (
     <AdminGuard>
@@ -111,18 +138,20 @@ export default function DeliveryCompaniesPage() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Truck className="h-5 w-5 text-primary" />
-                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">الخدمات اللوجستية</span>
+                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">شركاء الشحن</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-black text-primary">شركات التوصيل</h1>
             </div>
             
-            <Button 
-              onClick={() => setIsAdding(true)} 
-              className="h-12 px-8 rounded-2xl bg-primary text-white font-black hover:scale-105 transition-all shadow-lg shadow-primary/20"
-            >
-              <Plus className="ml-2 h-5 w-5" />
-              إضافة شركة شحن
-            </Button>
+            {!isAdding && (
+              <Button 
+                onClick={() => setIsAdding(true)} 
+                className="h-12 px-8 rounded-2xl bg-primary text-white font-black hover:scale-105 transition-all shadow-lg shadow-primary/20"
+              >
+                <Plus className="ml-2 h-5 w-5" />
+                إضافة شركة شحن
+              </Button>
+            )}
           </div>
 
           {isAdding && (
@@ -172,10 +201,23 @@ export default function DeliveryCompaniesPage() {
                   </div>
                 </div>
 
-                <div className="flex items-end gap-4">
-                  <Button className="w-full h-12 bg-primary text-white font-black rounded-xl shadow-lg shadow-primary/20" onClick={handleSave}>
-                    <Save className="ml-2 h-4 w-4" />
-                    حفظ الشركة
+                <div className="flex items-end gap-4 lg:col-span-3">
+                  <Button 
+                    className="w-full md:w-auto px-12 h-14 bg-primary text-white font-black rounded-xl shadow-lg shadow-primary/20" 
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                        جاري الحفظ في Firestore...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="ml-2 h-5 w-5" />
+                        حفظ بيانات الشركة
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -210,13 +252,19 @@ export default function DeliveryCompaniesPage() {
                     </button>
                   </div>
                 </div>
+                {company.phone && (
+                   <p className="text-sm font-bold text-primary/40 dir-ltr flex items-center gap-2">
+                     <Phone className="h-3 w-3" />
+                     {company.phone}
+                   </p>
+                )}
               </div>
             ))}
 
-            {companies?.length === 0 && (
+            {companies?.length === 0 && !loading && (
               <div className="col-span-full py-20 text-center opacity-20 text-primary">
                 <Truck className="h-16 w-16 mx-auto mb-4" />
-                <p className="font-black">لا توجد شركات توصيل مضافة بعد</p>
+                <p className="font-black">لم يتم إضافة أي شركات توصيل لقاعدة البيانات بعد</p>
               </div>
             )}
           </div>

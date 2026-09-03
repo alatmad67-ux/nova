@@ -62,34 +62,26 @@
         "purchasePrice": { "type": "number" },
         "price": { "type": "number" },
         "originalPrice": { "type": "number" },
-        "discount": { "type": "number" },
         "categoryId": { "type": "string" },
         "categoryName": { "type": "string" },
         "images": { "type": "array", "items": { "type": "string" } },
-        "colors": { "type": "array", "items": { "type": "object" } },
-        "selectedSizes": { "type": "array", "items": { "type": "string" } },
-        "variants": { 
-          "type": "array", 
-          "items": {
-            "object": {
-              "properties": {
-                "color": { "type": "string" },
-                "size": { "type": "string" },
-                "stock": { "type": "number" },
-                "sku": { "type": "string" }
-              }
-            }
-          }
-        },
+        "variants": { "type": "array" },
         "status": { "type": "string", "enum": ["active", "draft", "out_of_stock"] },
-        "isNew": { "type": "boolean" },
-        "isBestSeller": { "type": "boolean" },
-        "isFeatured": { "type": "boolean" },
         "storeId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "price", "categoryId", "storeId"]
+    },
+    "DeliveryCompany": {
+      "title": "Delivery Company",
+      "description": "Logistics partner configuration.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "storeId": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -98,27 +90,27 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "ALLOW PUBLIC READ (get, list). ALLOW FULL WRITE (create, update, delete) ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
+      "description": "PUBLIC READ. ADMIN WRITE ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "ALLOW PUBLIC READ (get, list). ALLOW FULL WRITE (create, update, delete) ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
+      "description": "PUBLIC READ. ADMIN WRITE ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "ALLOW PUBLIC CREATE. ALLOW FULL READ/WRITE (list, get, update, delete) ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
+      "description": "PUBLIC CREATE. ADMIN READ/WRITE ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "ALLOW PUBLIC READ (get, list). ALLOW FULL WRITE (create, update, delete) ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
+      "description": "PUBLIC READ. ADMIN WRITE ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
     },
     "/sliders/{sliderId}": {
       "schema": "SliderItem",
-      "description": "ALLOW PUBLIC READ (get, list). ALLOW FULL WRITE (create, update, delete) ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
+      "description": "PUBLIC READ. ADMIN WRITE ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
     },
     "/delivery-companies/{companyId}": {
-      "schema": "object",
-      "description": "ADMIN ONLY READ/WRITE. request.auth.token.email == '07858833838@novafashion.iq'."
+      "schema": "DeliveryCompany",
+      "description": "ADMIN READ/WRITE ONLY IF request.auth.token.email == '07858833838@novafashion.iq'."
     }
   }
 }
