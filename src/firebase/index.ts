@@ -2,8 +2,8 @@
 'use client';
 
 /**
- * NOVA FIREBASE CORE - ULTRA STABLE (v75)
- * Uses a module-level singleton to prevent "Assertion Failed: Unexpected state (ID: ca9)".
+ * NOVA FIREBASE CORE - ULTRA STABLE (v80)
+ * Fixed Assertion Failed (ID: ca9) using global singleton pattern.
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -17,44 +17,48 @@ interface NovaFirebaseServices {
   db: Firestore;
 }
 
-// Persistent reference to survive HMR in dev environment
-let cachedServices: NovaFirebaseServices | null = null;
+// Global variable to persist through HMR and avoid ID: ca9
+declare global {
+  var __NOVA_INSTANCE__: NovaFirebaseServices | undefined;
+}
 
 export function initializeFirebase(): NovaFirebaseServices {
   if (typeof window === 'undefined') {
-    return null as any;
+    return {} as any;
   }
 
-  // If services are already initialized, return them immediately
-  if (cachedServices) {
-    return cachedServices;
+  // If already initialized globally, return it immediately to prevent assertion errors
+  if (globalThis.__NOVA_INSTANCE__) {
+    return globalThis.__NOVA_INSTANCE__;
   }
 
-  // Check if app exists or initialize it
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   
   let db: Firestore;
+  
+  // Strict check to avoid re-initializing Firestore with conflicting settings
   try {
-    /**
-     * We only call initializeFirestore ONCE. 
-     * This is critical to avoid "INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9)".
-     */
-    db = initializeFirestore(app, {
-      experimentalForceLongPolling: true,
-    });
+    const existingDb = getFirestore(app);
+    if (existingDb) {
+      db = existingDb;
+    } else {
+      db = initializeFirestore(app, {
+        experimentalForceLongPolling: true,
+      });
+    }
   } catch (e) {
-    // If already initialized (common during Hot Module Replacement), get the existing instance
+    // If initializeFirestore fails because it's already initialized, fallback to getFirestore
     db = getFirestore(app);
   }
 
   const auth = getAuth(app);
 
-  cachedServices = { app, auth, db };
+  const services = { app, auth, db };
+  
+  // Store in global and module level
+  globalThis.__NOVA_INSTANCE__ = services;
 
-  // Global backup for debugging
-  (window as any).__NOVA_FIREBASE__ = cachedServices;
-
-  return cachedServices;
+  return services;
 }
 
 export * from './provider';
