@@ -2,12 +2,10 @@
 'use client';
 
 /**
- * NOVA FIREBASE CORE & SECURITY SYNC
+ * NOVA FIREBASE CORE - STABLE INITIALIZATION
  * 
- * Target Project: studio-9674030533-5f5ae
- * Admin Identity: 07858833838@novafashion.iq
- * Security Policy: Admin-Only Full Write / Public Read (Idempotent Architecture)
- * Rules Sync Trigger: 2026.03.04.v46 (STABLE_CONNECTION_INIT)
+ * Version: 2026.03.04.v47 (STABLE_SINGLETON_ARCHITECTURE)
+ * Handles: Firestore 11.9.0 Assertion Failed fix.
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -15,46 +13,46 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
-// منع تكرار التهيئة باستخدام Singleton Pattern
-let initializedServices: {
+// Singleton to persist across hot reloads and component re-renders
+let firebaseServices: {
   app: FirebaseApp;
   auth: Auth;
   db: Firestore;
 } | null = null;
 
-export function initializeFirebase(): {
-  app: FirebaseApp;
-  auth: Auth;
-  db: Firestore;
-} {
-  // إذا تم التهيئة مسبقاً، قم بإرجاع الخدمات الحالية فوراً
-  if (initializedServices) {
-    return initializedServices;
+export function initializeFirebase() {
+  // Guard against server-side execution
+  if (typeof window === 'undefined') {
+    return null as any;
   }
 
-  // Initialize Firebase App
+  // Return existing services if already initialized
+  if (firebaseServices) {
+    return firebaseServices;
+  }
+
+  // 1. Initialize App (Idempotent)
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   
-  // Initialize Auth
+  // 2. Initialize Auth
   const auth = getAuth(app);
   
-  /**
-   * Initialize Firestore with Long Polling.
-   * يتم استخدام initializeFirestore فقط إذا لم تكن هناك نسخة مسبقة لتجنب "Internal Assertion Failed"
-   */
+  // 3. Initialize Firestore with settings
+  // Note: initializeFirestore can only be called ONCE per app.
+  // We use a try-catch to fallback to getFirestore if the instance already exists.
   let db: Firestore;
   try {
     db = initializeFirestore(app, {
-      experimentalForceLongPolling: true,
-      // نكتفي بـ force long polling لضمان الاستقرار في بيئة Studio
+      experimentalForceLongPolling: true, // Required for Cloud Workstations stability
     });
   } catch (e) {
-    // في حال فشل initializeFirestore (مثلاً بسبب تهيئة مسبقة مخفية)، نستخدم getFirestore
+    // If initializeFirestore throws (usually because an instance already exists),
+    // we retrieve the existing instance using getFirestore.
     db = getFirestore(app);
   }
 
-  initializedServices = { app, auth, db };
-  return initializedServices;
+  firebaseServices = { app, auth, db };
+  return firebaseServices;
 }
 
 export * from './provider';
