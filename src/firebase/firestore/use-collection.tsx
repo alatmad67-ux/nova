@@ -37,19 +37,27 @@ export function useCollection(query: Query | null) {
         setLoading(false);
       },
       async (serverError: any) => {
-        // Safe path extraction for reporting
-        const path = (query instanceof CollectionReference) ? query.path : 'query';
+        // Safe path extraction to avoid client-side crash
+        let path = 'unknown';
+        try {
+          if (query instanceof CollectionReference) {
+            path = query.path;
+          } else if ('_query' in (query as any)) {
+            // Fallback for Query objects which might not expose path directly
+            path = (query as any)._query?.path?.toString() || 'query';
+          }
+        } catch (e) {
+          path = 'query-error';
+        }
         
-        // Handle 'unavailable' error silently or with warning to avoid app crash
-        if (serverError.code === 'unavailable') {
-          console.warn("Firestore connection unavailable, operating in offline mode.");
-        } else if (serverError.code === 'permission-denied') {
-          // Emit for global permission listener
+        if (serverError.code === 'permission-denied') {
           const permissionError = new FirestorePermissionError({
             path: path,
             operation: 'list',
           });
           errorEmitter.emit('permission-error', permissionError);
+        } else if (serverError.code === 'unavailable') {
+          console.warn("Firestore connection unavailable. Using local cache.");
         }
         
         setError(serverError);

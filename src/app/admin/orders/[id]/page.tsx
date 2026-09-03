@@ -1,10 +1,9 @@
-
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useCollection } from '@/firebase';
-import { doc, updateDoc, collection, query } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where } from 'firebase/firestore';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { Button } from "@/components/ui/button";
@@ -20,16 +19,15 @@ import {
   Package, 
   Calendar,
   CreditCard,
-  History,
   Save,
   Printer,
-  ExternalLink,
   Image as ImageIcon
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { cn } from "@/lib/utils";
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const STATUS_OPTIONS = [
   "جديد", "تم التأكيد", "قيد التجهيز", "جاهز للشحن", "مع شركة التوصيل", "تم التسليم", "ملغي", "مرتجع"
@@ -43,6 +41,7 @@ export default function OrderDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const db = useFirestore();
+  
   const orderRef = useMemo(() => id ? doc(db, 'orders', id as string) : null, [db, id]);
   const { data: order, loading } = useDoc(orderRef);
 
@@ -56,7 +55,8 @@ export default function OrderDetailPage() {
     status: 'لم يتم الشحن'
   });
 
-  useMemo(() => {
+  // CORRECT: Sync form data with document using useEffect, NOT useMemo
+  useEffect(() => {
     if (order?.shippingInfo) {
       setShippingForm({
         companyId: order.shippingInfo.companyId || '',
@@ -68,35 +68,43 @@ export default function OrderDetailPage() {
 
   const handleUpdateStatus = async (newStatus: string) => {
     if (!orderRef) return;
-    try {
-      await updateDoc(orderRef, { status: newStatus });
-      toast({ title: "تم التحديث", description: `حالة الطلب الآن: ${newStatus}` });
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل تحديث حالة الطلب" });
-    }
+    updateDoc(orderRef, { status: newStatus })
+      .then(() => {
+        toast({ title: "تم التحديث", description: `حالة الطلب الآن: ${newStatus}` });
+      })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: orderRef.path, operation: 'update' }));
+      });
   };
 
   const handleSaveShipping = async () => {
     if (!orderRef) return;
     setIsSaving(true);
-    try {
-      const selectedCompany = companies?.find(c => c.id === shippingForm.companyId);
-      
-      await updateDoc(orderRef, {
-        shippingInfo: {
-          ...shippingForm,
-          companyName: selectedCompany?.name || 'غير محدد'
-        }
-      });
-      toast({ title: "تم الحفظ", description: "تم تحديث معلومات الشحن بنجاح" });
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ معلومات الشحن" });
-    } finally {
-      setIsSaving(false);
-    }
+    
+    const selectedCompany = companies?.find(c => c.id === shippingForm.companyId);
+    const updateData = {
+      shippingInfo: {
+        ...shippingForm,
+        companyName: selectedCompany?.name || 'غير محدد'
+      }
+    };
+
+    updateDoc(orderRef, updateData)
+      .then(() => {
+        toast({ title: "تم الحفظ", description: "تم تحديث معلومات الشحن بنجاح" });
+      })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: orderRef.path, operation: 'update', requestResourceData: updateData }));
+      })
+      .finally(() => setIsSaving(false));
   };
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black animate-pulse">جاري تحميل تفاصيل الشحنة...</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black animate-pulse">
+      جاري تحميل تفاصيل الشحنة...
+    </div>
+  );
+  
   if (!order) return <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black">الطلب غير موجود</div>;
 
   return (
@@ -142,7 +150,7 @@ export default function OrderDetailPage() {
                   محتويات الحقيبة
                 </h3>
                 <div className="space-y-6">
-                  {order.items.map((item: any, idx: number) => (
+                  {order.items?.map((item: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-6 p-6 bg-accent/30 rounded-2xl border border-border">
                       <div className="h-20 w-16 bg-accent rounded-xl overflow-hidden flex-shrink-0 relative">
                         <div className="absolute inset-0 flex items-center justify-center text-primary/20">
@@ -165,16 +173,16 @@ export default function OrderDetailPage() {
                 <div className="mt-10 pt-10 border-t border-border space-y-4">
                   <div className="flex justify-between text-primary/40 font-black">
                     <span>المجموع الفرعي</span>
-                    <span>{order.totals.subtotal.toLocaleString()} د.ع</span>
+                    <span>{order.totals?.subtotal?.toLocaleString()} د.ع</span>
                   </div>
                   <div className="flex justify-between text-primary/40 font-black">
                     <span>أجور التوصيل</span>
-                    <span>{order.totals.shipping.toLocaleString()} د.ع</span>
+                    <span>{order.totals?.shipping?.toLocaleString()} د.ع</span>
                   </div>
                   <div className="h-px bg-border my-6" />
                   <div className="flex justify-between text-2xl font-black text-primary">
                     <span>الإجمالي النهائي</span>
-                    <span className="text-secondary">{order.totals.total.toLocaleString()} د.ع</span>
+                    <span className="text-secondary">{order.totals?.total?.toLocaleString()} د.ع</span>
                   </div>
                 </div>
               </div>
@@ -250,7 +258,7 @@ export default function OrderDetailPage() {
                     </div>
                     <div>
                       <p className="text-xs text-primary/40 font-black uppercase tracking-widest mb-1">الاسم</p>
-                      <p className="font-black text-lg text-primary">{order.customer.name}</p>
+                      <p className="font-black text-lg text-primary">{order.customer?.name}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -259,7 +267,7 @@ export default function OrderDetailPage() {
                     </div>
                     <div>
                       <p className="text-xs text-primary/40 font-black uppercase tracking-widest mb-1">الهاتف</p>
-                      <p className="font-black text-lg text-primary dir-ltr">{order.customer.phone}</p>
+                      <p className="font-black text-lg text-primary dir-ltr">{order.customer?.phone}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -269,9 +277,9 @@ export default function OrderDetailPage() {
                     <div>
                       <p className="text-xs text-primary/40 font-black uppercase tracking-widest mb-1">العنوان</p>
                       <p className="font-bold text-primary/80 leading-relaxed">
-                        {order.customer.province} - {order.customer.region}<br />
-                        {order.customer.address}<br />
-                        <span className="text-xs text-secondary font-black">نقطة دالة: {order.customer.landmark || 'غير محددة'}</span>
+                        {order.customer?.province} - {order.customer?.region}<br />
+                        {order.customer?.address}<br />
+                        <span className="text-xs text-secondary font-black">نقطة دالة: {order.customer?.landmark || 'غير محددة'}</span>
                       </p>
                     </div>
                   </div>

@@ -3,10 +3,8 @@
 /**
  * NOVA FIREBASE CORE - ATOMIC INITIALIZATION
  * 
- * Version: 2026.03.04.v48 (ULTRA_STABLE_SINGLETON)
  * Targeted Fix: Firestore 11.9.0 Internal Assertion Failed (ID: ca9 / ID: b815)
- * This fix ensures that Firestore settings are applied exactly once and 
- * survive HMR/Fast Refresh cycles in development environments like Cloud Workstations.
+ * Ensures singleton pattern for Firebase services to survive HMR and concurrent calls.
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -14,35 +12,35 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
-export function initializeFirebase() {
-  // Guard against server-side execution
+interface NovaFirebaseServices {
+  app: FirebaseApp;
+  auth: Auth;
+  db: Firestore;
+}
+
+export function initializeFirebase(): NovaFirebaseServices {
   if (typeof window === 'undefined') {
     return null as any;
   }
 
-  // Persist services on the window object to survive HMR/Fast Refresh during development
   const win = window as any;
 
+  // Global Singleton Pattern to prevent "Internal Assertion Failed"
   if (!win._novaFirebase) {
-    // 1. Initialize App (Idempotent)
     const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     
-    // 2. Initialize Auth
-    const auth = getAuth(app);
-    
-    // 3. Initialize Firestore with settings
-    // Version 11.9.0 Assertion Failed fix: 
-    // Ensure initializeFirestore is called exactly once and handles already-initialized apps gracefully.
     let db: Firestore;
     try {
+      // Use initializeFirestore exactly once for specialized settings
       db = initializeFirestore(app, {
-        experimentalForceLongPolling: true, // Required for Cloud Workstations stability
+        experimentalForceLongPolling: true,
       });
     } catch (e) {
-      // Fallback to existing instance if initializeFirestore has already been called
+      // If already initialized, get the existing instance
       db = getFirestore(app);
     }
 
+    const auth = getAuth(app);
     win._novaFirebase = { app, auth, db };
   }
 

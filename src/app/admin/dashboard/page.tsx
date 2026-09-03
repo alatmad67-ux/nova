@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useEffect } from 'react';
@@ -25,7 +24,7 @@ import {
   CartesianGrid,
   Tooltip
 } from 'recharts';
-import { format, startOfDay, subDays } from 'date-fns';
+import { format, startOfDay, subDays, isValid } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useRouter } from 'next/navigation';
@@ -37,7 +36,6 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { storeId } = useStore();
   
-  // التأكد من تهيئة قاعدة البيانات بكافة مجموعاتها عند دخول الإدارة
   useEffect(() => {
     if (db && storeId) {
       initializeDatabase(db, storeId);
@@ -59,44 +57,44 @@ export default function AdminDashboard() {
   
   const { data: products } = useCollection(productsQuery);
 
-  const orders = useMemo(() => {
-    if (!rawOrders) return [];
-    return [...rawOrders];
-  }, [rawOrders]);
-
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
-    const validOrders = orders || [];
-    const todaySales = validOrders
+    const orders = rawOrders || [];
+    
+    const todaySales = orders
       .filter(o => {
-        const oDate = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : new Date();
-        return oDate >= today && o.status !== 'ملغي';
+        const oDate = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : null;
+        return oDate && isValid(oDate) && oDate >= today && o.status !== 'ملغي';
       })
       .reduce((acc, o) => acc + (o.totals?.total || 0), 0);
 
     return {
       todaySales,
-      totalOrders: validOrders.length,
-      newOrders: validOrders.filter(o => o.status === 'جديد').length,
-      totalCustomers: new Set(validOrders.map(o => o.customer?.phone)).size,
+      totalOrders: orders.length,
+      newOrders: orders.filter(o => o.status === 'جديد').length,
+      totalCustomers: new Set(orders.map(o => o.customer?.phone).filter(Boolean)).size,
       totalProducts: products?.length || 0
     };
-  }, [orders, products]);
+  }, [rawOrders, products]);
 
   const chartData = useMemo(() => {
+    const orders = rawOrders || [];
     const data = [];
     for (let i = 6; i >= 0; i--) {
       const date = subDays(new Date(), i);
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      
       const dayTotal = orders
         .filter(o => {
-          const oDate = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : new Date();
-          return format(oDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') && o.status !== 'ملغي';
+          const oDate = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : null;
+          return oDate && isValid(oDate) && format(oDate, 'yyyy-MM-dd') === formattedDate && o.status !== 'ملغي';
         })
         .reduce((acc, o) => acc + (o.totals?.total || 0), 0);
+        
       data.push({ name: format(date, 'EEE', { locale: ar }), sales: dayTotal });
     }
     return data;
-  }, [orders]);
+  }, [rawOrders]);
 
   const QUICK_ACTIONS = [
     { label: 'إضافة منتج', icon: ShoppingBag, href: '/admin/products/new', color: 'bg-primary' },
@@ -122,8 +120,8 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3">
               <img src="https://picsum.photos/seed/admin/100/100" className="h-10 w-10 rounded-full border-2 border-primary/10" alt="Admin" />
               <div className="text-right">
-                <p className="text-xs font-bold text-primary">مرحباً، Admin</p>
-                <p className="text-[10px] text-primary/40">مدير المتجر</p>
+                <p className="text-xs font-bold text-primary">مرحباً، المديرة</p>
+                <p className="text-[10px] text-primary/40">التحكم الملكي</p>
               </div>
             </div>
           </div>
@@ -133,8 +131,8 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-2">
                 <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><ShoppingBag className="h-5 w-5" /></div>
               </div>
-              <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">إجمالي المبيعات</p>
-              <p className="text-2xl font-black text-primary">{stats.todaySales.toLocaleString()} د.ع</p>
+              <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">مبيعات اليوم</p>
+              <p className="text-xl md:text-2xl font-black text-primary">{stats.todaySales.toLocaleString()} د.ع</p>
             </div>
             <div className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
               <div className="flex items-center justify-between mb-2">
@@ -161,9 +159,9 @@ export default function AdminDashboard() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <div className="bg-white p-10 rounded-[2.5rem] border border-border shadow-sm">
+              <div className="bg-white p-6 md:p-10 rounded-[2.5rem] border border-border shadow-sm">
                 <div className="flex items-center justify-between mb-10">
-                  <h3 className="text-xl font-black text-primary">المبيعات</h3>
+                  <h3 className="text-xl font-black text-primary">المبيعات (آخر 7 أيام)</h3>
                 </div>
                 <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
