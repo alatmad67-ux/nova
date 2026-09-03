@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Download, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDoc, useFirestore } from '@/firebase';
@@ -18,12 +18,13 @@ export function InstallPrompt() {
   const [isInstalled, setIsInstalled] = useState(false);
   
   const db = useFirestore();
-  const settingsRef = doc(db, 'settings', 'general');
+  // استخدام useMemo لمنع إعادة إنشاء المرجع في كل ريندر وتجنب الـ Infinite Loop
+  const settingsRef = useMemo(() => doc(db, 'settings', 'general'), [db]);
   const { data: settings } = useDoc(settingsRef);
 
   useEffect(() => {
     // التحقق مما إذا كان التطبيق مثبتاً بالفعل
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
       return;
     }

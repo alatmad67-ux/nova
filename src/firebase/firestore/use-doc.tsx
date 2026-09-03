@@ -17,6 +17,7 @@ export function useDoc(docRef: DocumentReference | null) {
 
   useEffect(() => {
     if (!docRef) {
+      setData(null); // مسح البيانات إذا كان المرجع فارغاً
       setLoading(false);
       return;
     }
@@ -25,7 +26,8 @@ export function useDoc(docRef: DocumentReference | null) {
     const unsubscribe = onSnapshot(
       docRef,
       (snapshot: DocumentSnapshot) => {
-        setData(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null);
+        const newData = snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
+        setData(newData);
         setLoading(false);
       },
       async (serverError: any) => {
@@ -39,7 +41,7 @@ export function useDoc(docRef: DocumentReference | null) {
     );
 
     return () => unsubscribe();
-  }, [docRef]);
+  }, [docRef]); // سيعمل الـ useEffect فقط عند تغير هوية المرجع (لذا نستخدم useMemo في المكونات)
 
   return { data, loading };
 }
