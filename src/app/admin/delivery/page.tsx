@@ -17,7 +17,8 @@ import {
   Save, 
   X, 
   Phone, 
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -37,7 +38,7 @@ export default function DeliveryCompaniesPage() {
     );
   }, [db, storeId]);
   
-  const { data: companies, loading } = useCollection(companiesQuery);
+  const { data: companies, loading, error: queryError } = useCollection(companiesQuery);
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -57,42 +58,40 @@ export default function DeliveryCompaniesPage() {
     setIsSaving(true);
     const companyData = {
       ...formData,
-      storeId,
+      storeId, // REQUIRED by schema
       updatedAt: serverTimestamp()
     };
 
     if (editingId) {
-      updateDoc(doc(db, 'delivery-companies', editingId), companyData)
+      const docRef = doc(db, 'delivery-companies', editingId);
+      updateDoc(docRef, companyData)
         .then(() => {
           toast({ title: "تم التحديث بنجاح", description: `تم حفظ تعديلات شركة ${formData.name}` });
           resetForm();
         })
         .catch(async (error: any) => {
-          console.error("Update Error:", error);
+          console.error("Update Error Details:", error);
           errorEmitter.emit('permission-error', new FirestorePermissionError({ 
-            path: `delivery-companies/${editingId}`, 
+            path: docRef.path, 
             operation: 'update',
             requestResourceData: companyData
           }));
-          toast({ variant: "destructive", title: "فشل التحديث", description: "تأكدي من صلاحيات الوصول" });
         })
         .finally(() => setIsSaving(false));
     } else {
-      addDoc(collection(db, 'delivery-companies'), { ...companyData, createdAt: serverTimestamp() })
+      const colRef = collection(db, 'delivery-companies');
+      addDoc(colRef, { ...companyData, createdAt: serverTimestamp() })
         .then(() => {
           toast({ title: "تمت الإضافة بنجاح", description: `تمت إضافة شركة ${formData.name} للمنظومة` });
           resetForm();
         })
         .catch(async (error: any) => {
-          console.error("Create Error:", error);
-          // Create the rich, contextual error asynchronously and emit it.
-          const permissionError = new FirestorePermissionError({ 
+          console.error("Create Error Details:", error);
+          errorEmitter.emit('permission-error', new FirestorePermissionError({ 
             path: 'delivery-companies', 
             operation: 'create',
             requestResourceData: companyData
-          });
-          errorEmitter.emit('permission-error', permissionError);
-          toast({ variant: "destructive", title: "فشل الإضافة", description: "خطأ في الصلاحيات أو الاتصال" });
+          }));
         })
         .finally(() => setIsSaving(false));
     }
@@ -101,13 +100,13 @@ export default function DeliveryCompaniesPage() {
   const handleDelete = (id: string, name: string) => {
     if (!window.confirm(`هل أنتِ متأكدة من حذف شركة ${name}؟`)) return;
     
-    deleteDoc(doc(db, 'delivery-companies', id))
+    const docRef = doc(db, 'delivery-companies', id);
+    deleteDoc(docRef)
       .then(() => {
         toast({ title: "تم الحذف", description: "تم مسح بيانات الشركة بنجاح" });
       })
       .catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `delivery-companies/${id}`, operation: 'delete' }));
-        toast({ variant: "destructive", title: "فشل الحذف" });
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'delete' }));
       });
   };
 
@@ -134,6 +133,13 @@ export default function DeliveryCompaniesPage() {
         <AdminHeader />
         
         <main className="flex-grow container mx-auto px-4 py-12">
+          {queryError && (
+            <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              <p className="font-bold text-sm">خطأ في الاتصال: يرجى التأكد من تسجيل الدخول كمسؤولة.</p>
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -169,6 +175,7 @@ export default function DeliveryCompaniesPage() {
                     className="h-12 bg-accent/30 border-border rounded-xl font-bold"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    disabled={isSaving}
                   />
                 </div>
 
@@ -179,6 +186,7 @@ export default function DeliveryCompaniesPage() {
                     className="h-12 bg-accent/30 border-border rounded-xl font-bold dir-ltr"
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    disabled={isSaving}
                   />
                 </div>
 
@@ -189,6 +197,7 @@ export default function DeliveryCompaniesPage() {
                     className="h-12 bg-accent/30 border-border rounded-xl font-bold dir-ltr"
                     value={formData.apiUrl}
                     onChange={(e) => setFormData({...formData, apiUrl: e.target.value})}
+                    disabled={isSaving}
                   />
                 </div>
 

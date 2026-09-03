@@ -82,7 +82,8 @@
         "apiUrl": { "type": "string" },
         "isActive": { "type": "boolean" },
         "storeId": { "type": "string" }
-      }
+      },
+      "required": ["name", "storeId"]
     }
   },
   "auth": {
@@ -91,27 +92,27 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC READ. FULL WRITE ACCESS FOR ADMIN (07858833838@novafashion.iq). RULES_VERSION_60"
+      "description": "PUBLIC READ. ALLOW CREATE, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). RULES_VERSION_70"
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC READ. FULL WRITE ACCESS FOR ADMIN (07858833838@novafashion.iq). RULES_VERSION_60"
+      "description": "PUBLIC READ. ALLOW CREATE, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). RULES_VERSION_70"
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "PUBLIC CREATE. FULL READ/WRITE ACCESS FOR ADMIN (07858833838@novafashion.iq). RULES_VERSION_60"
+      "description": "PUBLIC CREATE ACCESS. ALLOW READ, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). RULES_VERSION_70"
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "PUBLIC READ. FULL WRITE ACCESS FOR ADMIN (07858833838@novafashion.iq). RULES_VERSION_60"
+      "description": "PUBLIC READ. ALLOW CREATE, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). RULES_VERSION_70"
     },
     "/sliders/{sliderId}": {
       "schema": "SliderItem",
-      "description": "PUBLIC READ. FULL WRITE ACCESS FOR ADMIN (07858833838@novafashion.iq). RULES_VERSION_60"
+      "description": "PUBLIC READ. ALLOW CREATE, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). RULES_VERSION_70"
     },
     "/delivery-companies/{companyId}": {
       "schema": "DeliveryCompany",
-      "description": "FULL READ/WRITE ACCESS ONLY FOR ADMIN (07858833838@novafashion.iq). NO PUBLIC ACCESS. RULES_VERSION_60"
+      "description": "ALLOW READ, CREATE, UPDATE, DELETE ONLY FOR AUTHENTICATED ADMIN (07858833838@novafashion.iq). NO PUBLIC ACCESS. RULES_VERSION_70"
     }
   }
 }

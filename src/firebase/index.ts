@@ -2,10 +2,8 @@
 'use client';
 
 /**
- * NOVA FIREBASE CORE - FINAL STABLE INITIALIZATION (v60)
- * 
- * Fixes the "INTERNAL ASSERTION FAILED" by strictly managing the Firestore singleton
- * and ensuring only one configuration call is made per session.
+ * NOVA FIREBASE CORE - ULTRA STABLE (v70)
+ * Uses a single verified instance shared across the app to prevent Assertion Errors.
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -19,44 +17,35 @@ interface NovaFirebaseServices {
   db: Firestore;
 }
 
-// Global cache to prevent multiple initializations across HMR and page loads
-let cachedServices: NovaFirebaseServices | null = null;
-
 export function initializeFirebase(): NovaFirebaseServices {
   if (typeof window === 'undefined') {
     return null as any;
   }
 
-  // Check if we already have the services in memory
   const win = window as any;
-  if (win.__NOVA_FIREBASE__) {
-    return win.__NOVA_FIREBASE__;
+  
+  // Return existing services if already initialized in this session
+  if (win.__NOVA_SERVICES__) {
+    return win.__NOVA_SERVICES__;
   }
 
-  // 1. Initialize Firebase App
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   
-  // 2. Initialize Firestore (Only once with experimental settings)
   let db: Firestore;
   try {
-    // Attempt initialization with forced long polling for proxy stability
+    // Try to initialize with settings first
     db = initializeFirestore(app, {
       experimentalForceLongPolling: true,
-      experimentalAutoDetectLongPolling: false
     });
-  } catch (e: any) {
-    // If already initialized, just get the existing instance
+  } catch (e) {
+    // Fallback to getFirestore if already initialized
     db = getFirestore(app);
   }
 
-  // 3. Initialize Auth
   const auth = getAuth(app);
 
   const services = { app, auth, db };
-  
-  // Save to global window object to survive Hot Module Replacement (HMR)
-  win.__NOVA_FIREBASE__ = services;
-  cachedServices = services;
+  win.__NOVA_SERVICES__ = services;
 
   return services;
 }
