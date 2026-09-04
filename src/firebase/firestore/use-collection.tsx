@@ -45,21 +45,16 @@ export function useCollection(query: Query | null) {
         setLoading(false);
       },
       (serverError: any) => {
-        // IMPORTANT: Callback must be synchronous to avoid internal SDK state corruption (ID: ca9)
+        // مزامنة فورية لمنع خطأ ca9
         if (activeQueryRef.current !== query) return;
 
-        let path = 'unknown';
-        try {
-          if (query instanceof CollectionReference) {
-            path = query.path;
-          } else if ('_query' in (query as any)) {
-            path = (query as any)._query?.path?.toString() || 'query';
-          }
-        } catch (e) {
-          path = 'query-error';
-        }
-        
         if (serverError.code === 'permission-denied') {
+          let path = 'unknown';
+          try {
+            if (query instanceof CollectionReference) path = query.path;
+            else if ('_query' in (query as any)) path = (query as any)._query?.path?.toString() || 'query';
+          } catch (e) {}
+
           const permissionError = new FirestorePermissionError({
             path: path,
             operation: 'list',
@@ -72,9 +67,7 @@ export function useCollection(query: Query | null) {
       }
     );
 
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [query]);
 
   return { data, loading, error };

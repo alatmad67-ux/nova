@@ -2,8 +2,8 @@
 'use client';
 
 /**
- * NOVA FIREBASE CORE - ATOMIC STABLE (v84)
- * حل نهائي لمشكلة Assertion Failed (ID: ca9)
+ * NOVA FIREBASE CORE - ATOMIC STABLE (v85)
+ * الحل النهائي والقطعي لمشكلة Assertion Failed (ID: ca9)
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -11,57 +11,40 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
-interface NovaFirebaseServices {
-  app: FirebaseApp;
-  auth: Auth;
-  db: Firestore;
-}
+let firebaseApp: FirebaseApp;
+let firestore: Firestore;
+let firebaseAuth: Auth;
 
-/**
- * استخدام Singleton مع حماية مطلقة ضد إعادة التهيئة
- */
-function getNovaServices(): NovaFirebaseServices {
-  if (typeof window === 'undefined') {
-    return {} as any;
-  }
-
-  const anyGlobal = (globalThis as any);
-
-  // إذا كانت الخدمات موجودة مسبقاً، لا تقم بأي فعل، فقط أرجعها
-  if (anyGlobal.__NOVA_SERVICES__) {
-    return anyGlobal.__NOVA_SERVICES__;
-  }
-
-  // 1. تهيئة التطبيق
-  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+if (typeof window !== 'undefined') {
+  const g = globalThis as any;
   
-  // 2. تهيئة Firestore مرة واحدة فقط وبدون تعقيدات
-  let db: Firestore;
-  if (!anyGlobal.__NOVA_DB__) {
+  // 1. تثبيت التطبيق
+  if (!g.__NOVA_APP__) {
+    g.__NOVA_APP__ = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  }
+  firebaseApp = g.__NOVA_APP__;
+
+  // 2. تثبيت Firestore لمرة واحدة فقط وبدون تكرار الإعدادات
+  if (!g.__NOVA_DB__) {
     try {
-      db = initializeFirestore(app, {
+      g.__NOVA_DB__ = initializeFirestore(firebaseApp, {
         experimentalForceLongPolling: true,
       });
-      anyGlobal.__NOVA_DB__ = db;
     } catch (e) {
-      db = getFirestore(app);
-      anyGlobal.__NOVA_DB__ = db;
+      g.__NOVA_DB__ = getFirestore(firebaseApp);
     }
-  } else {
-    db = anyGlobal.__NOVA_DB__;
   }
+  firestore = g.__NOVA_DB__;
 
-  // 3. تهيئة Auth
-  const auth = getAuth(app);
-
-  const services = { app, auth, db };
-  anyGlobal.__NOVA_SERVICES__ = services;
-
-  return services;
+  // 3. تثبيت Auth
+  if (!g.__NOVA_AUTH__) {
+    g.__NOVA_AUTH__ = getAuth(firebaseApp);
+  }
+  firebaseAuth = g.__NOVA_AUTH__;
 }
 
-export function initializeFirebase(): NovaFirebaseServices {
-  return getNovaServices();
+export function initializeFirebase() {
+  return { app: firebaseApp, db: firestore, auth: firebaseAuth };
 }
 
 export * from './provider';

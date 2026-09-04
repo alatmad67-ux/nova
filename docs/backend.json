@@ -92,27 +92,27 @@
   "firestore": {
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_84"
+      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_84"
+      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "PUBLIC_CREATE: allow create. ADMIN_OWNER: allow read, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_84"
+      "description": "PUBLIC_CREATE: allow create. ADMIN_OWNER: allow read, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
     },
     "/settings/{settingId}": {
       "schema": "Store",
-      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_84"
+      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
     },
     "/sliders/{sliderId}": {
       "schema": "SliderItem",
-      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_84"
+      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
     },
     "/delivery-companies/{companyId}": {
       "schema": "DeliveryCompany",
-      "description": "ADMIN_OWNER: allow read, write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_84"
+      "description": "ADMIN_OWNER: allow read, write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
     }
   }
 }
