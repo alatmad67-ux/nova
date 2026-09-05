@@ -24,6 +24,8 @@ import { toast } from '@/hooks/use-toast';
 import { IRAQI_GOVERNORATES, STORE_ID } from '@/lib/constants';
 import { cn } from "@/lib/utils";
 import { useRouter } from 'next/navigation';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function AddressesPage() {
   const router = useRouter();
@@ -48,7 +50,7 @@ export default function AddressesPage() {
 
   const { data: addresses, loading: dataLoading } = useCollection(addrQuery);
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!db || !user) return;
     
@@ -58,42 +60,58 @@ export default function AddressesPage() {
     }
 
     setLoading(true);
-    try {
-      const colRef = collection(db, 'users', user.uid, 'addresses');
-      
-      // If this is the first address, or set as default, handle others
-      if (formData.isDefault && addresses) {
-        for (const addr of addresses) {
-          if (addr.isDefault) await updateDoc(doc(db, 'users', user.uid, 'addresses', addr.id), { isDefault: false });
-        }
-      }
+    const colRef = collection(db, 'users', user.uid, 'addresses');
+    
+    const addressData = {
+      ...formData,
+      storeId: STORE_ID,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
 
-      await addDoc(colRef, {
-        ...formData,
-        storeId: STORE_ID,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+    // Add document without await to allow optimistic UI or proper .catch handling
+    addDoc(colRef, addressData)
+      .then(() => {
+        toast({ title: "تم الحفظ بنجاح ✨", description: "تمت إضافة العنوان الجديد إلى قائمتكِ." });
+        setIsAdding(false);
+        setFormData({ label: 'المنزل', governorate: 'بغداد', area: '', street: '', nearestLandmark: '', phone: '', isDefault: false });
+        
+        // If set as default, we might need to unset others, but we do this as a side effect
+        if (formData.isDefault && addresses) {
+          addresses.forEach(addr => {
+            if (addr.isDefault) {
+              updateDoc(doc(db, 'users', user.uid, 'addresses', addr.id), { isDefault: false });
+            }
+          });
+        }
+      })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: colRef.path,
+          operation: 'create',
+          requestResourceData: addressData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-      
-      toast({ title: "تم الحفظ بنجاح ✨", description: "تمت إضافة العنوان الجديد إلى قائمتكِ." });
-      setIsAdding(false);
-      setFormData({ label: 'المنزل', governorate: 'بغداد', area: '', street: '', nearestLandmark: '', phone: '', isDefault: false });
-    } catch (error) {
-      console.error("Save address error:", error);
-      toast({ variant: "destructive", title: "خطأ في الحفظ", description: "فشل حفظ العنوان، يرجى المحاولة لاحقاً." });
-    } finally {
-      setLoading(false);
-    }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!db || !user || !confirm('هل أنتِ متأكدة من حذف هذا العنوان؟')) return;
-    try {
-      await deleteDoc(doc(db, 'users', user.uid, 'addresses', id));
-      toast({ title: "تم الحذف" });
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل الحذف" });
-    }
+    
+    const docRef = doc(db, 'users', user.uid, 'addresses', id);
+    deleteDoc(docRef)
+      .then(() => {
+        toast({ title: "تم الحذف" });
+      })
+      .catch(async (error) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'delete'
+        }));
+      });
   };
 
   return (
