@@ -57,3 +57,36 @@
 .nova-gradient {
   background: linear-gradient(135deg, hsl(var(--primary)) 0%, #6d28d9 100%);
 }
+
+/* Print Specific Styles */
+@media print {
+  @page {
+    margin: 1cm;
+    size: auto;
+  }
+  
+  body {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  .nova-card {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Ensure colors and text are visible */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

@@ -3,14 +3,12 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useDoc, useFirestore, useCollection } from '@/firebase';
-import { doc, updateDoc, collection, query } from 'firebase/firestore';
+import { useDoc, useFirestore } from '@/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { 
   ChevronRight, 
   Truck, 
@@ -18,13 +16,11 @@ import {
   Phone, 
   User, 
   Package, 
-  Calendar,
-  CreditCard,
-  Save,
   Printer,
   Image as ImageIcon,
   MessageCircle,
-  Clock
+  Clock,
+  CreditCard
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -67,6 +63,10 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const openWhatsApp = () => {
     if (!order) return;
     const phone = order.customerPhone.replace(/\D/g, '');
@@ -86,10 +86,13 @@ export default function OrderDetailPage() {
   return (
     <AdminGuard>
       <div className="min-h-screen flex flex-col bg-background text-foreground font-arabic" dir="rtl">
-        <AdminHeader />
+        <div className="print:hidden">
+          <AdminHeader />
+        </div>
         
-        <main className="flex-grow container mx-auto px-4 py-12">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+        <main className="flex-grow container mx-auto px-4 py-12 print:p-0">
+          {/* Page Header - Hidden on Print */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 print:hidden">
             <div className="flex items-center gap-6">
               <button onClick={() => router.back()} className="h-14 w-14 rounded-2xl bg-accent border border-border flex items-center justify-center hover:bg-white transition-all text-primary/40 hover:text-primary shadow-sm">
                 <ChevronRight className="h-6 w-6" />
@@ -103,7 +106,11 @@ export default function OrderDetailPage() {
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <Button onClick={handlePrint} variant="outline" className="h-12 gap-2 rounded-xl bg-white border-border font-black text-primary hover:bg-accent shadow-sm transition-all">
+                <Printer className="h-5 w-5" />
+                طباعة الفاتورة
+              </Button>
               <Button onClick={openWhatsApp} variant="outline" className="border-green-100 h-12 gap-2 rounded-xl bg-green-50 font-black text-green-600 hover:bg-green-100 shadow-sm transition-all">
                 <MessageCircle className="h-5 w-5" />
                 تواصل مع الزبونة
@@ -124,9 +131,9 @@ export default function OrderDetailPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Items Table */}
-            <div className="lg:col-span-2 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print:block">
+            {/* Items Table - Content View */}
+            <div className="lg:col-span-2 space-y-8 print:hidden">
               <div className="nova-card p-10 bg-white border border-border shadow-premium">
                 <h3 className="text-xl font-black mb-8 flex items-center gap-3 text-primary border-b border-border pb-4">
                   <Package className="h-5 w-5 text-secondary" />
@@ -178,8 +185,8 @@ export default function OrderDetailPage() {
               </div>
             </div>
 
-            {/* Customer & Shipping Info */}
-            <div className="space-y-8">
+            {/* Customer & Shipping Info - Content View */}
+            <div className="space-y-8 print:hidden">
               <div className="nova-card p-10 bg-white border border-border shadow-sm">
                 <h3 className="text-xl font-black mb-8 flex items-center gap-3 text-primary border-b border-border pb-4">
                   <User className="h-5 w-5 text-secondary" />
@@ -238,6 +245,94 @@ export default function OrderDetailPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* PRINT INVOICE TEMPLATE - Visible only on print */}
+            <div className="hidden print:block font-arabic text-black bg-white p-8 max-w-[800px] mx-auto border-2 border-black/5">
+               {/* Invoice Header */}
+               <div className="flex justify-between items-start mb-12 border-b-2 border-black/10 pb-8">
+                  <div>
+                     <h1 className="text-4xl font-black text-primary tracking-tighter mb-1">NOVA</h1>
+                     <p className="text-xs font-bold text-black/40 uppercase tracking-[0.3em]">Official Women Store</p>
+                  </div>
+                  <div className="text-left">
+                     <h2 className="text-2xl font-black mb-1">فاتورة طلب</h2>
+                     <p className="text-sm font-black">رقم الطلبية: #{order.orderNumber}</p>
+                     <p className="text-[10px] font-bold text-black/40 mt-1">تاريخ الطلب: {order.createdAt?.seconds ? format(new Date(order.createdAt.seconds * 1000), 'yyyy/MM/dd', { locale: ar }) : '-'}</p>
+                  </div>
+               </div>
+
+               {/* Customer Info Section */}
+               <div className="grid grid-cols-2 gap-12 mb-12">
+                  <div className="space-y-4">
+                     <h3 className="text-xs font-black uppercase tracking-widest text-black/40 border-b border-black/10 pb-1">بيانات الزبونة</h3>
+                     <div>
+                        <p className="text-lg font-black">{order.customerName}</p>
+                        <p className="text-sm font-bold dir-ltr text-right">{order.customerPhone}</p>
+                     </div>
+                  </div>
+                  <div className="space-y-4">
+                     <h3 className="text-xs font-black uppercase tracking-widest text-black/40 border-b border-black/10 pb-1">عنوان التوصيل</h3>
+                     <div className="text-sm font-bold leading-relaxed">
+                        <p>{order.shippingAddress?.governorate} - {order.shippingAddress?.area}</p>
+                        <p>{order.shippingAddress?.street}</p>
+                        <p className="mt-1 text-xs">نقطة دالة: {order.shippingAddress?.nearestLandmark || 'غير محددة'}</p>
+                     </div>
+                  </div>
+               </div>
+
+               {/* Items Table */}
+               <div className="mb-12">
+                  <table className="w-full text-right border-collapse">
+                     <thead>
+                        <tr className="bg-black text-white">
+                           <th className="p-3 text-xs font-black">المنتج</th>
+                           <th className="p-3 text-xs font-black">الخيارات</th>
+                           <th className="p-3 text-xs font-black">الكمية</th>
+                           <th className="p-3 text-xs font-black text-left">السعر</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-black/10">
+                        {order.items?.map((item: any, idx: number) => (
+                           <tr key={idx}>
+                              <td className="p-4">
+                                 <p className="font-black text-sm">{item.name}</p>
+                                 <p className="text-[9px] text-black/40 font-bold uppercase">SKU: {item.sku}</p>
+                              </td>
+                              <td className="p-4 text-xs font-bold">
+                                 {item.color} / {item.size}
+                              </td>
+                              <td className="p-4 text-sm font-black">{item.quantity}</td>
+                              <td className="p-4 text-sm font-black text-left">{(item.price * item.quantity).toLocaleString()} د.ع</td>
+                           </tr>
+                        ))}
+                     </tbody>
+                  </table>
+               </div>
+
+               {/* Summary & Footer */}
+               <div className="flex justify-end mb-20">
+                  <div className="w-64 space-y-3">
+                     <div className="flex justify-between text-xs font-bold text-black/40">
+                        <span>المجموع الفرعي</span>
+                        <span>{order.totals?.subtotal?.toLocaleString()} د.ع</span>
+                     </div>
+                     <div className="flex justify-between text-xs font-bold text-black/40">
+                        <span>أجور التوصيل</span>
+                        <span>{order.totals?.shipping?.toLocaleString()} د.ع</span>
+                     </div>
+                     <div className="h-px bg-black my-2" />
+                     <div className="flex justify-between text-lg font-black border-b-4 border-black pb-1">
+                        <span>الإجمالي</span>
+                        <span>{order.totals?.total?.toLocaleString()} د.ع</span>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="text-center border-t-2 border-black/5 pt-8">
+                  <p className="text-sm font-black mb-1 italic">شكراً لاختياركِ NOVA</p>
+                  <p className="text-[10px] font-bold text-black/20 uppercase tracking-[0.4em]">nova-fashion.com | 07858833838</p>
+               </div>
             </div>
           </div>
         </main>
