@@ -5,16 +5,11 @@ import cloudinary from '@/lib/cloudinary';
 
 /**
  * أكشن رفع الصور الحقيقي لمتجر NOVA.
- * تم تعديله لإلغاء الصور العشوائية وفرض الرفع الحقيقي.
+ * تم تحسينه لإعطاء تفاصيل دقيقة للخطأ.
  */
 export async function uploadImage(formData: FormData) {
   const file = formData.get('file') as File;
   if (!file) throw new Error('لم يتم اختيار ملف');
-
-  // التأكد من أن مفاتيح Cloudinary موجودة
-  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-    throw new Error('إعدادات Cloudinary مفقودة من السيرفر. يرجى التأكد من ضبط الـ Environment Variables.');
-  }
 
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -27,13 +22,12 @@ export async function uploadImage(formData: FormData) {
           resource_type: 'image',
           quality: 'auto',
           fetch_format: 'auto',
-          // ضمان استلام الرابط بصيغة HTTPS
           secure: true 
         },
         (error, result) => {
           if (error) {
-            console.error('Cloudinary Upload Error Details:', error);
-            reject(new Error(`فشل الرفع لـ Cloudinary: ${error.message}`));
+            console.error('Cloudinary Error:', error);
+            reject(new Error(error.message || 'فشل الرفع لـ Cloudinary'));
           } else {
             resolve(result);
           }
@@ -44,7 +38,7 @@ export async function uploadImage(formData: FormData) {
 
     return result.secure_url;
   } catch (error: any) {
-    console.error('Upload Action Crash:', error);
-    throw new Error(error.message || 'فشل في رفع الصورة، يرجى التحقق من اتصالك وحجم الملف');
+    console.error('Upload Error:', error);
+    throw new Error(error.message || 'حدث خطأ أثناء محاولة رفع الصورة');
   }
 }

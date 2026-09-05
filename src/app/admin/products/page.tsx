@@ -21,7 +21,8 @@ import {
   Search, 
   Trash2, 
   Eye, 
-  EyeOff 
+  EyeOff,
+  Pencil
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { toast } from '@/hooks/use-toast';
@@ -123,6 +124,9 @@ export default function AdminProductsPage() {
                     <TableCell className="font-black text-primary">{product.price?.toLocaleString()} د.ع</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-3">
+                        <Link href={`/admin/products/${product.id}`} className="p-2 bg-accent rounded-lg text-primary/40 hover:text-primary transition-all">
+                          <Pencil className="h-4 w-4" />
+                        </Link>
                         <button onClick={() => toggleStatus(product.id, product.status)} className="p-2 bg-accent rounded-lg text-primary/40 hover:text-primary transition-all">
                           {product.status === 'active' ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         </button>
