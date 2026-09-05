@@ -102,9 +102,9 @@ export default function Home() {
       <Header />
       
       <main className="flex-grow space-y-4 pt-24">
-        {/* Top Greeting */}
+        {/* Top Greeting - Aligned to Right */}
         {!isViewSearchResults && (
-          <section className="container mx-auto px-6 flex justify-end">
+          <section className="container mx-auto px-6 flex justify-start">
             <p className="text-primary/40 text-sm font-medium">
               أهلاً، {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'جميلة نوفا'}
             </p>

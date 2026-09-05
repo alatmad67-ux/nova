@@ -12,7 +12,7 @@ import {
   RotateCcw,
   MessageCircle,
   Sparkles,
-  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   ChevronUp,
   Plus,
@@ -110,7 +110,7 @@ export default function ProductPage() {
     <div className="min-h-screen flex flex-col bg-background font-arabic pb-32">
       <header className="h-16 flex items-center px-6 justify-between sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border/30">
         <button onClick={() => router.back()} className="h-9 w-9 rounded-full bg-accent flex items-center justify-center text-primary shadow-sm">
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronRight className="h-5 w-5" />
         </button>
         <span className="text-xs font-black text-primary truncate max-w-[180px]">{product.name}</span>
         <button onClick={() => toggleFavorite(product.id)} className={cn("h-9 w-9 rounded-full bg-accent flex items-center justify-center shadow-sm", isFav ? "text-primary" : "text-primary/20")}>
@@ -254,8 +254,8 @@ export default function ProductPage() {
         </div>
       </main>
 
-      {/* Integrated Action Bar with Quantity Selector */}
-      <div className="fixed bottom-20 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-border/30 z-40">
+      {/* Fixed Action Bar with Quantity Selector at the absolute bottom */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-border/30 z-50 pb-safe shadow-2xl">
          <div className="container mx-auto max-w-lg flex items-center gap-3">
             
             {/* Quantity Controls */}
