@@ -12,7 +12,9 @@ import {
   RotateCcw,
   MessageCircle,
   Sparkles,
-  ChevronLeft
+  ChevronLeft,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +36,7 @@ export default function ProductPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
 
   const isFav = favorites.includes(id as string);
 
@@ -57,10 +60,6 @@ export default function ProductPage() {
   const originalPrice = product.originalPrice || 0;
   const variants = product.variants || [];
 
-  const currentVariant = variants.find((v: any) => 
-    v.color === selectedColor && v.size === selectedSize
-  );
-
   const availableColors = Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean))) as string[];
   const availableSizes = selectedColor 
     ? variants.filter((v: any) => v.color === selectedColor).map((v: any) => v.size).filter(Boolean)
@@ -72,6 +71,10 @@ export default function ProductPage() {
       return;
     }
     
+    const currentVariant = variants.find((v: any) => 
+      v.color === selectedColor && v.size === selectedSize
+    );
+
     addToCart({
       id: product.id,
       name: product.name || 'منتج نوفا',
@@ -88,6 +91,18 @@ export default function ProductPage() {
     toast({ title: "تمت الإضافة", description: "القطعة الآن في حقيبة تسوقكِ ✨" });
   };
 
+  const DetailSection = ({ title, content }: { title: string, content?: string }) => {
+    if (!content) return null;
+    return (
+      <div className="space-y-3">
+        <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">{title}</Label>
+        <p className="text-sm font-bold text-primary/60 leading-relaxed bg-accent/30 p-4 rounded-2xl border border-border/20">
+          {content}
+        </p>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background font-arabic pb-32">
       <header className="h-20 flex items-center px-6 justify-between sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border/30">
@@ -101,6 +116,7 @@ export default function ProductPage() {
       </header>
       
       <main className="flex-grow">
+        {/* Images */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-accent">
           <Image
             src={images[activeImage]}
@@ -124,7 +140,8 @@ export default function ProductPage() {
            ))}
         </div>
 
-        <div className="px-6 py-4 space-y-6">
+        <div className="px-6 py-4 space-y-8">
+          {/* Header Info */}
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-secondary" />
@@ -145,15 +162,19 @@ export default function ProductPage() {
 
           <div className="h-px bg-border/50" />
 
+          {/* Variants for Fashion */}
           {availableColors.length > 0 && (
-            <div className="space-y-3">
-              <Label className="text-xs font-black text-primary/40 uppercase">اللون المتاح</Label>
-              <div className="flex flex-wrap gap-2">
+            <div className="space-y-4">
+              <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">اللون المتاح</Label>
+              <div className="flex flex-wrap gap-3">
                 {availableColors.map(c => (
                   <button 
                    key={c} 
-                   onClick={() => setSelectedColor(c)}
-                   className={cn("px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all", selectedColor === c ? "border-primary bg-primary/5 text-primary" : "border-border text-primary/40")}
+                   onClick={() => { setSelectedColor(c); setSelectedSize(null); }}
+                   className={cn(
+                     "px-6 py-3 rounded-2xl border-2 font-black text-xs transition-all", 
+                     selectedColor === c ? "border-primary bg-primary text-white shadow-lg" : "border-border text-primary/40 bg-white"
+                   )}
                   >
                     {c}
                   </button>
@@ -163,14 +184,17 @@ export default function ProductPage() {
           )}
 
           {availableSizes.length > 0 && (
-            <div className="space-y-3">
-              <Label className="text-xs font-black text-primary/40 uppercase">القياس</Label>
-              <div className="flex flex-wrap gap-2">
+            <div className="space-y-4">
+              <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">القياس</Label>
+              <div className="flex flex-wrap gap-3">
                 {availableSizes.map((s: any) => (
                   <button 
                    key={s} 
                    onClick={() => setSelectedSize(s)}
-                   className={cn("h-12 w-12 rounded-2xl border-2 flex items-center justify-center font-black text-xs transition-all", selectedSize === s ? "border-primary bg-primary/5 text-primary" : "border-border text-primary/40")}
+                   className={cn(
+                     "h-12 w-12 rounded-2xl border-2 flex items-center justify-center font-black text-xs transition-all", 
+                     selectedSize === s ? "border-primary bg-primary text-white shadow-lg" : "border-border text-primary/40 bg-white"
+                   )}
                   >
                     {s}
                   </button>
@@ -179,11 +203,41 @@ export default function ProductPage() {
             </div>
           )}
 
-          <div className="space-y-4">
-             <Label className="text-xs font-black text-primary/40 uppercase">الوصف</Label>
-             <p className="text-sm font-bold text-primary/60 leading-relaxed whitespace-pre-line">{product.description || 'لا يوجد وصف متاح لهذا المنتج حالياً.'}</p>
+          {/* Dynamic Details Sections */}
+          <div className="space-y-6">
+            {/* Main Description with Expand/Collapse */}
+            <div className="space-y-3">
+               <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">الوصف</Label>
+               <div className="relative">
+                  <p className={cn(
+                    "text-sm font-bold text-primary/60 leading-relaxed whitespace-pre-line",
+                    !isDescExpanded && "line-clamp-3"
+                  )}>
+                    {product.description || 'لا يوجد وصف متاح لهذا المنتج حالياً.'}
+                  </p>
+                  {product.description?.length > 100 && (
+                    <button 
+                      onClick={() => setIsDescExpanded(!isDescExpanded)}
+                      className="mt-2 text-xs font-black text-secondary flex items-center gap-1 hover:underline"
+                    >
+                      {isDescExpanded ? (
+                        <>إغلاق <ChevronUp className="h-3 w-3" /></>
+                      ) : (
+                        <>عرض المزيد <ChevronDown className="h-3 w-3" /></>
+                      )}
+                    </button>
+                  )}
+               </div>
+            </div>
+
+            {/* Skincare / Devices Fields */}
+            <DetailSection title="المكونات" content={product.ingredients} />
+            <DetailSection title="طريقة الاستخدام" content={product.howToUse} />
+            <DetailSection title="المواصفات التقنية" content={product.specifications} />
+            <DetailSection title="خامة القماش" content={product.material} />
           </div>
 
+          {/* Trust Features */}
           <div className="grid grid-cols-3 gap-3 pt-6">
              {[
                { icon: Truck, label: 'توصيل سريع' },
@@ -199,12 +253,20 @@ export default function ProductPage() {
         </div>
       </main>
 
-      <div className="fixed bottom-20 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-border/30 flex gap-3 z-40">
-         <Button onClick={handleAddToCart} className="flex-[2] h-16 rounded-3xl bg-primary text-white text-lg font-black shadow-xl shadow-primary/20 gap-3">
+      {/* Action Bar */}
+      <div className="fixed bottom-20 left-0 right-0 p-4 bg-white/90 backdrop-blur-xl border-t border-border/30 flex gap-3 z-40">
+         <Button 
+          onClick={handleAddToCart} 
+          className="flex-[2] h-16 rounded-[2rem] bg-primary text-white text-lg font-black shadow-xl shadow-primary/20 gap-3 hover:scale-[1.02] transition-all"
+         >
             <ShoppingBag className="h-6 w-6" />
             أضف للسلة
          </Button>
-         <Button variant="outline" onClick={() => window.open(`https://wa.me/9647858833838?text=أود الاستفسار عن ${product.name}`, '_blank')} className="flex-1 h-16 rounded-3xl border-border bg-white text-green-500 hover:bg-green-50">
+         <Button 
+          variant="outline" 
+          onClick={() => window.open(`https://wa.me/9647858833838?text=أود الاستفسار عن ${product.name}`, '_blank')} 
+          className="flex-1 h-16 rounded-[2rem] border-border bg-white text-green-500 hover:bg-green-50 shadow-sm"
+         >
             <MessageCircle className="h-8 w-8" />
          </Button>
       </div>
