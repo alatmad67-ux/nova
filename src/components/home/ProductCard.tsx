@@ -1,9 +1,10 @@
+
 "use client";
 
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, ShoppingBag, Plus } from 'lucide-react';
+import { Heart, ShoppingBag } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from '@/providers/cart-provider';
@@ -16,7 +17,6 @@ interface ProductProps {
     price: number;
     originalPrice?: number;
     category: string;
-    rating: number;
     image: string;
     badge?: string;
   }
@@ -31,22 +31,21 @@ export function ProductCard({ product }: ProductProps) {
     : null;
 
   return (
-    <div className="bg-white rounded-[2rem] group relative overflow-hidden flex flex-col h-full border border-border/50 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500">
-      <Link href={`/product/${product.id}`} className="block relative aspect-[3/4] overflow-hidden bg-muted/30">
+    <div className="bg-white rounded-[2.5rem] group relative overflow-hidden flex flex-col h-full border border-border/30 hover:shadow-xl transition-all duration-500">
+      <Link href={`/product/${product.id}`} className="block relative aspect-[4/5] overflow-hidden bg-accent/30 m-2 rounded-[2rem]">
         <Image
           src={product.image}
           alt={product.name}
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
+          className="object-cover transition-transform duration-700 group-hover:scale-110"
           sizes="(max-width: 768px) 50vw, 25vw"
-          data-ai-hint="fashion clothes"
         />
         
-        {/* Actions Overlay */}
+        {/* Heart Icon Top Right */}
         <button 
           className={cn(
-            "absolute top-4 right-4 p-2.5 rounded-full shadow-lg transition-all duration-300 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100 z-10",
-            isFav ? "bg-primary text-white" : "bg-white text-primary hover:bg-primary hover:text-white"
+            "absolute top-3 right-3 p-2 rounded-full shadow-md transition-all z-10",
+            isFav ? "bg-primary text-white" : "bg-white/80 backdrop-blur-sm text-primary"
           )}
           onClick={(e) => {
             e.preventDefault();
@@ -56,43 +55,30 @@ export function ProductCard({ product }: ProductProps) {
           <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
         </button>
 
-        {product.badge && (
-          <Badge className="absolute top-4 left-4 bg-secondary text-white border-none px-3 py-1 text-[9px] font-bold rounded-lg shadow-sm z-10">
-            {product.badge}
-          </Badge>
-        )}
-
         {discount && (
-          <Badge className="absolute bottom-4 left-4 bg-primary text-white border-none px-2 py-0.5 text-[9px] font-bold rounded-lg z-10">
+          <Badge className="absolute top-3 left-3 bg-red-500 text-white border-none px-2 py-0.5 text-[9px] font-black rounded-lg z-10">
             -{discount}%
           </Badge>
         )}
       </Link>
 
-      <div className="p-5 flex flex-col flex-grow text-center">
-        <h4 className="font-bold text-primary text-sm md:text-base line-clamp-1 mb-2">
+      <div className="px-4 pb-4 flex flex-col flex-grow">
+        <h4 className="font-bold text-primary text-xs md:text-sm line-clamp-1 mb-1">
           {product.name}
         </h4>
-
-        <div className="flex flex-col items-center gap-1 mb-4">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-black text-primary">{product.price.toLocaleString()}</span>
-            <span className="text-[9px] font-bold text-primary/40">د.ع</span>
-          </div>
-          {product.originalPrice && (
-            <span className="text-xs text-primary/30 line-through">
-              {product.originalPrice.toLocaleString()} د.ع
-            </span>
-          )}
-        </div>
         
-        <div className="mt-auto">
-          <Button asChild className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/10 transition-all hover:scale-[1.02]">
-            <Link href={`/product/${product.id}`} className="flex items-center justify-center gap-2">
-              <ShoppingBag className="h-4 w-4" />
-              <span className="text-xs font-bold">تسوقي الآن</span>
-            </Link>
-          </Button>
+        <div className="flex items-center justify-between mt-auto">
+          <div className="flex flex-col">
+            <span className="text-sm font-black text-primary">{product.price.toLocaleString()} د.ع</span>
+            {product.originalPrice && (
+              <span className="text-[10px] text-primary/30 line-through">
+                {product.originalPrice.toLocaleString()} د.ع
+              </span>
+            )}
+          </div>
+          <button className="h-8 w-8 rounded-full bg-accent border border-border/50 flex items-center justify-center text-primary/60 hover:bg-primary hover:text-white transition-all">
+            <ShoppingBag className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>

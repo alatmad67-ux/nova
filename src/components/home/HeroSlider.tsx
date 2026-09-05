@@ -11,10 +11,8 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
+import Autoplay from "embla-carousel-autoplay";
 
 export function HeroSlider() {
   const db = useFirestore();
@@ -36,7 +34,7 @@ export function HeroSlider() {
     if (!slides || slides.length === 0) return [
       { 
         title: "أناقتكِ تبدأ من هنا", 
-        subtitle: "اكتشفي أحدث تشكيلات الأزياء النسائية للموسم الجديد", 
+        subtitle: "اكتشفي أحدث تشكيلات الموسم", 
         image: "https://picsum.photos/seed/nova-h1/1200/800",
         link: "/shop"
       }
@@ -45,55 +43,45 @@ export function HeroSlider() {
   }, [slides, loading]);
 
   if (loading) return (
-    <section className="container mx-auto px-4 py-6 md:py-10">
-      <div className="w-full h-[400px] md:h-[600px] rounded-[2.5rem] bg-accent/20 animate-pulse" />
+    <section className="container mx-auto px-5 py-2">
+      <div className="w-full h-[200px] rounded-[2.5rem] bg-accent/20 animate-pulse" />
     </section>
   );
 
   return (
-    <section className="container mx-auto px-4 py-6 md:py-10">
+    <section className="container mx-auto px-5 py-2">
       <Carousel 
         opts={{ loop: true, direction: 'rtl' }}
-        className="w-full overflow-hidden rounded-[2.5rem] bg-accent/30 relative group"
+        plugins={[Autoplay({ delay: 5000 })]}
+        className="w-full overflow-hidden rounded-[2.5rem] bg-accent/30 shadow-sm"
       >
         <CarouselContent>
           {sortedSlides.map((slide, index) => (
             <CarouselItem key={index}>
-              <div className="relative h-[400px] md:h-[600px] w-full flex items-center overflow-hidden">
-                <div className="flex-1 p-8 md:p-24 z-10 text-right">
-                  <h2 className="text-4xl md:text-7xl font-black mb-6 text-primary leading-[1.1] animate-in fade-in slide-in-from-right-10 duration-700">
+              <Link href={slide.link || "/shop"} className="block relative h-[180px] md:h-[400px] w-full overflow-hidden">
+                <Image
+                  src={slide.image}
+                  alt={slide.title}
+                  fill
+                  className="object-cover"
+                  priority={index === 0}
+                />
+                <div className="absolute inset-0 bg-gradient-to-l from-primary/30 to-transparent flex flex-col justify-center p-8">
+                  <h2 className="text-xl md:text-4xl font-black text-white mb-1 drop-shadow-md">
                     {slide.title}
                   </h2>
-                  <p className="text-base md:text-xl text-primary/60 mb-10 max-w-lg leading-relaxed font-medium animate-in fade-in slide-in-from-right-8 duration-700 delay-100">
+                  <p className="text-[10px] md:text-lg text-white/90 font-bold drop-shadow-md">
                     {slide.subtitle}
                   </p>
-                  <Button asChild size="lg" className="rounded-2xl px-12 h-14 text-lg font-bold bg-primary text-white hover:bg-primary/90 transition-all hover:scale-105 shadow-xl shadow-primary/10">
-                    <Link href={slide.link || "/shop"}>تسوقي الآن</Link>
-                  </Button>
                 </div>
-                
-                <div className="flex-1 relative h-full w-full hidden md:block">
-                  <Image
-                    src={slide.image}
-                    alt={slide.title}
-                    fill
-                    className="object-cover"
-                    priority={index === 0}
-                    data-ai-hint="fashion model"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-accent/30 via-transparent to-transparent" />
-                </div>
-
-                <div className="md:hidden absolute inset-0 -z-0 opacity-20">
-                  <Image src={slide.image} alt="bg" fill className="object-cover" />
-                </div>
-              </div>
+              </Link>
             </CarouselItem>
           ))}
         </CarouselContent>
-        <div className="absolute bottom-10 right-24 hidden md:flex gap-4">
-          <CarouselPrevious className="relative left-0 top-0 translate-y-0 h-10 w-10 border-primary/20 text-primary hover:bg-primary hover:text-white" />
-          <CarouselNext className="relative right-0 top-0 translate-y-0 h-10 w-10 border-primary/20 text-primary hover:bg-primary hover:text-white" />
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {sortedSlides.map((_, i) => (
+            <div key={i} className="h-1.5 w-1.5 rounded-full bg-white/40" />
+          ))}
         </div>
       </Carousel>
     </section>
