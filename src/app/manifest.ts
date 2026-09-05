@@ -3,11 +3,11 @@ import { MetadataRoute } from 'next';
 
 /**
  * ملف Manifest ديناميكي لمتجر NOVA.
- * يحاول جلب شعار المتجر من الإعدادات أو استخدام شعار افتراضي.
+ * يستخدم شعار المتجر الرسمي لضمان تجربة PWA احترافية.
  */
 export default function manifest(): MetadataRoute.Manifest {
-  // ملاحظة: الأيقونات في الـ PWA يفضل أن تكون ثابتة في مجلد public لضمان العمل بدون إنترنت
-  // ولكن سنقوم بضبط المسارات لتكون جاهزة لاستقبال شعار المتجر
+  const logoUrl = 'https://l.top4top.io/p_39004lv5j0.png';
+
   return {
     name: 'نوفا للأزياء النسائية - NOVA',
     short_name: 'NOVA',
@@ -20,13 +20,13 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'ar',
     icons: [
       {
-        src: 'https://res.cloudinary.com/nova-fashion/image/upload/v1/nova-assets/icon-192.png',
+        src: logoUrl,
         sizes: '192x192',
         type: 'image/png',
         purpose: 'maskable'
       },
       {
-        src: 'https://res.cloudinary.com/nova-fashion/image/upload/v1/nova-assets/icon-512.png',
+        src: logoUrl,
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any'

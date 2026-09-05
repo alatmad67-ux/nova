@@ -8,10 +8,16 @@ import { CartProvider } from '@/providers/cart-provider';
 import { InstallPrompt } from '@/components/layout/InstallPrompt';
 import Script from 'next/script';
 
+const LOGO_URL = 'https://l.top4top.io/p_39004lv5j0.png';
+
 export const metadata: Metadata = {
   title: 'NOVA | أزياء نسائية فاخرة',
   description: 'نوفا للأزياء النسائية الفاخرة - تصاميم حصرية تناسب ذوقكِ الرفيع في العراق',
   manifest: '/manifest.json',
+  icons: {
+    icon: LOGO_URL,
+    apple: LOGO_URL,
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -66,7 +72,6 @@ export default function RootLayout({
           </StoreProvider>
         </FirebaseClientProvider>
 
-        {/* تسجيل الـ Service Worker برمجياً لضمان التثبيت */}
         <Script id="register-sw" strategy="afterInteractive">
           {`
             if ('serviceWorker' in navigator) {
