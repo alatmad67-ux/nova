@@ -14,11 +14,21 @@
     --border: 280 10% 90%;
     --radius: 2rem;
   }
+
+  .dark {
+    --background: 280 50% 5%;
+    --foreground: 340 30% 95%;
+    --primary: 280 50% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 45 40% 50%;
+    --accent: 280 40% 10%;
+    --border: 280 30% 15%;
+  }
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground font-arabic antialiased overflow-x-hidden;
+    @apply bg-background text-foreground font-arabic antialiased overflow-x-hidden transition-colors duration-300;
     -webkit-tap-highlight-color: transparent;
   }
 }
@@ -41,4 +51,9 @@
 /* Safe Area for Bottom Nav */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Custom Gradients */
+.nova-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, #6d28d9 100%);
 }

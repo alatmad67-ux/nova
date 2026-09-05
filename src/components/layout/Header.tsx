@@ -5,26 +5,44 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { ShoppingBag, Bell } from 'lucide-react';
 import { useCart } from '@/providers/cart-provider';
-import { useDoc, useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDoc, useFirestore, useUser, useCollection } from '@/firebase';
+import { doc, query, collection, where } from 'firebase/firestore';
 import Image from 'next/image';
+import { STORE_ID } from '@/lib/constants';
 
 export function Header() {
   const { cart } = useCart();
   const db = useFirestore();
+  const { user } = useUser();
   const settingsRef = useMemo(() => db ? doc(db, 'settings', 'general') : null, [db]);
   const { data: settings } = useDoc(settingsRef);
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+  const notifyQuery = useMemo(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.uid),
+      where('isRead', '==', false),
+      where('storeId', '==', STORE_ID)
+    );
+  }, [db, user]);
+
+  const { data: unreadNotifications } = useCollection(notifyQuery);
+  const unreadCount = unreadNotifications?.length || 0;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-border/30 h-20">
       <div className="container mx-auto px-5 h-full flex items-center justify-between relative">
         
         {/* Left: Notification */}
-        <button className="h-11 w-11 rounded-full bg-accent flex items-center justify-center text-primary/60 shadow-sm border border-border/20">
+        <Link href="/account/notifications" className="h-11 w-11 rounded-full bg-accent flex items-center justify-center text-primary/60 shadow-sm border border-border/20 relative">
           <Bell className="h-5 w-5" />
-        </button>
+          {unreadCount > 0 && (
+             <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 border-2 border-white rounded-full animate-pulse" />
+          )}
+        </Link>
 
         {/* Center: Logo */}
         <Link href="/" className="absolute left-1/2 -translate-x-1/2">
