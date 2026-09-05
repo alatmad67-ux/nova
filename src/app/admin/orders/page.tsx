@@ -25,7 +25,7 @@ import { AdminHeader } from '@/components/layout/AdminHeader';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { Eye, Truck, Search, Calendar, Filter } from 'lucide-react';
+import { Eye, Truck, Search, Calendar, Filter, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useStore } from '@/providers/store-provider';
 import { format } from 'date-fns';
@@ -41,6 +41,7 @@ export default function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  // استعلام الطلبات مع مراعاة تأخير الفهارس أحياناً
   const ordersQuery = useMemo(() => {
     if (!db || !storeId) return null;
     return query(
@@ -50,7 +51,7 @@ export default function AdminOrdersPage() {
     );
   }, [db, storeId]);
     
-  const { data: orders, loading } = useCollection(ordersQuery);
+  const { data: orders, loading, error } = useCollection(ordersQuery);
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
@@ -124,6 +125,16 @@ export default function AdminOrdersPage() {
               </div>
             </div>
           </div>
+
+          {error && (
+            <div className="mb-8 p-6 bg-red-50 border border-red-100 rounded-[2rem] text-red-600 flex items-center gap-4">
+               <AlertCircle className="h-6 w-6" />
+               <div>
+                 <p className="font-black">خطأ في جلب البيانات من Firestore</p>
+                 <p className="text-xs font-bold opacity-80">{error.message}</p>
+               </div>
+            </div>
+          )}
 
           <div className="nova-card overflow-hidden border-border bg-white shadow-premium">
             {loading && filteredOrders.length === 0 ? (

@@ -109,7 +109,7 @@ export default function OrderDetailPage() {
             <div className="flex flex-wrap items-center gap-4">
               <Button onClick={handlePrint} variant="outline" className="h-12 gap-2 rounded-xl bg-white border-border font-black text-primary hover:bg-accent shadow-sm transition-all">
                 <Printer className="h-5 w-5" />
-                طباعة الفاتورة
+                طباعة الفاتورة (حرارية)
               </Button>
               <Button onClick={openWhatsApp} variant="outline" className="border-green-100 h-12 gap-2 rounded-xl bg-green-50 font-black text-green-600 hover:bg-green-100 shadow-sm transition-all">
                 <MessageCircle className="h-5 w-5" />
@@ -132,7 +132,7 @@ export default function OrderDetailPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print:block">
-            {/* Items Table - Content View */}
+            {/* Content View */}
             <div className="lg:col-span-2 space-y-8 print:hidden">
               <div className="nova-card p-10 bg-white border border-border shadow-premium">
                 <h3 className="text-xl font-black mb-8 flex items-center gap-3 text-primary border-b border-border pb-4">
@@ -158,7 +158,6 @@ export default function OrderDetailPage() {
                            <Badge variant="outline" className="text-[10px] font-black border-primary/10 text-primary/60">القياس: {item.size}</Badge>
                            <Badge variant="outline" className="text-[10px] font-black border-primary/10 text-primary/60">الكمية: {item.quantity}</Badge>
                         </div>
-                        <p className="text-[10px] text-primary/20 font-bold mt-2 uppercase tracking-tighter">SKU: {item.sku}</p>
                       </div>
                       <div className="text-left">
                         <p className="font-black text-secondary text-lg">{(item.price * item.quantity).toLocaleString()} د.ع</p>
@@ -185,7 +184,7 @@ export default function OrderDetailPage() {
               </div>
             </div>
 
-            {/* Customer & Shipping Info - Content View */}
+            {/* Sidebar View */}
             <div className="space-y-8 print:hidden">
               <div className="nova-card p-10 bg-white border border-border shadow-sm">
                 <h3 className="text-xl font-black mb-8 flex items-center gap-3 text-primary border-b border-border pb-4">
@@ -193,145 +192,81 @@ export default function OrderDetailPage() {
                   بيانات الزبونة
                 </h3>
                 <div className="space-y-8">
-                  <div className="flex items-start gap-4">
-                    <div className="h-10 w-10 bg-accent rounded-full flex items-center justify-center flex-shrink-0 text-primary/40">
-                      <User className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-primary/40 font-black uppercase tracking-widest mb-1">الاسم الكامل</p>
-                      <p className="font-black text-lg text-primary">{order.customerName}</p>
-                    </div>
+                  <div>
+                    <p className="text-[10px] text-primary/40 font-black uppercase tracking-widest mb-1">الاسم الكامل</p>
+                    <p className="font-black text-lg text-primary">{order.customerName}</p>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <div className="h-10 w-10 bg-accent rounded-full flex items-center justify-center flex-shrink-0 text-primary/40">
-                      <Phone className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-primary/40 font-black uppercase tracking-widest mb-1">رقم الهاتف</p>
-                      <p className="font-black text-lg text-primary dir-ltr text-right">{order.customerPhone}</p>
-                    </div>
+                  <div>
+                    <p className="text-[10px] text-primary/40 font-black uppercase tracking-widest mb-1">رقم الهاتف</p>
+                    <p className="font-black text-lg text-primary dir-ltr text-right">{order.customerPhone}</p>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <div className="h-10 w-10 bg-accent rounded-full flex items-center justify-center flex-shrink-0 text-primary/40">
-                      <MapPin className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-primary/40 font-black uppercase tracking-widest mb-1">عنوان التوصيل</p>
-                      <p className="font-bold text-primary/80 leading-relaxed text-sm">
-                        {order.shippingAddress?.governorate} - {order.shippingAddress?.area}<br />
-                        {order.shippingAddress?.street}<br />
-                        <span className="text-secondary font-black">نقطة دالة: {order.shippingAddress?.nearestLandmark || 'غير محددة'}</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="nova-card p-10 bg-primary/5 border border-primary/10">
-                <h3 className="text-lg font-black mb-6 flex items-center gap-3 text-primary">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  حالة الدفع
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-black text-primary/40 uppercase tracking-widest">طريقة الدفع</span>
-                    <Badge variant="outline" className="border-primary/20 text-primary font-black bg-white">عند الاستلام</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-black text-primary/40 uppercase tracking-widest">تاريخ الطلب</span>
-                    <span className="text-xs font-bold text-primary/60">
-                      {order.createdAt?.seconds ? format(new Date(order.createdAt.seconds * 1000), 'PPPP', { locale: ar }) : '-'}
-                    </span>
+                  <div>
+                    <p className="text-[10px] text-primary/40 font-black uppercase tracking-widest mb-1">عنوان التوصيل</p>
+                    <p className="font-bold text-primary/80 leading-relaxed text-sm">
+                      {order.shippingAddress?.governorate} - {order.shippingAddress?.area}<br />
+                      {order.shippingAddress?.street}<br />
+                      <span className="text-secondary font-black">نقطة دالة: {order.shippingAddress?.nearestLandmark || 'غير محددة'}</span>
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* PRINT INVOICE TEMPLATE - Visible only on print */}
-            <div className="hidden print:block font-arabic text-black bg-white p-8 max-w-[800px] mx-auto border-2 border-black/5">
-               {/* Invoice Header */}
-               <div className="flex justify-between items-start mb-12 border-b-2 border-black/10 pb-8">
-                  <div>
-                     <h1 className="text-4xl font-black text-primary tracking-tighter mb-1">NOVA</h1>
-                     <p className="text-xs font-bold text-black/40 uppercase tracking-[0.3em]">Official Women Store</p>
-                  </div>
-                  <div className="text-left">
-                     <h2 className="text-2xl font-black mb-1">فاتورة طلب</h2>
-                     <p className="text-sm font-black">رقم الطلبية: #{order.orderNumber}</p>
-                     <p className="text-[10px] font-bold text-black/40 mt-1">تاريخ الطلب: {order.createdAt?.seconds ? format(new Date(order.createdAt.seconds * 1000), 'yyyy/MM/dd', { locale: ar }) : '-'}</p>
-                  </div>
+            {/* THERMAL INVOICE TEMPLATE (80mm) - Hidden on Screen */}
+            <div className="hidden print:block font-arabic text-black bg-white p-4 w-[80mm] max-w-[80mm] mx-auto">
+               <div className="text-center border-b border-black pb-4 mb-4">
+                  <h1 className="text-2xl font-black tracking-tighter">NOVA</h1>
+                  <p className="text-[10px] font-bold uppercase tracking-widest">Official Women Store</p>
+                  <p className="text-[12px] font-black mt-2">رقم الطلبية: #{order.orderNumber}</p>
+                  <p className="text-[10px] font-bold mt-1">تاريخ: {order.createdAt?.seconds ? format(new Date(order.createdAt.seconds * 1000), 'yyyy/MM/dd', { locale: ar }) : '-'}</p>
                </div>
 
-               {/* Customer Info Section */}
-               <div className="grid grid-cols-2 gap-12 mb-12">
-                  <div className="space-y-4">
-                     <h3 className="text-xs font-black uppercase tracking-widest text-black/40 border-b border-black/10 pb-1">بيانات الزبونة</h3>
-                     <div>
-                        <p className="text-lg font-black">{order.customerName}</p>
-                        <p className="text-sm font-bold dir-ltr text-right">{order.customerPhone}</p>
-                     </div>
-                  </div>
-                  <div className="space-y-4">
-                     <h3 className="text-xs font-black uppercase tracking-widest text-black/40 border-b border-black/10 pb-1">عنوان التوصيل</h3>
-                     <div className="text-sm font-bold leading-relaxed">
-                        <p>{order.shippingAddress?.governorate} - {order.shippingAddress?.area}</p>
-                        <p>{order.shippingAddress?.street}</p>
-                        <p className="mt-1 text-xs">نقطة دالة: {order.shippingAddress?.nearestLandmark || 'غير محددة'}</p>
-                     </div>
-                  </div>
+               <div className="text-[12px] mb-4 space-y-1">
+                  <p><span className="font-black">الزبونة:</span> {order.customerName}</p>
+                  <p><span className="font-black">الهاتف:</span> <span className="dir-ltr inline-block">{order.customerPhone}</span></p>
+                  <p><span className="font-black">العنوان:</span> {order.shippingAddress?.governorate} - {order.shippingAddress?.area}</p>
+                  <p>{order.shippingAddress?.street}</p>
+                  {order.shippingAddress?.nearestLandmark && <p><span className="font-black">نقطة دالة:</span> {order.shippingAddress.nearestLandmark}</p>}
                </div>
 
-               {/* Items Table */}
-               <div className="mb-12">
-                  <table className="w-full text-right border-collapse">
-                     <thead>
-                        <tr className="bg-black text-white">
-                           <th className="p-3 text-xs font-black">المنتج</th>
-                           <th className="p-3 text-xs font-black">الخيارات</th>
-                           <th className="p-3 text-xs font-black">الكمية</th>
-                           <th className="p-3 text-xs font-black text-left">السعر</th>
+               <table className="w-full text-right text-[11px] mb-4 border-t border-black">
+                  <thead>
+                     <tr className="border-b border-black">
+                        <th className="py-2">المنتج</th>
+                        <th className="py-2 text-left">السعر</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-dotted divide-black">
+                     {order.items?.map((item: any, idx: number) => (
+                        <tr key={idx}>
+                           <td className="py-2">
+                              <p className="font-black leading-tight">{item.name}</p>
+                              <p className="text-[9px]">{item.color} / {item.size} × {item.quantity}</p>
+                           </td>
+                           <td className="py-2 text-left font-black">{(item.price * item.quantity).toLocaleString()}</td>
                         </tr>
-                     </thead>
-                     <tbody className="divide-y divide-black/10">
-                        {order.items?.map((item: any, idx: number) => (
-                           <tr key={idx}>
-                              <td className="p-4">
-                                 <p className="font-black text-sm">{item.name}</p>
-                                 <p className="text-[9px] text-black/40 font-bold uppercase">SKU: {item.sku}</p>
-                              </td>
-                              <td className="p-4 text-xs font-bold">
-                                 {item.color} / {item.size}
-                              </td>
-                              <td className="p-4 text-sm font-black">{item.quantity}</td>
-                              <td className="p-4 text-sm font-black text-left">{(item.price * item.quantity).toLocaleString()} د.ع</td>
-                           </tr>
-                        ))}
-                     </tbody>
-                  </table>
-               </div>
+                     ))}
+                  </tbody>
+               </table>
 
-               {/* Summary & Footer */}
-               <div className="flex justify-end mb-20">
-                  <div className="w-64 space-y-3">
-                     <div className="flex justify-between text-xs font-bold text-black/40">
-                        <span>المجموع الفرعي</span>
-                        <span>{order.totals?.subtotal?.toLocaleString()} د.ع</span>
-                     </div>
-                     <div className="flex justify-between text-xs font-bold text-black/40">
-                        <span>أجور التوصيل</span>
-                        <span>{order.totals?.shipping?.toLocaleString()} د.ع</span>
-                     </div>
-                     <div className="h-px bg-black my-2" />
-                     <div className="flex justify-between text-lg font-black border-b-4 border-black pb-1">
-                        <span>الإجمالي</span>
-                        <span>{order.totals?.total?.toLocaleString()} د.ع</span>
-                     </div>
+               <div className="text-[12px] space-y-1 border-t border-black pt-4">
+                  <div className="flex justify-between">
+                     <span>المجموع الفرعي:</span>
+                     <span>{order.totals?.subtotal?.toLocaleString()} د.ع</span>
+                  </div>
+                  <div className="flex justify-between">
+                     <span>أجور التوصيل:</span>
+                     <span>{order.totals?.shipping?.toLocaleString()} د.ع</span>
+                  </div>
+                  <div className="flex justify-between text-[16px] font-black border-t border-black mt-2 pt-2">
+                     <span>الإجمالي:</span>
+                     <span>{order.totals?.total?.toLocaleString()} د.ع</span>
                   </div>
                </div>
 
-               <div className="text-center border-t-2 border-black/5 pt-8">
-                  <p className="text-sm font-black mb-1 italic">شكراً لاختياركِ NOVA</p>
-                  <p className="text-[10px] font-bold text-black/20 uppercase tracking-[0.4em]">nova-fashion.com | 07858833838</p>
+               <div className="text-center mt-10 border-t border-black pt-4">
+                  <p className="text-[12px] font-black italic">شكراً لاختياركِ NOVA</p>
+                  <p className="text-[9px] mt-1">يرجى فحص القطعة عند الاستلام</p>
                </div>
             </div>
           </div>

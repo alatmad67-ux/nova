@@ -14,7 +14,8 @@ import {
   Truck,
   ChevronLeft,
   Clock,
-  Eye
+  Eye,
+  AlertCircle
 } from 'lucide-react';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { useCollection, useFirestore, useUser } from '@/firebase';
@@ -50,24 +51,25 @@ export default function AdminDashboard() {
     }
   }, [db, storeId, user]);
   
+  // استعلام الطلبات مع مراعاة تأخير الفهارس
   const ordersQuery = useMemo(() => {
-    if (!db || !storeId || !user) return null;
+    if (!db || !storeId) return null;
     return query(
       collection(db, 'orders'), 
       where('storeId', '==', storeId),
       orderBy('createdAt', 'desc')
     );
-  }, [db, storeId, user]);
+  }, [db, storeId]);
   
-  const { data: rawOrders, loading: ordersLoading } = useCollection(ordersQuery);
+  const { data: rawOrders, loading: ordersLoading, error: ordersError } = useCollection(ordersQuery);
   
   const productsQuery = useMemo(() => {
-    if (!db || !storeId || !user) return null;
+    if (!db || !storeId) return null;
     return query(
       collection(db, 'products'), 
       where('storeId', '==', storeId)
     );
-  }, [db, storeId, user]);
+  }, [db, storeId]);
   
   const { data: products } = useCollection(productsQuery);
 
@@ -122,10 +124,20 @@ export default function AdminDashboard() {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-background text-foreground flex flex-col font-arabic" dir="rtl">
+      <div className="min-h-screen bg-background text-foreground font-arabic" dir="rtl">
         <AdminHeader />
         
         <main className="flex-grow container mx-auto px-4 py-12">
+          {ordersError && (
+            <div className="mb-10 p-6 bg-red-50 border border-red-100 rounded-[2.5rem] text-red-600 flex items-center gap-4">
+               <AlertCircle className="h-6 w-6" />
+               <div>
+                 <p className="font-black italic">نظام مراقبة الفهارس (Index Alert)</p>
+                 <p className="text-xs font-bold opacity-80">الطلبات موجودة في قاعدة البيانات ولكن الفايربيس يحتاج لثوانٍ لبناء الفهرس. يرجى الانتظار.</p>
+               </div>
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-2">
