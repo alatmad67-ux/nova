@@ -18,8 +18,8 @@ import {
   X, 
   Phone, 
   Loader2,
-  AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  PackageCheck
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -71,8 +71,7 @@ export default function DeliveryCompaniesPage() {
           toast({ title: "تم التحديث بنجاح", description: `تم حفظ تعديلات شركة ${formData.name}` });
           resetForm();
         })
-        .catch(async (error: any) => {
-          console.error("Firestore Update Error:", error);
+        .catch((error: any) => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({ 
             path: docRef.path, 
             operation: 'update',
@@ -87,8 +86,7 @@ export default function DeliveryCompaniesPage() {
           toast({ title: "تمت الإضافة بنجاح", description: `تمت إضافة شركة ${formData.name}` });
           resetForm();
         })
-        .catch(async (error: any) => {
-          console.error("Firestore Create Error:", error);
+        .catch((error: any) => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({ 
             path: 'delivery-companies', 
             operation: 'create',
@@ -108,8 +106,7 @@ export default function DeliveryCompaniesPage() {
       .then(() => {
         toast({ title: "تم الحذف", description: "تم مسح بيانات الشركة بنجاح" });
       })
-      .catch(async (error) => {
-        console.error("Firestore Delete Error:", error);
+      .catch((error) => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'delete' }));
       });
   };
@@ -137,21 +134,6 @@ export default function DeliveryCompaniesPage() {
         <AdminHeader />
         
         <main className="flex-grow container mx-auto px-4 py-12">
-          {queryError && (
-            <div className="mb-8 p-6 bg-red-50 border-2 border-red-200 rounded-[2rem] flex flex-col gap-4 text-red-600 animate-in slide-in-from-top-4">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-6 w-6 shrink-0" />
-                <h3 className="font-black text-lg">خطأ في مزامنة البيانات</h3>
-              </div>
-              <p className="text-sm font-bold opacity-80 leading-relaxed">
-                يبدو أن هناك مشكلة في صلاحيات الوصول لمجموعة "شركات التوصيل". يرجى التأكد من تحديث هيكل البيانات (Backend Schema) من لوحة التحكم الرئيسية لضمان تفعيل قواعد الأمان المطلوبة.
-              </p>
-              <div className="text-[10px] font-mono bg-red-100/50 p-3 rounded-xl overflow-x-auto whitespace-pre-wrap">
-                {queryError.message}
-              </div>
-            </div>
-          )}
-
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -222,17 +204,8 @@ export default function DeliveryCompaniesPage() {
                     onClick={handleSave}
                     disabled={isSaving}
                   >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="ml-2 h-6 w-6 animate-spin" />
-                        جاري الحفظ في الفاير ستور...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="ml-2 h-5 w-5" />
-                        حفظ البيانات الملكية
-                      </>
-                    )}
+                    {isSaving ? <Loader2 className="ml-2 h-6 w-6 animate-spin" /> : <Save className="ml-2 h-5 w-5" />}
+                    حفظ بيانات الشركة
                   </Button>
                 </div>
               </div>
@@ -240,7 +213,7 @@ export default function DeliveryCompaniesPage() {
           )}
 
           {loading ? (
-            <div className="py-20 text-center font-black animate-pulse text-primary/20 text-lg">جاري تحميل القائمة...</div>
+            <div className="py-20 text-center font-black animate-pulse text-primary/20 text-lg">جاري تحميل القائمة الملكية...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {companies?.map((company: any) => (
@@ -269,7 +242,7 @@ export default function DeliveryCompaniesPage() {
                   )}
                 </div>
               ))}
-              {companies?.length === 0 && !queryError && (
+              {companies?.length === 0 && (
                 <div className="col-span-full py-32 text-center opacity-20 text-primary border-4 border-dashed border-accent rounded-[3rem]">
                   <Truck className="h-20 w-20 mx-auto mb-6" />
                   <p className="font-black text-xl">لا توجد شركات توصيل مضافة حالياً</p>

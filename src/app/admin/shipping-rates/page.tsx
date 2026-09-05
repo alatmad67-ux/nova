@@ -9,7 +9,7 @@ import { AdminGuard } from '@/components/layout/AdminGuard';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Truck, Save, Loader2, CheckCircle2, Globe } from 'lucide-react';
+import { Truck, Save, Loader2, Globe } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { IRAQI_GOVERNORATES, STORE_ID } from '@/lib/constants';
 import { Switch } from "@/components/ui/switch";
