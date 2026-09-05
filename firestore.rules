@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // وظيفة للتحقق مما إذا كان المستخدم هو مدير النظام
+    function isAdmin() {
+      return request.auth != null && 
+        (request.auth.token.email == "07858833838@novafashion.iq" || 
+         request.auth.token.email == "+9647858833838@nova-auth.local");
+    }
+
+    // إعدادات المتجر العامة
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // المنتجات والأقسام والسلايدر
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /sliders/{sliderId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // شركات التوصيل وأسعار الشحن
+    match /delivery-companies/{companyId} {
+      allow read, write: if isAdmin();
+    }
+    match /shipping-rates/{rateId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // بيانات المستخدمين والعناوين والمفضلات
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      match /addresses/{addressId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /favorites/{productId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // الطلبات (الزبون ينشئ ويقرأ طلبه، الأدمن يتحكم بكل شيء)
+    match /orders/{orderId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && (request.auth.uid == resource.data.customerId || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+
+    // الإشعارات
+    match /notifications/{notificationId} {
+      allow read, update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create, delete: if isAdmin();
+    }
+  }
+}
