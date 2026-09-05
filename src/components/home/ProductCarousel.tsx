@@ -18,16 +18,16 @@ export function ProductCarousel({ title, products, viewAllHref }: ProductCarouse
   return (
     <section className="space-y-4">
       <div className="container mx-auto px-5 flex items-center justify-between">
-        <h2 className="text-xl font-black text-primary">{title}</h2>
-        <Link href={viewAllHref} className="text-xs font-bold text-primary/40 flex items-center gap-1 hover:text-primary transition-colors">
+        <h2 className="text-lg font-black text-primary">{title}</h2>
+        <Link href={viewAllHref} className="text-[10px] font-bold text-primary/40 flex items-center gap-1 hover:text-primary transition-colors">
           عرض الكل
           <ChevronLeft className="h-3 w-3" />
         </Link>
       </div>
 
-      <div className="flex overflow-x-auto gap-4 px-5 pb-4 no-scrollbar snap-x">
+      <div className="flex overflow-x-auto gap-3 px-5 pb-4 no-scrollbar snap-x">
         {products.map((product) => (
-          <div key={product.id} className="min-w-[160px] md:min-w-[220px] snap-start">
+          <div key={product.id} className="min-w-[145px] md:min-w-[200px] snap-start">
             <ProductCard 
               product={{
                 id: product.id,
