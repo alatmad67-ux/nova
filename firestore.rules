@@ -32,8 +32,7 @@ service cloud.firestore {
 
     // شركات التوصيل وأسعار الشحن (الأدمن فقط لديه كامل الصلاحية)
     match /delivery-companies/{companyId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if isAdmin();
     }
     match /shipping-rates/{rateId} {
       allow read: if true;
@@ -62,7 +61,8 @@ service cloud.firestore {
     // الإشعارات
     match /notifications/{notificationId} {
       allow read, update: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create, delete: if isAdmin();
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow delete: if isAdmin();
     }
   }
 }

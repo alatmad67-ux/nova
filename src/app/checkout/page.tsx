@@ -3,28 +3,24 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowRight, 
   MapPin, 
-  Truck, 
   CreditCard,
   CheckCircle2,
   ChevronLeft,
   Loader2,
   Plus,
   Package,
-  AlertCircle
+  MessageCircle
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Header } from '@/components/layout/Header';
 import { useCart } from '@/providers/cart-provider';
 import { useFirestore, useUser, useCollection } from '@/firebase';
-import { doc, collection, serverTimestamp, runTransaction, query, where, getDoc } from 'firebase/firestore';
+import { doc, collection, serverTimestamp, setDoc, query, where, getDoc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { STORE_ID } from '@/lib/constants';
-import { cn } from "@/lib/utils";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -33,7 +29,7 @@ export default function CheckoutPage() {
   const db = useFirestore();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [orderResult, setOrderResult] = useState<{ id: string, number: string } | null>(null);
+  const [orderResult, setOrderResult] = useState<{ id: string, number: string, total: number, address: any } | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [deliveryPrice, setDeliveryPrice] = useState(0);
 
@@ -76,6 +72,7 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
     try {
       const orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
+      const newOrderRef = doc(collection(db, 'orders'));
       
       const orderData = {
         orderNumber,
@@ -106,10 +103,9 @@ export default function CheckoutPage() {
         updatedAt: serverTimestamp()
       };
 
-      const newOrderRef = doc(collection(db, 'orders'));
       await setDoc(newOrderRef, orderData);
       
-      // Send internal notification
+      // Send internal notification (Permissions fixed in rules)
       await setDoc(doc(collection(db, 'notifications')), {
         userId: user.uid,
         title: 'تم استلام طلبكِ بنجاح ✨',
@@ -121,13 +117,35 @@ export default function CheckoutPage() {
         createdAt: serverTimestamp()
       });
 
-      setOrderResult({ id: newOrderRef.id, number: orderNumber });
+      setOrderResult({ 
+        id: newOrderRef.id, 
+        number: orderNumber, 
+        total: total,
+        address: selectedAddress
+      });
       clearCart();
     } catch (error: any) {
-      toast({ variant: "destructive", title: "فشل إرسال الطلب", description: "يرجى التأكد من اتصالكِ بالإنترنت" });
+      console.error("Order Error:", error);
+      toast({ 
+        variant: "destructive", 
+        title: "فشل إرسال الطلب", 
+        description: error.message?.includes('permission') ? "خطأ في الصلاحيات، يرجى المحاولة لاحقاً" : "يرجى التأكد من اتصالكِ بالإنترنت" 
+      });
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const sendToWhatsApp = () => {
+    if (!orderResult) return;
+    const phone = '9647858833838';
+    const message = `مرحباً NOVA، أود تأكيد طلبي الجديد:
+رقم الطلبية: #${orderResult.number}
+المبلغ الإجمالي: ${orderResult.total.toLocaleString()} د.ع
+العنوان: ${orderResult.address.governorate} - ${orderResult.address.area}
+شكراً لكم ✨`;
+    
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   if (userLoading) return <div className="min-h-screen bg-background flex items-center justify-center font-black animate-pulse">جاري التحقق...</div>;
@@ -141,15 +159,25 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen flex flex-col bg-background font-arabic">
         <main className="flex-grow flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-full max-w-md bg-white p-12 rounded-[4rem] border border-border/50 shadow-premium">
-            <div className="h-24 w-24 rounded-full bg-green-50 flex items-center justify-center text-green-500 mx-auto mb-8 shadow-inner">
-               <CheckCircle2 className="h-12 w-12" />
+          <div className="w-full max-w-md bg-white p-10 rounded-[4rem] border border-border/50 shadow-premium">
+            <div className="h-20 w-20 rounded-full bg-green-50 flex items-center justify-center text-green-500 mx-auto mb-8 shadow-inner">
+               <CheckCircle2 className="h-10 w-10" />
             </div>
-            <h1 className="text-3xl font-black text-primary mb-4">شكراً لكِ!</h1>
-            <p className="text-primary/40 font-bold mb-10">تم تثبيت طلبكِ بنجاح برقم <span className="text-primary">#{orderResult.number}</span>. سنقوم بالتواصل معكِ قريباً لتأكيد الشحن.</p>
-            <Button asChild className="w-full h-16 rounded-3xl bg-primary text-white font-black shadow-xl">
-              <Link href="/account/orders">متابعة طلباتي</Link>
-            </Button>
+            <h1 className="text-3xl font-black text-primary mb-4">تم تثبيت طلبكِ!</h1>
+            <p className="text-primary/40 font-bold mb-10 text-sm">رقم الطلبية هو <span className="text-primary">#{orderResult.number}</span>. يرجى الضغط على الزر أدناه لإرسال التفاصيل عبر واتساب لسرعة التأكيد.</p>
+            
+            <div className="space-y-4">
+              <Button 
+                onClick={sendToWhatsApp}
+                className="w-full h-16 rounded-[2rem] bg-green-500 text-white text-lg font-black shadow-xl hover:bg-green-600 transition-all gap-3"
+              >
+                <MessageCircle className="h-6 w-6" />
+                تأكيد عبر واتساب
+              </Button>
+              <Button asChild variant="ghost" className="w-full h-14 rounded-2xl text-primary/40 font-black">
+                <Link href="/account/orders">عرض طلباتي</Link>
+              </Button>
+            </div>
           </div>
         </main>
       </div>
@@ -179,7 +207,7 @@ export default function CheckoutPage() {
           <div className="grid grid-cols-1 gap-4">
             {addressesLoading ? (
               <div className="h-32 bg-accent animate-pulse rounded-[2.5rem]" />
-            ) : addresses?.length === 0 ? (
+            ) : !addresses || addresses.length === 0 ? (
               <Button asChild variant="outline" className="h-32 rounded-[2.5rem] border-dashed border-primary/20 flex flex-col gap-2">
                 <Link href="/account/addresses"><Plus className="h-6 w-6" /> أضيفي عنوانكِ الأول</Link>
               </Button>
@@ -233,7 +261,7 @@ export default function CheckoutPage() {
            
            <Button 
             onClick={handlePlaceOrder} 
-            disabled={isSubmitting || !selectedAddress}
+            disabled={isSubmitting || !selectedAddress || cart.length === 0}
             className="w-full mt-6 h-16 rounded-[2rem] bg-white text-primary text-xl font-black hover:scale-[1.02] transition-all shadow-xl"
            >
              {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : "تأكيد الطلبية الآن"}
