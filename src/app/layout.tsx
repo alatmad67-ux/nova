@@ -6,6 +6,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { StoreProvider } from '@/providers/store-provider';
 import { CartProvider } from '@/providers/cart-provider';
 import { InstallPrompt } from '@/components/layout/InstallPrompt';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'NOVA | أزياء نسائية فاخرة',
@@ -14,7 +15,10 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'NOVA Fashion',
+    title: 'NOVA',
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
 
@@ -24,6 +28,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -45,7 +50,8 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-title" content="NOVA" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="font-arabic antialiased selection:bg-primary/30 selection:text-white overflow-x-hidden bg-background text-foreground min-h-screen flex flex-col">
         <FirebaseClientProvider>
@@ -59,6 +65,21 @@ export default function RootLayout({
             </CartProvider>
           </StoreProvider>
         </FirebaseClientProvider>
+
+        {/* تسجيل الـ Service Worker برمجياً لضمان التثبيت */}
+        <Script id="register-sw" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                  console.log('NOVA ServiceWorker registered');
+                }, function(err) {
+                  console.log('NOVA ServiceWorker registration failed: ', err);
+                });
+              });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );
