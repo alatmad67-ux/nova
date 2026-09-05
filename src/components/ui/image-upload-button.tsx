@@ -23,7 +23,7 @@ export function ImageUploadButton({ onUploadComplete, className, label = "رفع
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // فحص حجم الملف قبل الرفع (10MB)
+    // فحص حجم الملف (10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast({ 
         variant: "destructive", 
@@ -39,19 +39,23 @@ export function ImageUploadButton({ onUploadComplete, className, label = "رفع
     formData.append('file', file);
 
     try {
+      // استدعاء الأكشن الحقيقي
       const url = await uploadImage(formData);
+      
+      // إذا نجح، نقوم بتحديث الواجهة بالرابط الحقيقي
       onUploadComplete(url);
-      toast({ title: "تم الرفع بنجاح ✨", description: "الصورة جاهزة الآن" });
+      toast({ title: "تم الرفع بنجاح ✨", description: "الصورة الآن محفوظة في حساب NOVA" });
     } catch (err: any) {
       console.error(err);
       setError(err.message);
       toast({ 
         variant: "destructive", 
-        title: "خطأ في الرفع", 
-        description: err.message || "فشل رفع الصورة، يرجى المحاولة لاحقاً" 
+        title: "فشل الرفع الحقيقي", 
+        description: err.message || "يرجى التحقق من إعدادات Cloudinary في السيرفر" 
       });
     } finally {
       setIsUploading(false);
+      // مسح المدخل لتمكين اختيار نفس الملف مرة أخرى
       if (e.target) e.target.value = '';
     }
   };
@@ -80,7 +84,7 @@ export function ImageUploadButton({ onUploadComplete, className, label = "رفع
         {isUploading ? (
           <>
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="text-xs font-black text-primary">جاري الرفع...</span>
+            <span className="text-xs font-black text-primary">جاري الرفع للحساب...</span>
           </>
         ) : (
           <>
@@ -91,8 +95,8 @@ export function ImageUploadButton({ onUploadComplete, className, label = "رفع
       </Button>
       
       {error && (
-        <div className="flex items-center gap-1 text-[9px] text-red-500 font-bold px-2">
-          <AlertCircle className="h-3 w-3" />
+        <div className="flex items-start gap-1 text-[9px] text-red-500 font-bold px-2 leading-tight">
+          <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}

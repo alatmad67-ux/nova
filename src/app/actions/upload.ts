@@ -5,15 +5,15 @@ import cloudinary from '@/lib/cloudinary';
 
 /**
  * أكشن رفع الصور الحقيقي لمتجر NOVA.
- * يتم استخدامه في لوحة التحكم لرفع صور المنتجات والسلايدر واللوغو.
+ * تم تعديله لإلغاء الصور العشوائية وفرض الرفع الحقيقي.
  */
 export async function uploadImage(formData: FormData) {
   const file = formData.get('file') as File;
   if (!file) throw new Error('لم يتم اختيار ملف');
 
-  // التحقق من وجود الإعدادات
-  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY) {
-    throw new Error('إعدادات Cloudinary غير مكتملة في السيرفر');
+  // التأكد من أن مفاتيح Cloudinary موجودة
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    throw new Error('إعدادات Cloudinary مفقودة من السيرفر. يرجى التأكد من ضبط الـ Environment Variables.');
   }
 
   try {
@@ -26,12 +26,14 @@ export async function uploadImage(formData: FormData) {
           folder: 'nova-official-store',
           resource_type: 'image',
           quality: 'auto',
-          fetch_format: 'auto'
+          fetch_format: 'auto',
+          // ضمان استلام الرابط بصيغة HTTPS
+          secure: true 
         },
         (error, result) => {
           if (error) {
-            console.error('Cloudinary Upload Error:', error);
-            reject(error);
+            console.error('Cloudinary Upload Error Details:', error);
+            reject(new Error(`فشل الرفع لـ Cloudinary: ${error.message}`));
           } else {
             resolve(result);
           }
@@ -42,7 +44,7 @@ export async function uploadImage(formData: FormData) {
 
     return result.secure_url;
   } catch (error: any) {
-    console.error('Final Upload Crash:', error);
-    throw new Error(error.message || 'فشل في رفع الصورة، يرجى التحقق من الاتصال');
+    console.error('Upload Action Crash:', error);
+    throw new Error(error.message || 'فشل في رفع الصورة، يرجى التحقق من اتصالك وحجم الملف');
   }
 }
