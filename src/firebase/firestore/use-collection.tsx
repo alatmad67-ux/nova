@@ -16,10 +16,12 @@ export function useCollection(query: Query | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
-  // Track active query to prevent setting state on stale listeners
   const activeQueryRef = useRef<Query | null>(null);
+  const isUnmounting = useRef(false);
 
   useEffect(() => {
+    isUnmounting.current = false;
+    
     if (!query) {
       setData(null);
       setLoading(false);
@@ -31,24 +33,25 @@ export function useCollection(query: Query | null) {
     activeQueryRef.current = query;
     setLoading(true);
 
+    // CRITICAL: onSnapshot must be handled SYNCHRONOUSLY to prevent SDK state corruption (ID: ca9)
     const unsubscribe = onSnapshot(
       query,
       (snapshot: QuerySnapshot) => {
-        if (activeQueryRef.current !== query) return;
+        if (isUnmounting.current || activeQueryRef.current !== query) return;
 
         const docs = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+        
         setData(docs);
         setError(null);
         setLoading(false);
       },
       (serverError: any) => {
-        // MUST BE SYNCHRONOUS: async callbacks in onSnapshot error handling 
-        // can lead to Firestore internal state corruption (ID: ca9)
-        if (activeQueryRef.current !== query) return;
+        if (isUnmounting.current || activeQueryRef.current !== query) return;
 
+        // Process error synchronously
         if (serverError.code === 'permission-denied') {
           let path = 'unknown';
           try {
@@ -68,7 +71,10 @@ export function useCollection(query: Query | null) {
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      isUnmounting.current = true;
+      unsubscribe();
+    };
   }, [query]);
 
   return { data, loading, error };

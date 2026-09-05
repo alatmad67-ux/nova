@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useEffect } from 'react';
@@ -14,7 +13,7 @@ import {
   Truck
 } from 'lucide-react';
 import { AdminHeader } from '@/components/layout/AdminHeader';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useUser } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { 
@@ -37,31 +36,33 @@ export default function AdminDashboard() {
   const db = useFirestore();
   const router = useRouter();
   const { storeId } = useStore();
+  const { user } = useUser();
   
+  // Wait for both db and user to be ready before initializing
   useEffect(() => {
-    if (db && storeId) {
+    if (db && storeId && user) {
       initializeDatabase(db, storeId);
     }
-  }, [db, storeId]);
+  }, [db, storeId, user]);
   
   const ordersQuery = useMemo(() => {
-    if (!db || !storeId) return null;
+    if (!db || !storeId || !user) return null;
     return query(
       collection(db, 'orders'), 
       where('storeId', '==', storeId),
       orderBy('createdAt', 'desc')
     );
-  }, [db, storeId]);
+  }, [db, storeId, user]);
   
   const { data: rawOrders } = useCollection(ordersQuery);
   
   const productsQuery = useMemo(() => {
-    if (!db || !storeId) return null;
+    if (!db || !storeId || !user) return null;
     return query(
       collection(db, 'products'), 
       where('storeId', '==', storeId)
     );
-  }, [db, storeId]);
+  }, [db, storeId, user]);
   
   const { data: products } = useCollection(productsQuery);
 
@@ -108,7 +109,7 @@ export default function AdminDashboard() {
     { label: 'إدارة الأقسام', icon: LayoutGrid, href: '/admin/categories', color: 'bg-secondary' },
     { label: 'شركات التوصيل', icon: Truck, href: '/admin/delivery', color: 'bg-green-600' },
     { label: 'السلايدر', icon: ImageIcon, href: '/admin/slider', color: 'bg-primary/60' },
-    { label: 'الإعدادات', icon: SettingsIcon, href: '/admin/settings', color: 'bg-secondary/60' },
+    { label: 'إعدادات المتجر', icon: SettingsIcon, href: '/admin/settings', color: 'bg-secondary/60' },
   ];
 
   return (
