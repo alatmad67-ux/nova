@@ -4,17 +4,28 @@
 import React, { useMemo, useState } from 'react';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { collection, query, where, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { Header } from '@/components/layout/Header';
-import { BottomNav } from '@/components/layout/BottomNav';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, MapPin, Trash2, Edit, Check, X, ChevronRight, Loader2, Home, Briefcase, Info } from 'lucide-react';
+import { 
+  MapPin, 
+  Trash2, 
+  X, 
+  ChevronRight, 
+  Loader2, 
+  Home, 
+  Map, 
+  Flag, 
+  LocateFixed,
+  Plus
+} from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { IRAQI_GOVERNORATES, STORE_ID } from '@/lib/constants';
 import { cn } from "@/lib/utils";
+import { useRouter } from 'next/navigation';
 
 export default function AddressesPage() {
+  const router = useRouter();
   const db = useFirestore();
   const { user } = useUser();
   const [isAdding, setIsAdding] = useState(false);
@@ -42,7 +53,6 @@ export default function AddressesPage() {
     try {
       const colRef = collection(db, 'users', user.uid, 'addresses');
       
-      // If setting as default, clear others
       if (formData.isDefault && addresses) {
         for (const addr of addresses) {
           if (addr.isDefault) await updateDoc(doc(db, 'users', user.uid, 'addresses', addr.id), { isDefault: false });
@@ -55,7 +65,7 @@ export default function AddressesPage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
-      toast({ title: "تم الحفظ", description: "تمت إضافة العنوان بنجاح" });
+      toast({ title: "تم الحفظ", description: "تمت إضافة العنوان بنجاح ✨" });
       setIsAdding(false);
       setFormData({ label: 'المنزل', governorate: 'بغداد', area: '', street: '', nearestLandmark: '', isDefault: false });
     } catch (error) {
@@ -76,142 +86,144 @@ export default function AddressesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background font-arabic pb-32">
-      <Header />
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="rounded-full bg-accent text-primary">
-              <ChevronRight className="h-5 w-5" />
+    <div className="min-h-screen bg-[#3d3333] font-arabic pb-32">
+      {/* Main Header - Matches Image Style */}
+      <header className="h-20 flex items-center px-6 justify-between text-white relative z-10">
+        <div className="w-10" /> {/* Spacer */}
+        <h1 className="text-xl font-bold">العناوين</h1>
+        <button 
+          onClick={() => router.back()}
+          className="h-10 w-10 flex items-center justify-center"
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
+      </header>
+
+      <main className="container mx-auto px-0 max-w-lg">
+        {/* If not adding, show list and "Add" button */}
+        {!isAdding ? (
+          <div className="px-6 py-4">
+             <Button 
+              onClick={() => setIsAdding(true)} 
+              className="w-full h-16 rounded-[2rem] bg-white/10 text-white border border-white/20 font-black mb-8 gap-3"
+            >
+              <Plus className="h-5 w-5" /> إضافة عنوان جديد
             </Button>
-            <h1 className="text-2xl font-black text-primary">عناوين التوصيل</h1>
-          </div>
-          {!isAdding && (
-            <Button onClick={() => setIsAdding(true)} size="sm" className="rounded-xl bg-primary text-white font-bold gap-2">
-              <Plus className="h-4 w-4" /> إضافة جديد
-            </Button>
-          )}
-        </div>
 
-        {isAdding && (
-          <form onSubmit={handleSave} className="bg-white rounded-[2.5rem] p-8 border border-border shadow-premium mb-8 animate-in fade-in zoom-in-95">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-lg font-black text-primary">إضافة عنوان جديد</h3>
-              <button type="button" onClick={() => setIsAdding(false)}><X className="h-5 w-5 text-primary/20" /></button>
+            <div className="space-y-4">
+              {dataLoading ? (
+                <div className="h-32 bg-white/5 animate-pulse rounded-[2.5rem]" />
+              ) : (
+                addresses?.map((addr: any) => (
+                  <div key={addr.id} className="bg-white rounded-[2.5rem] p-6 border border-border shadow-sm flex items-center justify-between">
+                    <div className="text-right">
+                      <h4 className="font-black text-primary text-lg">{addr.label}</h4>
+                      <p className="text-sm text-primary/60 font-bold">{addr.governorate} - {addr.area}</p>
+                      <p className="text-xs text-primary/40 mt-1">{addr.street}</p>
+                    </div>
+                    <button onClick={() => handleDelete(addr.id)} className="p-3 text-red-400 hover:bg-red-50 rounded-full transition-colors">
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
-            
-            <div className="space-y-6">
-              <div className="grid grid-cols-3 gap-3">
-                {['المنزل', 'العمل', 'أخرى'].map(l => (
-                  <button 
-                    key={l} 
-                    type="button"
-                    onClick={() => setFormData({...formData, label: l})}
-                    className={cn(
-                      "h-12 rounded-xl text-xs font-bold border-2 transition-all flex items-center justify-center gap-2",
-                      formData.label === l ? "border-primary bg-primary/5 text-primary" : "border-border text-primary/20"
-                    )}
-                  >
-                    {l === 'المنزل' && <Home className="h-3 w-3" />}
-                    {l === 'العمل' && <Briefcase className="h-3 w-3" />}
-                    {l === 'أخرى' && <Info className="h-3 w-3" />}
-                    {l}
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black text-primary/40 uppercase tracking-widest pr-2">المحافظة</Label>
-                <select 
-                  className="w-full h-12 px-4 bg-accent/30 border border-border rounded-xl text-primary font-bold outline-none"
-                  value={formData.governorate}
-                  onChange={(e) => setFormData({...formData, governorate: e.target.value})}
-                >
-                  {IRAQI_GOVERNORATES.map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black text-primary/40 uppercase tracking-widest pr-2">المنطقة / الحي</Label>
-                <Input 
-                  value={formData.area} 
-                  onChange={(e) => setFormData({...formData, area: e.target.value})} 
-                  placeholder="مثلاً: المنصور، الداودي"
-                  className="h-12 bg-accent/30 rounded-xl"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black text-primary/40 uppercase tracking-widest pr-2">الشارع وأقرب نقطة دالة</Label>
-                <Input 
-                  value={formData.street} 
-                  onChange={(e) => setFormData({...formData, street: e.target.value})} 
-                  placeholder="رقم الدار، اسم الشارع، نقطة دالة"
-                  className="h-12 bg-accent/30 rounded-xl"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center gap-3 py-2">
-                <input 
-                  type="checkbox" 
-                  id="isDefault" 
-                  className="h-5 w-5 rounded-lg border-primary accent-primary" 
-                  checked={formData.isDefault}
-                  onChange={(e) => setFormData({...formData, isDefault: e.target.checked})}
-                />
-                <Label htmlFor="isDefault" className="text-sm font-bold text-primary/60 cursor-pointer">تعيين كعنوان افتراضي</Label>
-              </div>
-
-              <Button type="submit" className="w-full h-14 rounded-2xl bg-primary text-white font-black shadow-lg" disabled={loading}>
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "حفظ العنوان"}
-              </Button>
-            </div>
-          </form>
-        )}
-
-        {dataLoading ? (
-          <div className="space-y-4">
-            {[1, 2].map(i => <div key={i} className="h-32 bg-accent animate-pulse rounded-[2rem]" />)}
           </div>
         ) : (
-          <div className="space-y-4">
-            {addresses?.map((addr: any) => (
-              <div key={addr.id} className={cn(
-                "bg-white rounded-[2rem] p-6 border transition-all relative group",
-                addr.isDefault ? "border-primary/30 shadow-md" : "border-border shadow-sm"
-              )}>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-accent rounded-xl flex items-center justify-center text-primary">
-                      {addr.label === 'المنزل' ? <Home className="h-5 w-5" /> : addr.label === 'العمل' ? <Briefcase className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
-                    </div>
-                    <div>
-                      <h4 className="font-black text-primary">{addr.label}</h4>
-                      {addr.isDefault && <span className="text-[9px] font-black bg-primary text-white px-2 py-0.5 rounded-full uppercase">افتراضي</span>}
-                    </div>
-                  </div>
-                  <button onClick={() => handleDelete(addr.id)} className="p-2 text-primary/10 hover:text-red-500 transition-colors">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="text-sm text-primary/60 font-bold leading-relaxed">
-                  <p>{addr.governorate} - {addr.area}</p>
-                  <p className="text-xs opacity-70 mt-1">{addr.street}</p>
+          /* The "Add Address" Form - Matches Image Panel */
+          <div className="bg-white rounded-t-[3rem] min-h-[85vh] p-8 animate-in slide-in-from-bottom-10 duration-500 shadow-2xl">
+            <div className="flex justify-between items-center mb-8">
+              <button type="button" onClick={() => setIsAdding(false)} className="p-2 text-primary/20">
+                <X className="h-7 w-7" />
+              </button>
+              <h3 className="text-xl font-black text-primary">عنوان التوصيل</h3>
+            </div>
+
+            <form onSubmit={handleSave} className="space-y-8">
+              {/* المحافظة */}
+              <div className="space-y-3">
+                <Label className="text-sm font-bold text-primary/80 pr-2 block text-right">المحافظة</Label>
+                <div className="relative">
+                  <select 
+                    className="w-full h-16 px-12 bg-accent/30 border-none rounded-[1.5rem] text-primary font-bold appearance-none outline-none text-right"
+                    value={formData.governorate}
+                    onChange={(e) => setFormData({...formData, governorate: e.target.value})}
+                  >
+                    {IRAQI_GOVERNORATES.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                  <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500" />
+                  <ChevronRight className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/20 rotate-90" />
                 </div>
               </div>
-            ))}
-            {addresses?.length === 0 && !isAdding && (
-              <div className="text-center py-20 bg-accent/20 rounded-[3rem] border-2 border-dashed border-primary/5">
-                <MapPin className="h-12 w-12 text-primary/10 mx-auto mb-4" />
-                <p className="text-primary/40 font-bold">لا توجد عناوين محفوظة بعد</p>
+
+              {/* المنطقة / الحي */}
+              <div className="space-y-3">
+                <Label className="text-sm font-bold text-primary/80 pr-2 block text-right">المنطقة / الحي</Label>
+                <div className="relative">
+                  <Input 
+                    value={formData.area} 
+                    onChange={(e) => setFormData({...formData, area: e.target.value})} 
+                    placeholder="اسم المنطقة"
+                    className="h-16 pr-12 bg-accent/30 border-none rounded-[1.5rem] text-primary font-bold text-right focus-visible:ring-0"
+                    required
+                  />
+                  <Map className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-800/60" />
+                </div>
               </div>
-            )}
+
+              {/* العنوان التفصيلي */}
+              <div className="space-y-3">
+                <Label className="text-sm font-bold text-primary/80 pr-2 block text-right">العنوان التفصيلي</Label>
+                <div className="relative">
+                  <Input 
+                    value={formData.street} 
+                    onChange={(e) => setFormData({...formData, street: e.target.value})} 
+                    placeholder="الشارع، رقم البناية، الطابق..."
+                    className="h-16 pr-12 bg-accent/30 border-none rounded-[1.5rem] text-primary font-bold text-right focus-visible:ring-0"
+                    required
+                  />
+                  <Home className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-800/60" />
+                </div>
+              </div>
+
+              {/* أقرب نقطة دالة */}
+              <div className="space-y-3">
+                <Label className="text-sm font-bold text-primary/80 pr-2 block text-right">أقرب نقطة دالة</Label>
+                <div className="relative">
+                  <Input 
+                    value={formData.nearestLandmark} 
+                    onChange={(e) => setFormData({...formData, nearestLandmark: e.target.value})} 
+                    placeholder="مثال: مقابل صيدلية النور"
+                    className="h-16 pr-12 bg-accent/30 border-none rounded-[1.5rem] text-primary font-bold text-right focus-visible:ring-0"
+                  />
+                  <Flag className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500" />
+                </div>
+              </div>
+
+              {/* موقع التوصيل على الخريطة */}
+              <div className="space-y-3">
+                <Label className="text-sm font-bold text-primary/80 pr-2 block text-right">موقع التوصيل على الخريطة</Label>
+                <button type="button" className="w-full h-16 px-12 bg-accent/30 rounded-[1.5rem] flex items-center justify-between text-primary/40 font-bold">
+                  <LocateFixed className="h-5 w-5 text-red-500" />
+                  <span>حدّدي موقعكِ على الخريطة</span>
+                  <div className="w-5" />
+                </button>
+              </div>
+
+              {/* حفظ العنوان */}
+              <div className="pt-6">
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full h-16 rounded-[1.5rem] bg-[#d32f2f] text-white text-xl font-bold shadow-xl shadow-red-500/10 hover:bg-red-700 transition-all"
+                >
+                  {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "حفظ العنوان"}
+                </Button>
+              </div>
+            </form>
           </div>
         )}
       </main>
-      <BottomNav />
     </div>
   );
 }
