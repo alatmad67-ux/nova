@@ -22,11 +22,12 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ phone: '', password: '' });
 
-  // CONSTANTS FIXED AS PER USER REQUIREMENTS
+  // الثوابت الخاصة بمديرة النظام
   const ADMIN_PHONE = '07858833838';
   const ADMIN_EMAIL = `${ADMIN_PHONE}@novafashion.iq`;
 
   useEffect(() => {
+    // إذا كان المستخدم مسجلاً بالفعل ببريد الأدمن، يتم توجيهه للوحة التحكم
     if (!userLoading && user?.email === ADMIN_EMAIL) {
       router.push('/admin/dashboard');
     }
@@ -36,15 +37,24 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError(null);
 
-    const phone = formData.phone.trim();
+    if (!auth) {
+      toast({ variant: "destructive", title: "خطأ", description: "نظام التحقق غير جاهز" });
+      return;
+    }
+
+    const inputPhone = formData.phone.trim();
     const password = formData.password.trim();
 
-    if (!phone || !password) {
+    if (!inputPhone || !password) {
       toast({ variant: "destructive", title: "تنبيه", description: "يرجى إدخال جميع البيانات" });
       return;
     }
 
-    if (phone !== ADMIN_PHONE) {
+    // التأكد من تطابق رقم الهاتف (معالجة الصفر في البداية إن وجد)
+    const normalizedInput = inputPhone.startsWith('0') ? inputPhone.substring(1) : inputPhone;
+    const normalizedAdmin = ADMIN_PHONE.startsWith('0') ? ADMIN_PHONE.substring(1) : ADMIN_PHONE;
+
+    if (normalizedInput !== normalizedAdmin) {
       setError("رقم الهاتف هذا لا يمتلك صلاحيات إدارية");
       toast({ variant: "destructive", title: "دخول غير مصرح", description: "رقم الهاتف غير مخصص للإدارة" });
       return;
@@ -52,11 +62,16 @@ export default function AdminLoginPage() {
 
     setLoading(true);
     try {
+      // محاولة تسجيل الدخول باستخدام البريد الإلكتروني المرتبط برقم هاتف الإدارة
       await signInWithEmailAndPassword(auth, ADMIN_EMAIL, password);
-      toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بصلاحيات المديرة" });
+      toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بصلاحيات المديرة ✨" });
       router.push('/admin/dashboard');
     } catch (err: any) {
-      let message = "كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى";
+      console.error("Admin Login Error:", err.code);
+      let message = "كلمة المرور غير صحيحة، أو الحساب غير موجود في النظام";
+      if (err.code === 'auth/user-not-found') message = "حساب الإدارة غير معرف في Firebase";
+      if (err.code === 'auth/wrong-password') message = "كلمة المرور غير صحيحة";
+      
       setError(message);
       toast({ variant: "destructive", title: "خطأ في الدخول", description: message });
     } finally {
@@ -72,7 +87,7 @@ export default function AdminLoginPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-arabic">
+    <div className="min-h-screen flex flex-col bg-background text-foreground font-arabic" dir="rtl">
       <Header />
       
       <main className="flex-grow flex items-center justify-center p-6 bg-accent/10">
@@ -97,7 +112,7 @@ export default function AdminLoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-8">
             <div className="space-y-3">
-              <Label className="text-xs font-black text-primary/40 uppercase tracking-widest pr-2">رقم الهاتف</Label>
+              <Label className="text-xs font-black text-primary/40 uppercase tracking-widest pr-2 block text-right">رقم الهاتف</Label>
               <div className="relative group">
                 <Phone className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
                 <Input 
@@ -111,7 +126,7 @@ export default function AdminLoginPage() {
             </div>
 
             <div className="space-y-3">
-              <Label className="text-xs font-black text-primary/40 uppercase tracking-widest pr-2">كلمة المرور</Label>
+              <Label className="text-xs font-black text-primary/40 uppercase tracking-widest pr-2 block text-right">كلمة المرور</Label>
               <div className="relative group">
                 <Lock className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
                 <Input 
