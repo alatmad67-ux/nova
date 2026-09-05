@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -5,6 +6,9 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
+
+const ADMIN_EMAIL_1 = '07858833838@novafashion.iq';
+const ADMIN_EMAIL_2 = '+9647858833838@nova-auth.local';
 
 export function FirebaseErrorListener() {
   const { toast } = useToast();
@@ -14,6 +18,8 @@ export function FirebaseErrorListener() {
   useEffect(() => {
     const handlePermissionError = (error: any) => {
       const is_admin_route = window.location.pathname.startsWith('/admin');
+      const email = user?.email?.toLowerCase() || '';
+      const isAdmin = email === ADMIN_EMAIL_1 || email === ADMIN_EMAIL_2;
 
       if (is_admin_route) {
         if (!user) {
@@ -23,7 +29,7 @@ export function FirebaseErrorListener() {
             description: "يرجى تسجيل الدخول كمسؤولة للوصول لهذه الصفحة.",
           });
           router.push('/admin/login');
-        } else if (user.email !== '07858833838@novafashion.iq') {
+        } else if (!isAdmin) {
           toast({
             variant: "destructive",
             title: "صلاحيات محدودة",

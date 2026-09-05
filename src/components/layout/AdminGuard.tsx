@@ -5,8 +5,9 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 
-const ADMIN_PHONE = '07858833838';
-const ADMIN_EMAIL = `${ADMIN_PHONE}@novafashion.iq`;
+// الثوابت الموحدة للمديرة
+const ADMIN_EMAIL_1 = '07858833838@novafashion.iq';
+const ADMIN_EMAIL_2 = '+9647858833838@nova-auth.local';
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -15,7 +16,8 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading) {
-      if (!user || user.email !== ADMIN_EMAIL) {
+      const email = user?.email?.toLowerCase() || '';
+      if (!user || (email !== ADMIN_EMAIL_1 && email !== ADMIN_EMAIL_2)) {
         console.warn('Unauthorized access attempt to admin area');
         router.push('/admin/login');
       } else {

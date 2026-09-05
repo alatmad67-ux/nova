@@ -6,11 +6,10 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Lock, Phone, AlertCircle } from 'lucide-react';
+import { Sparkles, Lock, Phone, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -22,13 +21,12 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ phone: '', password: '' });
 
-  // الثوابت الخاصة بمديرة النظام
   const ADMIN_PHONE = '07858833838';
-  const ADMIN_EMAIL = `${ADMIN_PHONE}@novafashion.iq`;
+  const ADMIN_EMAIL = `07858833838@novafashion.iq`;
 
   useEffect(() => {
-    // إذا كان المستخدم مسجلاً بالفعل ببريد الأدمن، يتم توجيهه للوحة التحكم
-    if (!userLoading && user?.email === ADMIN_EMAIL) {
+    const email = user?.email?.toLowerCase() || '';
+    if (!userLoading && (email === ADMIN_EMAIL || email === '+9647858833838@nova-auth.local')) {
       router.push('/admin/dashboard');
     }
   }, [user, userLoading, router, ADMIN_EMAIL]);
@@ -50,11 +48,11 @@ export default function AdminLoginPage() {
       return;
     }
 
-    // التأكد من تطابق رقم الهاتف (معالجة الصفر في البداية إن وجد)
-    const normalizedInput = inputPhone.startsWith('0') ? inputPhone.substring(1) : inputPhone;
-    const normalizedAdmin = ADMIN_PHONE.startsWith('0') ? ADMIN_PHONE.substring(1) : ADMIN_PHONE;
+    // السماح بالدخول إذا كان الرقم هو رقم الإدارة (بأي صيغة)
+    const normalizedInput = inputPhone.replace(/\D/g, '');
+    const isAdminNumber = normalizedInput.endsWith('7858833838');
 
-    if (normalizedInput !== normalizedAdmin) {
+    if (!isAdminNumber) {
       setError("رقم الهاتف هذا لا يمتلك صلاحيات إدارية");
       toast({ variant: "destructive", title: "دخول غير مصرح", description: "رقم الهاتف غير مخصص للإدارة" });
       return;
@@ -62,7 +60,7 @@ export default function AdminLoginPage() {
 
     setLoading(true);
     try {
-      // محاولة تسجيل الدخول باستخدام البريد الإلكتروني المرتبط برقم هاتف الإدارة
+      // محاولة تسجيل الدخول بالبريد الإلكتروني المخصص للإدارة
       await signInWithEmailAndPassword(auth, ADMIN_EMAIL, password);
       toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بصلاحيات المديرة ✨" });
       router.push('/admin/dashboard');
@@ -88,7 +86,11 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-arabic" dir="rtl">
-      <Header />
+      <header className="h-20 flex items-center px-6 justify-between bg-white border-b border-border/30">
+        <div className="w-10" />
+        <h1 className="text-xl font-black text-primary">بوابة الإدارة</h1>
+        <div className="w-10" />
+      </header>
       
       <main className="flex-grow flex items-center justify-center p-6 bg-accent/10">
         <div className="w-full max-w-md bg-white border border-border p-12 rounded-[3rem] shadow-premium">
@@ -96,7 +98,7 @@ export default function AdminLoginPage() {
             <div className="inline-flex p-4 bg-accent rounded-full mb-6 shadow-xl shadow-primary/5">
               <Sparkles className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-black text-primary mb-2 uppercase tracking-widest">بوابة الإدارة</h1>
+            <h1 className="text-3xl font-black text-primary mb-2 uppercase tracking-widest">NOVA ADMIN</h1>
             <p className="text-primary/40 text-sm font-black">حصري لمديرة متجر NOVA</p>
           </div>
 
@@ -145,7 +147,7 @@ export default function AdminLoginPage() {
               disabled={loading}
               className="w-full h-16 rounded-full text-xl font-black bg-primary text-white shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-all"
             >
-              {loading ? "جاري التحقق..." : "دخول ملكي"}
+              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "دخول ملكي"}
             </Button>
           </form>
 
@@ -156,8 +158,6 @@ export default function AdminLoginPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

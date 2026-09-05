@@ -29,7 +29,8 @@ import {
   Instagram,
   Facebook,
   Music2,
-  Sparkles
+  Sparkles,
+  ShieldAlert
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
@@ -49,6 +50,12 @@ export default function AccountPage() {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  // التحقق مما إذا كان المستخدم الحالي هو مدير النظام
+  const isAdmin = useMemo(() => {
+    const email = user?.email?.toLowerCase() || '';
+    return email === '07858833838@novafashion.iq' || email === '+9647858833838@nova-auth.local';
+  }, [user]);
 
   const handleLogout = async () => {
     if (auth) {
@@ -112,6 +119,27 @@ export default function AccountPage() {
              <ChevronLeft className="h-6 w-6 rotate-180" />
            </button>
         </div>
+
+        {/* Admin Shortcut (Appears only for the Super Admin) */}
+        {isAdmin && (
+          <div className="mb-8 px-2 animate-in zoom-in-95 duration-500">
+            <Link 
+              href="/admin/dashboard" 
+              className="flex items-center justify-between p-6 bg-primary text-white rounded-[2.5rem] shadow-xl shadow-primary/20 border-b-4 border-black/10 group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center">
+                  <ShieldAlert className="h-6 w-6 text-secondary" />
+                </div>
+                <div>
+                  <h4 className="font-black text-sm">لوحة تحكم المديرة</h4>
+                  <p className="text-[10px] text-white/60 font-bold">إدارة المنتجات، الطلبات، والزبائن</p>
+                </div>
+              </div>
+              <ChevronLeft className="h-5 w-5 text-white/40 group-hover:translate-x-[-4px] transition-transform" />
+            </Link>
+          </div>
+        )}
 
         {/* Order Tracking Section */}
         <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-primary/5 mb-8">
