@@ -3,15 +3,17 @@
 
 import cloudinary from '@/lib/cloudinary';
 
+/**
+ * أكشن رفع الصور الحقيقي لمتجر NOVA.
+ * يتم استخدامه في لوحة التحكم لرفع صور المنتجات والسلايدر واللوغو.
+ */
 export async function uploadImage(formData: FormData) {
   const file = formData.get('file') as File;
   if (!file) throw new Error('لم يتم اختيار ملف');
 
-  // التحقق من وجود إعدادات Cloudinary
+  // التحقق من وجود الإعدادات
   if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY) {
-    console.error('Cloudinary configuration is missing');
-    // في حال عدم وجود الإعدادات، سنقوم بإرجاع صورة عشوائية مؤقتاً لكي لا يتوقف العمل
-    return `https://picsum.photos/seed/${Math.random()}/800/1000`;
+    throw new Error('إعدادات Cloudinary غير مكتملة في السيرفر');
   }
 
   try {
@@ -21,12 +23,14 @@ export async function uploadImage(formData: FormData) {
     const result: any = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: 'nova-fashion',
+          folder: 'nova-official-store',
           resource_type: 'image',
+          quality: 'auto',
+          fetch_format: 'auto'
         },
         (error, result) => {
           if (error) {
-            console.error('Cloudinary Error:', error);
+            console.error('Cloudinary Upload Error:', error);
             reject(error);
           } else {
             resolve(result);
@@ -38,7 +42,7 @@ export async function uploadImage(formData: FormData) {
 
     return result.secure_url;
   } catch (error: any) {
-    console.error('Upload Action Crash:', error);
-    throw new Error(error.message || 'فشل في رفع الصورة للسيرفر');
+    console.error('Final Upload Crash:', error);
+    throw new Error(error.message || 'فشل في رفع الصورة، يرجى التحقق من الاتصال');
   }
 }
