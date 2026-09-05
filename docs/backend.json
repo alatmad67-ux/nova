@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Store": {
@@ -45,6 +46,7 @@
         "area": { "type": "string" },
         "street": { "type": "string" },
         "nearestLandmark": { "type": "string" },
+        "phone": { "type": "string" },
         "notes": { "type": "string" },
         "isDefault": { "type": "boolean" },
         "storeId": { "type": "string" }
@@ -61,47 +63,24 @@
         "storeId": { "type": "string" }
       }
     },
-    "Category": {
-      "title": "Category",
-      "description": "Fashion categories for NOVA.",
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app alerts for users.",
       "type": "object",
       "properties": {
-        "name": { "type": "string" },
-        "slug": { "type": "string" },
-        "image": { "type": "string" },
-        "description": { "type": "string" },
-        "order": { "type": "number" },
-        "isActive": { "type": "boolean", "default": true },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "type": { "type": "string" },
+        "orderId": { "type": "string" },
+        "isRead": { "type": "boolean", "default": false },
         "storeId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["name", "slug", "storeId"]
-    },
-    "Product": {
-      "title": "Product",
-      "description": "Fashion product with advanced variant and stock management.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "sku": { "type": "string" },
-        "description": { "type": "string" },
-        "material": { "type": "string" },
-        "purchasePrice": { "type": "number" },
-        "price": { "type": "number" },
-        "originalPrice": { "type": "number" },
-        "categoryId": { "type": "string" },
-        "categoryName": { "type": "string" },
-        "images": { "type": "array", "items": { "type": "string" } },
-        "variants": { "type": "array" },
-        "status": { "type": "string", "enum": ["active", "draft", "out_of_stock"] },
-        "storeId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["name", "price", "categoryId", "storeId"]
+      }
     }
   },
   "auth": {
-    "providers": ["google", "apple", "phone", "password"]
+    "providers": ["google", "apple", "password"]
   },
   "firestore": {
     "/users/{userId}": {
@@ -133,16 +112,12 @@
       "description": "AUTH_CREATE: allow create if request.auth != null. OWNER_READ: allow read if resource.data.customerId == request.auth.uid. ADMIN: allow all. VERSION_87"
     },
     "/notifications/{notificationId}": {
-      "schema": "object",
+      "schema": "Notification",
       "description": "OWNER_READ: allow read if resource.data.userId == request.auth.uid. VERSION_87"
     },
     "/sliders/{sliderId}": {
       "schema": "object",
       "description": "PUBLIC_READ: allow read. ADMIN: allow write. VERSION_87"
-    },
-    "/delivery-companies/{companyId}": {
-      "schema": "object",
-      "description": "ADMIN: allow all. VERSION_87"
     },
     "/settings/general": {
       "schema": "Store",

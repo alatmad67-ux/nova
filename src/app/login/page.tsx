@@ -3,24 +3,22 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore } from '@/firebase';
 import { 
+  signInWithEmailAndPassword,
   signInWithPopup, 
   GoogleAuthProvider, 
   OAuthProvider, 
-  RecaptchaVerifier, 
-  signInWithPhoneNumber,
-  ConfirmationResult
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Smartphone, Mail, Sparkles, ChevronLeft, Loader2, Apple } from 'lucide-react';
+import { Smartphone, Lock, Sparkles, ChevronLeft, Loader2, Apple, ArrowRight } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { STORE_ID } from '@/lib/constants';
+import Link from 'next/link';
 
 function LoginForm() {
   const router = useRouter();
@@ -29,11 +27,9 @@ function LoginForm() {
   const db = useFirestore();
   const { user, loading: userLoading } = useUser();
   
-  const [step, setStep] = useState<'method' | 'phone' | 'otp'>('method');
   const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   const redirect = searchParams.get('redirect') || '/account';
 
@@ -43,19 +39,49 @@ function LoginForm() {
     }
   }, [user, userLoading, router, redirect]);
 
-  const syncProfile = async (u: any) => {
+  const normalizePhone = (num: string) => {
+    let clean = num.replace(/\D/g, '');
+    if (clean.startsWith('0')) clean = '964' + clean.substring(1);
+    if (clean.startsWith('7')) clean = '964' + clean;
+    return clean.startsWith('+') ? clean : '+' + clean;
+  };
+
+  const syncProfile = async (u: any, provider: string) => {
     if (!db) return;
     const userRef = doc(db, 'users', u.uid);
-    await setDoc(userRef, {
-      uid: u.uid,
-      displayName: u.displayName || 'عميل نوفا',
-      email: u.email || '',
-      phoneNumber: u.phoneNumber || '',
-      photoURL: u.photoURL || '',
-      provider: u.providerData[0]?.providerId || 'phone',
-      storeId: STORE_ID,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
+    const snap = await getDoc(userRef);
+    
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        uid: u.uid,
+        displayName: u.displayName || 'جميلة نوفا',
+        email: u.email || '',
+        phoneNumber: u.phoneNumber || (provider === 'phone' ? phone : ''),
+        photoURL: u.photoURL || '',
+        provider: provider,
+        storeId: STORE_ID,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth || !phone || !password) return;
+    
+    setLoading(true);
+    try {
+      const normalized = normalizePhone(phone);
+      const virtualEmail = `${normalized}@nova-auth.local`;
+      const result = await signInWithEmailAndPassword(auth, virtualEmail, password);
+      await syncProfile(result.user, 'phone');
+      toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بنجاح" });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "خطأ في الدخول", description: "رقم الهاتف أو كلمة المرور غير صحيحة" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -64,72 +90,10 @@ function LoginForm() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      await syncProfile(result.user);
-      toast({ title: "مرحباً بكِ", description: "تم تسجيل الدخول عبر Google بنجاح" });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل تسجيل الدخول عبر Google" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAppleLogin = async () => {
-    if (!auth) return;
-    setLoading(true);
-    try {
-      const provider = new OAuthProvider('apple.com');
-      const result = await signInWithPopup(auth, provider);
-      await syncProfile(result.user);
-      toast({ title: "مرحباً بكِ", description: "تم تسجيل الدخول عبر Apple بنجاح" });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل تسجيل الدخول عبر Apple. تأكدي من إعدادات الخدمة." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const setupRecaptcha = () => {
-    if (!auth) return;
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible'
-      });
-    }
-  };
-
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!auth) return;
-    if (!phone.startsWith('+964')) {
-      toast({ variant: "destructive", title: "تنبيه", description: "يرجى إدخال الرقم بصيغة +964" });
-      return;
-    }
-    setLoading(true);
-    try {
-      setupRecaptcha();
-      const verifier = (window as any).recaptchaVerifier;
-      const result = await signInWithPhoneNumber(auth, phone, verifier);
-      setConfirmationResult(result);
-      setStep('otp');
-      toast({ title: "تم الإرسال", description: "وصلك رمز التحقق الآن" });
-    } catch (error: any) {
-      console.error(error);
-      toast({ variant: "destructive", title: "خطأ", description: "فشل إرسال الرمز. تأكدي من الرقم." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!confirmationResult) return;
-    setLoading(true);
-    try {
-      const result = await confirmationResult.confirm(otp);
-      await syncProfile(result.user);
-      toast({ title: "تم الدخول", description: "مرحباً بكِ في عالم NOVA" });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "رمز خاطئ", description: "يرجى التأكد من الرمز المدخل" });
+      await syncProfile(result.user, 'google');
+      toast({ title: "مرحباً بكِ", description: "تم تسجيل الدخول عبر Google" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل تسجيل الدخول" });
     } finally {
       setLoading(false);
     }
@@ -137,99 +101,74 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background font-arabic">
-      <Header />
-      <main className="flex-grow flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white border border-border rounded-[3rem] p-8 md:p-12 shadow-premium relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-2xl" />
-          
-          <div id="recaptcha-container"></div>
+      <header className="h-20 flex items-center px-6 justify-between bg-white border-b border-border/30">
+        <button onClick={() => router.push('/')} className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-primary">
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+        <h1 className="text-xl font-black text-primary">تسجيل الدخول</h1>
+        <div className="w-10" />
+      </header>
 
-          <div className="text-center mb-10">
-            <div className="inline-flex p-4 bg-accent rounded-full mb-6">
-              <Sparkles className="h-8 w-8 text-primary" />
+      <main className="flex-grow flex flex-col p-6 max-w-md mx-auto w-full">
+        <div className="text-center mb-10 mt-4">
+          <div className="inline-flex p-4 bg-primary/5 rounded-3xl mb-6">
+            <Sparkles className="h-10 w-10 text-primary" />
+          </div>
+          <h2 className="text-3xl font-black text-primary mb-2">أهلاً بكِ في NOVA</h2>
+          <p className="text-primary/40 font-bold">سجلي دخولكِ لتجربة تسوق ملكية</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="space-y-2">
+            <Label className="text-xs font-black text-primary/40 uppercase pr-2">رقم الهاتف</Label>
+            <div className="relative">
+              <Smartphone className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/20" />
+              <Input 
+                placeholder="07xxxxxxxx" 
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="h-14 pr-12 bg-accent/30 border-none rounded-2xl font-bold text-primary dir-ltr text-right"
+                required
+              />
             </div>
-            <h1 className="text-3xl font-black text-primary mb-2">انضمي إلينا</h1>
-            <p className="text-primary/40 text-sm font-medium">سجلي الدخول لتجربة تسوق ملكية</p>
           </div>
 
-          {step === 'method' && (
-            <div className="space-y-4">
-              <Button 
-                onClick={handleGoogleLogin} 
-                variant="outline" 
-                className="w-full h-14 rounded-2xl border-border hover:bg-accent flex gap-4 font-bold text-primary"
-                disabled={loading}
-              >
-                <img src="https://www.gstatic.com/firebase/explore/google.svg" className="h-5 w-5" alt="G" />
-                الدخول عبر Google
-              </Button>
-              <Button 
-                onClick={handleAppleLogin} 
-                variant="outline" 
-                className="w-full h-14 rounded-2xl border-border hover:bg-accent flex gap-4 font-bold text-primary"
-                disabled={loading}
-              >
-                <Apple className="h-5 w-5" />
-                الدخول عبر Apple
-              </Button>
-              <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border"></span></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-4 text-primary/20 font-black">أو</span></div>
-              </div>
-              <Button 
-                onClick={() => setStep('phone')} 
-                className="w-full h-14 rounded-2xl bg-primary text-white font-black shadow-xl shadow-primary/20 flex gap-4"
-                disabled={loading}
-              >
-                <Smartphone className="h-5 w-5" />
-                رقم الهاتف (SMS)
-              </Button>
+          <div className="space-y-2">
+            <Label className="text-xs font-black text-primary/40 uppercase pr-2">كلمة المرور</Label>
+            <div className="relative">
+              <Lock className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/20" />
+              <Input 
+                type="password"
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-14 pr-12 bg-accent/30 border-none rounded-2xl font-bold text-primary dir-ltr text-right"
+                required
+              />
             </div>
-          )}
+          </div>
 
-          {step === 'phone' && (
-            <form onSubmit={handlePhoneSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label className="text-xs font-black text-primary/40 uppercase pr-2">رقم الهاتف</Label>
-                <Input 
-                  placeholder="+964 780 000 0000" 
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="h-14 bg-accent/30 border-border rounded-2xl text-primary font-black dir-ltr text-center focus:border-primary/50"
-                  disabled={loading}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full h-14 rounded-2xl bg-primary text-white font-black" disabled={loading}>
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "إرسال الرمز"}
-              </Button>
-              <button type="button" onClick={() => setStep('method')} className="w-full text-xs font-bold text-primary/40 hover:text-primary flex items-center justify-center gap-2">
-                <ChevronLeft className="h-4 w-4" /> العودة للخلف
-              </button>
-            </form>
-          )}
+          <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl bg-primary text-white text-xl font-black shadow-xl shadow-primary/20">
+            {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "دخول"}
+          </Button>
+        </form>
 
-          {step === 'otp' && (
-            <form onSubmit={handleOtpSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label className="text-xs font-black text-primary/40 uppercase pr-2">رمز التحقق</Label>
-                <Input 
-                  placeholder="000000" 
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  className="h-14 bg-accent/30 border-border rounded-2xl text-primary font-black tracking-[1em] text-center focus:border-primary/50"
-                  disabled={loading}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full h-14 rounded-2xl bg-primary text-white font-black" disabled={loading}>
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "تأكيد الرمز"}
-              </Button>
-              <button type="button" onClick={() => setStep('phone')} className="w-full text-xs font-bold text-primary/40 hover:text-primary flex items-center justify-center gap-2">
-                <ChevronLeft className="h-4 w-4" /> تغيير الرقم
-              </button>
-            </form>
-          )}
+        <div className="mt-8 text-center">
+          <p className="text-sm font-bold text-primary/40 mb-6">ليس لديكِ حساب؟ <Link href="/register" className="text-primary font-black underline">أنشئي حساباً الآن</Link></p>
+          
+          <div className="relative mb-8">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-4 text-primary/20 font-black">أو عبر</span></div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Button variant="outline" onClick={handleGoogleLogin} className="h-14 rounded-2xl border-border hover:bg-accent font-bold gap-3">
+              <img src="https://www.gstatic.com/firebase/explore/google.svg" className="h-5 w-5" alt="G" /> Google
+            </Button>
+            <Button variant="outline" className="h-14 rounded-2xl border-border hover:bg-accent font-bold gap-3">
+              <Apple className="h-5 w-5" /> Apple
+            </Button>
+          </div>
         </div>
       </main>
     </div>
@@ -237,13 +176,5 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
-      <LoginForm />
-    </Suspense>
-  );
+  return <Suspense><LoginForm /></Suspense>;
 }

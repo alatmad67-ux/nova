@@ -21,14 +21,14 @@ import {
   MessageSquare,
   ShieldCheck,
   Info,
-  Facebook,
-  Instagram,
-  Music2,
   Send,
   Package,
   Clock,
   Truck,
-  CheckCircle2
+  CheckCircle2,
+  Instagram,
+  Facebook,
+  Music2
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
@@ -84,14 +84,13 @@ export default function AccountPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fff9f9] font-arabic pb-32 relative overflow-hidden" dir="rtl">
-      {/* Background decoration */}
       <div className="absolute top-[-5%] right-[-10%] w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
       
       <main className="flex-grow container mx-auto px-5 py-6 relative z-10 max-w-lg">
         
         {/* Profile Card Header */}
         <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-primary/5 flex items-center justify-between mb-8">
-           <div className="flex items-center gap-4">
+           <div className="flex items-center gap-4 text-right">
              <Avatar className="h-16 w-16 border-4 border-accent shadow-sm">
                 <AvatarImage src={profile?.photoURL || user.photoURL || ''} />
                 <AvatarFallback className="bg-primary/5 text-primary font-black text-xl">
@@ -102,12 +101,12 @@ export default function AccountPage() {
                 <h2 className="text-lg font-black text-primary">
                   {profile?.displayName || user.displayName || 'جميلة نوفا'}
                 </h2>
-                <p className="text-[10px] text-primary/30 font-bold">
-                  {user.email || user.phoneNumber}
+                <p className="text-[10px] text-primary/30 font-bold dir-ltr text-right">
+                  {user.phoneNumber || user.email}
                 </p>
               </div>
            </div>
-           <button onClick={() => router.back()} className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-primary/20">
+           <button onClick={() => router.push('/')} className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-primary/20">
              <ChevronLeft className="h-6 w-6 rotate-180" />
            </button>
         </div>

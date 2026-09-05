@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -38,43 +39,34 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
 
-  // Local Storage for Cart (Standard behavior)
+  // Cart Persistence (Local Storage as primary for cart contents)
   useEffect(() => {
-    const savedCart = localStorage.getItem('nova_cart');
+    const savedCart = localStorage.getItem('nova_cart_v2');
     if (savedCart) setCart(JSON.parse(savedCart));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('nova_cart', JSON.stringify(cart));
+    localStorage.setItem('nova_cart_v2', JSON.stringify(cart));
   }, [cart]);
 
-  // Firestore Sync for Favorites
+  // Favorites Sync (Firestore for Auth Users)
   useEffect(() => {
     if (!db || !user) {
-      // If no user, fallback to local storage for guest favorites
-      const savedFavs = localStorage.getItem('nova_favorites');
+      const savedFavs = localStorage.getItem('nova_favs');
       if (savedFavs) setFavorites(JSON.parse(savedFavs));
       return;
     }
 
-    // Real-time listener for user favorites in Firestore
     const favsRef = collection(db, 'users', user.uid, 'favorites');
-    const unsubscribe = onSnapshot(
-      favsRef, 
-      (snapshot) => {
-        const favIds = snapshot.docs.map(doc => doc.id);
-        setFavorites(favIds);
-        localStorage.setItem('nova_favorites', JSON.stringify(favIds));
-      },
-      (serverError: any) => {
-        // Emit rich contextual error for favorites listener
-        const permissionError = new FirestorePermissionError({
-          path: favsRef.path,
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+    const unsubscribe = onSnapshot(favsRef, (snap) => {
+      const ids = snap.docs.map(d => d.id);
+      setFavorites(ids);
+      localStorage.setItem('nova_favs', JSON.stringify(ids));
+    }, (err) => {
+      if (err.code !== 'permission-denied') {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: favsRef.path, operation: 'list' }));
       }
-    );
+    });
 
     return () => unsubscribe();
   }, [db, user]);
@@ -83,7 +75,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCart(prev => {
       const existing = prev.find(i => i.variant.sku === newItem.variant.sku);
       if (existing) {
-        return prev.map(i => i.variant.sku === newItem.variant.sku ? { ...i, quantity: i.quantity + newItem.quantity } : i);
+        return prev.map(i => i.variant.sku === newItem.variant.sku ? { ...i, quantity: i.quantity + 1 } : i);
       }
       return [...prev, newItem];
     });
@@ -99,28 +91,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     ));
   };
 
-  const toggleFavorite = async (id: string) => {
+  const toggleFavorite = async (productId: string) => {
     if (!user) {
       toast({ title: "تنبيه", description: "يرجى تسجيل الدخول لحفظ المفضلات سحابياً" });
-      setFavorites(prev => {
-        const next = prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id];
-        localStorage.setItem('nova_favorites', JSON.stringify(next));
-        return next;
-      });
+      const next = favorites.includes(productId) ? favorites.filter(id => id !== productId) : [...favorites, productId];
+      setFavorites(next);
+      localStorage.setItem('nova_favs', JSON.stringify(next));
       return;
     }
 
     if (!db) return;
-    const favRef = doc(db, 'users', user.uid, 'favorites', id);
+    const favRef = doc(db, 'users', user.uid, 'favorites', productId);
     
-    if (favorites.includes(id)) {
-      deleteDoc(favRef).catch((e) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: favRef.path, operation: 'delete' }));
-      });
-    } else {
-      setDoc(favRef, { createdAt: new Date().toISOString() }).catch((e) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: favRef.path, operation: 'create' }));
-      });
+    try {
+      if (favorites.includes(productId)) {
+        await deleteDoc(favRef);
+      } else {
+        await setDoc(favRef, { createdAt: serverTimestamp() });
+      }
+    } catch (e) {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: favRef.path, operation: 'write' }));
     }
   };
 

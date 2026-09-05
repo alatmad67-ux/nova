@@ -10,15 +10,12 @@ import {
   Minus, 
   ArrowRight, 
   ShoppingBag, 
-  Ticket,
   ChevronLeft,
-  Sparkles
+  Sparkles,
+  Package
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { useCart } from '@/providers/cart-provider';
 
@@ -26,142 +23,99 @@ export default function CartPage() {
   const { cart, removeFromCart, updateQuantity } = useCart();
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const shipping = 5000;
-  const total = subtotal + shipping;
-
-  const formatPrice = (price: number) => price.toLocaleString() + ' د.ع';
+  const total = subtotal; // Shipping is calculated at checkout
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col bg-background font-arabic">
+      <div className="min-h-screen flex flex-col bg-background font-arabic pb-32">
         <Header />
-        <main className="flex-grow flex flex-col items-center justify-center p-4 text-center">
-          <div className="bg-white p-16 rounded-[4rem] border border-border shadow-premium max-w-md w-full">
-            <div className="bg-primary/5 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm">
-              <ShoppingBag className="h-10 w-10 text-primary" />
-            </div>
-            <h2 className="text-3xl font-black text-primary mb-4">سلتكِ فارغة</h2>
-            <p className="text-primary/40 mb-10 font-black">لا توجد قطع مضافة حالياً، ابدأي باكتشاف أحدث مجموعاتنا</p>
-            <Button asChild className="w-full h-16 rounded-full text-lg font-black bg-primary text-white shadow-xl shadow-primary/20">
-              <Link href="/">ابدأ التسوق</Link>
-            </Button>
+        <main className="flex-grow flex flex-col items-center justify-center p-6 text-center">
+          <div className="h-24 w-24 rounded-full bg-primary/5 flex items-center justify-center text-primary/20 mb-6">
+            <ShoppingBag className="h-12 w-12" />
           </div>
+          <h2 className="text-2xl font-black text-primary mb-2">حقيبتكِ فارغة</h2>
+          <p className="text-sm text-primary/40 font-bold mb-8">اكتشفي أحدث القطع وأضيفي لمسة سحرية لخزانتكِ</p>
+          <Button asChild className="h-16 px-12 rounded-3xl bg-primary text-white font-black shadow-xl shadow-primary/20">
+            <Link href="/shop">ابدأ التسوق</Link>
+          </Button>
         </main>
-        <Footer />
         <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background font-arabic">
-      <Header />
+    <div className="min-h-screen flex flex-col bg-background font-arabic pb-40">
+      <header className="h-20 flex items-center px-6 justify-between bg-white border-b border-border/30">
+        <div className="w-10" />
+        <h1 className="text-xl font-black text-primary">حقيبة التسوق</h1>
+        <button onClick={() => window.history.back()} className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-primary">
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+      </header>
       
-      <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
-        <div className="flex items-center gap-4 mb-12">
-          <Sparkles className="h-6 w-6 text-secondary" />
-          <h1 className="text-3xl md:text-5xl font-black text-primary">حقيبة التسوق</h1>
-          <span className="text-sm font-black bg-primary/5 text-primary px-4 py-1 rounded-full border border-primary/10">{cart.length} قطع</span>
+      <main className="flex-grow container mx-auto px-5 py-8 space-y-6">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs font-black text-primary/40 uppercase tracking-widest">{cart.length} قطع في الحقيبة</span>
+          <button onClick={() => {/* Clear all cart logic */}} className="text-[10px] font-black text-red-400">تفريغ الحقيبة</button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          <div className="lg:col-span-2 space-y-6">
-            {cart.map((item) => (
-              <div key={item.variant.sku} className="nova-card p-6 md:p-8 flex gap-6 md:gap-10 items-center bg-white shadow-sm hover:shadow-md transition-all">
-                <div className="relative h-32 w-24 md:h-44 md:w-32 flex-shrink-0 bg-accent rounded-3xl overflow-hidden border border-border">
-                  <Image src={item.image} alt={item.name} fill className="object-cover" />
+        {cart.map((item) => (
+          <div key={item.variant.sku} className="bg-white rounded-[2.5rem] p-5 border border-border/50 shadow-sm flex gap-5">
+            <div className="h-32 w-24 rounded-3xl overflow-hidden bg-accent flex-shrink-0 relative border border-border/30">
+              <Image src={item.image} alt={item.name} fill className="object-cover" />
+            </div>
+            
+            <div className="flex-1 flex flex-col justify-between py-1">
+              <div>
+                <div className="flex justify-between items-start gap-2">
+                  <h3 className="text-sm font-black text-primary line-clamp-1">{item.name}</h3>
+                  <button onClick={() => removeFromCart(item.variant.sku)} className="text-primary/10 hover:text-red-500 transition-colors p-1">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-                
-                <div className="flex flex-col flex-grow">
-                  <div className="flex justify-between items-start gap-4 mb-2">
-                    <h3 className="font-black text-primary text-lg md:text-2xl line-clamp-1">{item.name}</h3>
-                    <button 
-                      onClick={() => removeFromCart(item.variant.sku)}
-                      className="p-2 text-primary/20 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
-                  </div>
-                  
-                  <div className="flex gap-4 mb-6">
-                    <Badge variant="outline" className="border-border text-primary/40 font-black px-3 py-1 bg-accent/30 text-[10px]">اللون: {item.variant.color}</Badge>
-                    <Badge variant="outline" className="border-border text-primary/40 font-black px-3 py-1 bg-accent/30 text-[10px]">القياس: {item.variant.size}</Badge>
-                  </div>
-                  
-                  <div className="mt-auto flex items-center justify-between gap-6">
-                    <div className="flex items-center bg-accent rounded-2xl p-1.5 border border-border">
-                      <button 
-                        onClick={() => updateQuantity(item.variant.sku, -1)}
-                        className="p-2 hover:bg-white rounded-xl transition-all text-primary"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      <span className="w-12 text-center font-black text-lg text-primary">{item.quantity}</span>
-                      <button 
-                        onClick={() => updateQuantity(item.variant.sku, 1)}
-                        className="p-2 hover:bg-white rounded-xl transition-all text-primary"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-                    
-                    <div className="text-left">
-                      <p className="text-xl md:text-3xl font-black text-secondary">{formatPrice(item.price * item.quantity)}</p>
-                    </div>
-                  </div>
+                <div className="flex gap-2 mt-2">
+                  <span className="text-[9px] font-black bg-accent text-primary/60 px-2 py-1 rounded-lg">اللون: {item.variant.color}</span>
+                  <span className="text-[9px] font-black bg-accent text-primary/60 px-2 py-1 rounded-lg">القياس: {item.variant.size}</span>
                 </div>
               </div>
-            ))}
-
-            <Link href="/" className="inline-flex items-center text-primary font-black gap-2 hover:underline p-2 mt-8">
-              <ChevronLeft className="h-6 w-6" />
-              مواصلة التسوق
-            </Link>
-          </div>
-
-          <div className="space-y-8">
-            <div className="nova-card p-10 bg-white shadow-premium">
-              <h3 className="text-2xl font-black text-primary mb-10">ملخص الطلب</h3>
               
-              <div className="space-y-6 mb-10">
-                <div className="flex justify-between text-primary/40 font-black">
-                  <span>المجموع</span>
-                  <span>{formatPrice(subtotal)}</span>
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center bg-accent/50 rounded-xl p-1 gap-4">
+                  <button onClick={() => updateQuantity(item.variant.sku, -1)} className="h-8 w-8 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm active:scale-95 transition-all"><Minus className="h-3 w-3" /></button>
+                  <span className="font-black text-sm text-primary">{item.quantity}</span>
+                  <button onClick={() => updateQuantity(item.variant.sku, 1)} className="h-8 w-8 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm active:scale-95 transition-all"><Plus className="h-3 w-3" /></button>
                 </div>
-                <div className="flex justify-between text-primary/40 font-black">
-                  <span>أجرة التوصيل</span>
-                  <span>{formatPrice(shipping)}</span>
-                </div>
-                <div className="h-px bg-border my-6" />
-                <div className="flex justify-between text-2xl font-black text-primary">
-                  <span>الإجمالي</span>
-                  <span className="text-secondary">{formatPrice(total)}</span>
+                <div className="text-left">
+                  <span className="text-lg font-black text-secondary">{(item.price * item.quantity).toLocaleString()} د.ع</span>
                 </div>
               </div>
-
-              <div className="mb-10">
-                <div className="relative group">
-                  <Ticket className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary" />
-                  <Input 
-                    placeholder="كود الخصم" 
-                    className="h-14 pr-12 bg-accent/30 border-border rounded-2xl text-primary font-black"
-                  />
-                  <Button variant="ghost" className="absolute left-2 top-2 h-10 rounded-xl text-primary font-black hover:bg-white">تطبيق</Button>
-                </div>
-              </div>
-
-              <Button asChild size="lg" className="w-full h-16 rounded-full text-xl font-black bg-primary text-white shadow-2xl shadow-primary/20 hover:scale-105 transition-all">
-                <Link href="/checkout">
-                  إتمام الشراء
-                  <ArrowRight className="mr-2 h-6 w-6" />
-                </Link>
-              </Button>
             </div>
           </div>
-        </div>
+        ))}
       </main>
 
-      <Footer />
+      {/* Summary Float */}
+      <div className="fixed bottom-20 left-0 right-0 p-6 bg-white border-t border-border/50 z-40 rounded-t-[3rem] shadow-2xl">
+         <div className="space-y-3 mb-6">
+            <div className="flex justify-between text-sm font-bold text-primary/40">
+              <span>المجموع الفرعي</span>
+              <span>{subtotal.toLocaleString()} د.ع</span>
+            </div>
+            <div className="flex justify-between text-lg font-black text-primary pt-2 border-t border-border/30">
+              <span>الإجمالي التقديري</span>
+              <span className="text-secondary">{total.toLocaleString()} د.ع</span>
+            </div>
+            <p className="text-[10px] text-primary/30 font-bold text-center">أجور التوصيل تُحسب في الخطوة التالية</p>
+         </div>
+         <Button asChild className="w-full h-16 rounded-3xl bg-primary text-white text-xl font-black shadow-xl shadow-primary/20">
+            <Link href="/checkout">
+              إتمام الطلبية
+              <ArrowRight className="mr-3 h-6 w-6" />
+            </Link>
+         </Button>
+      </div>
+
       <BottomNav />
     </div>
   );

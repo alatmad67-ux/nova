@@ -3,84 +3,93 @@
 
 import React, { useMemo, useState } from 'react';
 import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProductCard } from '@/components/home/ProductCard';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { useStore } from '@/providers/store-provider';
-import { Sparkles, Filter, LayoutGrid, ListFilter } from 'lucide-react';
+import { Search, Filter, ListFilter, SlidersHorizontal, Package } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 
 export default function ShopPage() {
   const db = useFirestore();
   const { storeId } = useStore();
   const [sortBy, setSortBy] = useState('newest');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const productsQuery = useMemo(() => {
     if (!db || !storeId) return null;
     return query(
       collection(db, 'products'),
       where('storeId', '==', storeId),
-      where('status', '==', 'active')
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc')
     );
   }, [db, storeId]);
 
   const { data: rawProducts, loading } = useCollection(productsQuery);
 
-  const products = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     if (!rawProducts) return [];
     let items = [...rawProducts];
     
+    if (searchTerm) {
+      items = items.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+
     if (sortBy === 'price-asc') items.sort((a, b) => a.price - b.price);
     else if (sortBy === 'price-desc') items.sort((a, b) => b.price - a.price);
-    else items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     
     return items;
-  }, [rawProducts, sortBy]);
+  }, [rawProducts, sortBy, searchTerm]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background font-arabic pb-32">
       <Header />
       
-      <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-16">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-4 w-4 text-secondary" />
-              <span className="text-xs font-black text-primary tracking-[0.3em] uppercase">NOVA OFFICIAL STORE</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-black text-primary">المتجر العام</h1>
-          </div>
-
-          <div className="flex items-center gap-4 w-full md:w-auto">
-             <div className="flex-1 md:w-48 relative">
-               <ListFilter className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/40" />
-               <select 
-                className="w-full h-12 pr-10 pl-4 bg-accent border-none rounded-xl text-xs font-black text-primary outline-none appearance-none"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-               >
-                 <option value="newest">الأحدث أولاً</option>
-                 <option value="price-asc">الأقل سعراً</option>
-                 <option value="price-desc">الأعلى سعراً</option>
-               </select>
+      <main className="flex-grow container mx-auto px-5 py-6">
+        {/* Mobile App Header Style */}
+        <div className="mb-8">
+           <h1 className="text-3xl font-black text-primary mb-6">اكتشفي المجموعة</h1>
+           
+           <div className="flex gap-3">
+             <div className="relative flex-1 group">
+               <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/30 group-focus-within:text-primary transition-colors" />
+               <Input 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="ابحثي عن فستان، تنورة..." 
+                className="h-14 pr-12 bg-white border-border shadow-sm rounded-2xl font-bold"
+               />
              </div>
-             <button className="h-12 px-6 bg-accent rounded-xl text-primary/60 hover:text-primary transition-colors">
-               <Filter className="h-5 w-5" />
+             <button className="h-14 w-14 bg-white border border-border rounded-2xl flex items-center justify-center text-primary/40 shadow-sm">
+               <SlidersHorizontal className="h-5 w-5" />
              </button>
+           </div>
+        </div>
+
+        {/* Filters & Sorting */}
+        <div className="flex items-center justify-between mb-8 overflow-x-auto no-scrollbar py-1">
+          <div className="flex gap-2">
+            {['الكل', 'فساتين', 'بناطيل', 'بلوزات'].map(cat => (
+              <button key={cat} className="px-5 py-2.5 rounded-xl bg-white border border-border text-xs font-black text-primary/60 whitespace-nowrap active:bg-primary active:text-white transition-all">
+                {cat}
+              </button>
+            ))}
           </div>
         </div>
 
+        {/* Product Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-              <Skeleton key={i} className="aspect-[3/4] rounded-[2.5rem] bg-accent" />
+          <div className="grid grid-cols-2 gap-4">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="aspect-[3/4] rounded-[2.5rem] bg-accent animate-pulse" />
             ))}
           </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-            {products.map((product: any) => (
+        ) : filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 gap-4">
+            {filteredProducts.map((product: any) => (
               <ProductCard 
                 key={product.id} 
                 product={{
@@ -96,10 +105,14 @@ export default function ShopPage() {
               />
             ))}
           </div>
+        ) : (
+          <div className="text-center py-32 opacity-20">
+            <Package className="h-16 w-16 mx-auto mb-4" />
+            <p className="font-black">لا توجد منتجات مطابقة</p>
+          </div>
         )}
       </main>
 
-      <Footer />
       <BottomNav />
     </div>
   );
