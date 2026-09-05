@@ -46,6 +46,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'c.top4top.io',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

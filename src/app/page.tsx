@@ -60,28 +60,27 @@ export default function Home() {
       <Header />
       
       <main className="flex-grow space-y-8">
-        {/* Top Greeting & Search */}
-        <div className="space-y-4 pt-4">
-          <section className="container mx-auto px-5">
-            <p className="text-primary/40 text-sm font-bold">أهلاً، {profile?.displayName || user?.displayName || 'جميلة نوفا'}</p>
-          </section>
+        {/* Top Greeting Styled like the screenshot */}
+        <section className="container mx-auto px-6 flex justify-end">
+          <p className="text-[#555] text-lg font-medium">
+            أهلاً، {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Gskin'}
+          </p>
+        </section>
 
-          <section className="container mx-auto px-5">
-            <div className="flex items-center gap-3">
-              <Link href="/search" className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                <Sparkles className="h-5 w-5" />
-              </Link>
-              <Link href="/search" className="flex-1">
-                <div className="relative group">
-                  <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/30" />
-                  <div className="h-12 w-full bg-white border border-border/50 rounded-2xl flex items-center pr-12 text-sm text-primary/30 font-bold shadow-sm">
-                    عن ماذا تبحثين اليوم؟
-                  </div>
-                </div>
-              </Link>
+        {/* Search Bar Section */}
+        <section className="container mx-auto px-6">
+          <Link href="/search" className="block">
+            <div className="relative group">
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/30" />
+              <div className="h-14 w-full bg-white border border-primary/5 rounded-2xl flex items-center pr-12 text-sm text-primary/20 font-bold shadow-sm">
+                عن ماذا تبحثين اليوم؟
+              </div>
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
+                <Sparkles className="h-4 w-4" />
+              </div>
             </div>
-          </section>
-        </div>
+          </Link>
+        </section>
 
         {/* Hero Section */}
         <HeroSlider />
@@ -98,10 +97,10 @@ export default function Home() {
             { label: 'دعم مباشر', icon: MessageCircle },
           ].map((item, idx) => (
             <div key={idx} className="flex flex-col items-center text-center gap-2">
-              <div className="h-12 w-12 rounded-full bg-accent border border-border/40 flex items-center justify-center text-primary/60">
+              <div className="h-12 w-12 rounded-full bg-white border border-primary/5 shadow-sm flex items-center justify-center text-primary/60">
                 <item.icon className="h-5 w-5" />
               </div>
-              <span className="text-[9px] font-black text-primary/60 leading-tight">{item.label}</span>
+              <span className="text-[9px] font-black text-primary/40 leading-tight">{item.label}</span>
             </div>
           ))}
         </section>
@@ -135,7 +134,7 @@ export default function Home() {
 
         {/* Minimal Footer Info */}
         <div className="text-center pt-8 opacity-20 pb-4">
-           <p className="text-[10px] font-black uppercase tracking-[0.3em]">NOVA Women Store © 2026</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.3em]">بشرتكِ الزجاجية تبدأ من هنا © 2026</p>
         </div>
       </main>
 

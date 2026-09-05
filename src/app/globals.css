@@ -5,24 +5,24 @@
 
 @layer base {
   :root {
-    --background: 340 30% 99%;
-    --foreground: 280 50% 15%;
-    --primary: 280 50% 25%;
+    --background: 0 30% 98%;
+    --foreground: 0 10% 20%;
+    --primary: 355 65% 45%; /* اللون الأحمر الوردي من الصورة */
     --primary-foreground: 0 0% 100%;
-    --secondary: 45 40% 60%;
-    --accent: 340 30% 96%;
-    --border: 280 10% 90%;
+    --secondary: 15 30% 60%;
+    --accent: 0 40% 96%;
+    --border: 0 10% 90%;
     --radius: 2rem;
   }
 
   .dark {
-    --background: 280 50% 5%;
-    --foreground: 340 30% 95%;
-    --primary: 280 50% 35%;
+    --background: 0 10% 5%;
+    --foreground: 0 10% 95%;
+    --primary: 355 65% 55%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 45 40% 50%;
-    --accent: 280 40% 10%;
-    --border: 280 30% 15%;
+    --secondary: 15 30% 50%;
+    --accent: 0 20% 10%;
+    --border: 0 20% 15%;
   }
 }
 
@@ -42,7 +42,7 @@
 }
 
 .shadow-premium {
-  box-shadow: 0 15px 40px -10px rgba(76, 29, 149, 0.05);
+  box-shadow: 0 15px 40px -10px rgba(197, 48, 48, 0.05);
 }
 
 .dir-ltr { direction: ltr; }
@@ -53,12 +53,11 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Custom Gradients */
+/* Custom Gradients matching the new theme */
 .nova-gradient {
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, #6d28d9 100%);
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, #e53e3e 100%);
 }
 
-/* Print Specific Styles */
 @media print {
   @page {
     margin: 1cm;
@@ -84,7 +83,6 @@
     border: none !important;
   }
 
-  /* Ensure colors and text are visible */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
