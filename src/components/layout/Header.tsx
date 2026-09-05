@@ -33,7 +33,7 @@ export function Header() {
   const unreadCount = unreadNotifications?.length || 0;
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-50 w-full h-24 flex items-center bg-white/50 backdrop-blur-sm">
+    <header className="absolute top-0 left-0 right-0 z-40 w-full h-24 flex items-center bg-transparent">
       <div className="container mx-auto px-6 h-full flex items-center justify-between relative">
         
         {/* Left: Notification Button (White Circle with Shadow) */}

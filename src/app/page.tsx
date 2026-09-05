@@ -101,7 +101,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col relative bg-background font-arabic pb-32" dir="rtl">
       <Header />
       
-      <main className="flex-grow space-y-8 pt-24">
+      <main className="flex-grow space-y-4 pt-24">
         {/* Top Greeting */}
         {!isViewSearchResults && (
           <section className="container mx-auto px-6 flex justify-end">
@@ -111,38 +111,40 @@ export default function Home() {
           </section>
         )}
 
-        {/* Integrated Search Bar Section */}
-        <section className="container mx-auto px-6 sticky top-24 z-40">
-          <form onSubmit={handleSearch} className="relative group">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/30 group-focus-within:text-primary transition-colors" />
-            <Input 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="عن ماذا تبحثين اليوم؟"
-              className="h-14 w-full bg-white border border-primary/10 rounded-2xl flex items-center pr-12 pl-12 text-sm text-primary font-bold shadow-sm focus-visible:ring-primary/20 focus-visible:border-primary/30"
-            />
-            {searchTerm && (
+        {/* Integrated Sticky Search Bar Section */}
+        <section className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl py-4 border-b border-primary/5 transition-all">
+          <div className="container mx-auto px-6">
+            <form onSubmit={handleSearch} className="relative group">
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/30 group-focus-within:text-primary transition-colors" />
+              <Input 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="عن ماذا تبحثين اليوم؟"
+                className="h-14 w-full bg-accent/30 border-none rounded-2xl flex items-center pr-12 pl-12 text-sm text-primary font-bold shadow-sm focus-visible:ring-primary/20"
+              />
+              {searchTerm && (
+                <button 
+                  type="button"
+                  onClick={clearSearch}
+                  className="absolute left-14 top-1/2 -translate-y-1/2 p-1 text-primary/20 hover:text-primary transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
               <button 
-                type="button"
-                onClick={clearSearch}
-                className="absolute left-14 top-1/2 -translate-y-1/2 p-1 text-primary/20 hover:text-primary transition-colors"
+                type="submit"
+                disabled={isSearching}
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all active:scale-95"
               >
-                <X className="h-4 w-4" />
+                {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               </button>
-            )}
-            <button 
-              type="submit"
-              disabled={isSearching}
-              className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all active:scale-95"
-            >
-              {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            </button>
-          </form>
+            </form>
+          </div>
         </section>
 
         {isViewSearchResults ? (
           /* Search Results View */
-          <section className="container mx-auto px-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <section className="container mx-auto px-6 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between mb-8">
                <h3 className="text-xl font-black text-primary">نتائج البحث ({filteredProducts.length})</h3>
                <button onClick={clearSearch} className="text-xs font-black text-secondary underline">عرض المتجر كاملاً</button>
@@ -175,7 +177,7 @@ export default function Home() {
           </section>
         ) : (
           /* Normal Home View */
-          <>
+          <div className="space-y-8">
             <HeroSlider />
             <Categories />
 
@@ -214,7 +216,7 @@ export default function Home() {
                 viewAllHref="/category/accessories" 
               />
             </div>
-          </>
+          </div>
         )}
 
         <div className="text-center pt-8 opacity-20 pb-4">
