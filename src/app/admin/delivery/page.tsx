@@ -18,7 +18,8 @@ import {
   X, 
   Phone, 
   Loader2,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -71,6 +72,7 @@ export default function DeliveryCompaniesPage() {
           resetForm();
         })
         .catch(async (error: any) => {
+          console.error("Firestore Update Error:", error);
           errorEmitter.emit('permission-error', new FirestorePermissionError({ 
             path: docRef.path, 
             operation: 'update',
@@ -86,6 +88,7 @@ export default function DeliveryCompaniesPage() {
           resetForm();
         })
         .catch(async (error: any) => {
+          console.error("Firestore Create Error:", error);
           errorEmitter.emit('permission-error', new FirestorePermissionError({ 
             path: 'delivery-companies', 
             operation: 'create',
@@ -105,7 +108,8 @@ export default function DeliveryCompaniesPage() {
       .then(() => {
         toast({ title: "تم الحذف", description: "تم مسح بيانات الشركة بنجاح" });
       })
-      .catch(async () => {
+      .catch(async (error) => {
+        console.error("Firestore Delete Error:", error);
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'delete' }));
       });
   };
@@ -134,9 +138,17 @@ export default function DeliveryCompaniesPage() {
         
         <main className="flex-grow container mx-auto px-4 py-12">
           {queryError && (
-            <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-600">
-              <AlertCircle className="h-5 w-5" />
-              <p className="font-bold text-sm">خطأ في الصلاحيات أو الاتصال بالخادم.</p>
+            <div className="mb-8 p-6 bg-red-50 border-2 border-red-200 rounded-[2rem] flex flex-col gap-4 text-red-600 animate-in slide-in-from-top-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-6 w-6 shrink-0" />
+                <h3 className="font-black text-lg">خطأ في مزامنة البيانات</h3>
+              </div>
+              <p className="text-sm font-bold opacity-80 leading-relaxed">
+                يبدو أن هناك مشكلة في صلاحيات الوصول لمجموعة "شركات التوصيل". يرجى التأكد من تحديث هيكل البيانات (Backend Schema) من لوحة التحكم الرئيسية لضمان تفعيل قواعد الأمان المطلوبة.
+              </p>
+              <div className="text-[10px] font-mono bg-red-100/50 p-3 rounded-xl overflow-x-auto whitespace-pre-wrap">
+                {queryError.message}
+              </div>
             </div>
           )}
 
@@ -163,8 +175,11 @@ export default function DeliveryCompaniesPage() {
           {isAdding && (
             <div className="nova-card p-10 mb-12 border-primary/10 bg-white shadow-premium animate-in fade-in zoom-in-95">
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-black text-primary">{editingId ? 'تعديل بيانات الشركة' : 'شركة توصيل جديدة'}</h3>
-                <button onClick={resetForm} className="text-primary/20 hover:text-primary"><X className="h-6 w-6" /></button>
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="h-5 w-5 text-secondary" />
+                  <h3 className="text-xl font-black text-primary">{editingId ? 'تعديل بيانات الشركة' : 'شركة توصيل جديدة'}</h3>
+                </div>
+                <button onClick={resetForm} className="text-primary/20 hover:text-primary transition-colors p-2 rounded-full hover:bg-accent"><X className="h-6 w-6" /></button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -172,7 +187,7 @@ export default function DeliveryCompaniesPage() {
                   <Label className="text-xs font-black text-primary/40 uppercase">اسم الشركة *</Label>
                   <Input 
                     placeholder="مثلاً: شركة النور للتوصيل"
-                    className="h-12 bg-accent/30 border-border rounded-xl font-bold"
+                    className="h-14 bg-accent/30 border-border rounded-xl font-bold focus:border-primary/50"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     disabled={isSaving}
@@ -183,7 +198,7 @@ export default function DeliveryCompaniesPage() {
                   <Label className="text-xs font-black text-primary/40 uppercase">رقم الهاتف</Label>
                   <Input 
                     placeholder="0770 000 0000"
-                    className="h-12 bg-accent/30 border-border rounded-xl font-bold dir-ltr"
+                    className="h-14 bg-accent/30 border-border rounded-xl font-bold dir-ltr focus:border-primary/50 text-right"
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
                     disabled={isSaving}
@@ -194,28 +209,28 @@ export default function DeliveryCompaniesPage() {
                   <Label className="text-xs font-black text-primary/40 uppercase">رابط الـ API (إن وجد)</Label>
                   <Input 
                     placeholder="https://api.delivery.com"
-                    className="h-12 bg-accent/30 border-border rounded-xl font-bold dir-ltr"
+                    className="h-14 bg-accent/30 border-border rounded-xl font-bold dir-ltr focus:border-primary/50"
                     value={formData.apiUrl}
                     onChange={(e) => setFormData({...formData, apiUrl: e.target.value})}
                     disabled={isSaving}
                   />
                 </div>
 
-                <div className="flex items-end lg:col-span-3">
+                <div className="flex items-end lg:col-span-3 pt-4">
                   <Button 
-                    className="w-full md:w-auto px-12 h-14 bg-primary text-white font-black rounded-xl shadow-lg" 
+                    className="w-full md:w-auto px-12 h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all" 
                     onClick={handleSave}
                     disabled={isSaving}
                   >
                     {isSaving ? (
                       <>
-                        <Loader2 className="ml-2 h-5 w-5 animate-spin" />
-                        جاري الحفظ...
+                        <Loader2 className="ml-2 h-6 w-6 animate-spin" />
+                        جاري الحفظ في الفاير ستور...
                       </>
                     ) : (
                       <>
                         <Save className="ml-2 h-5 w-5" />
-                        حفظ البيانات
+                        حفظ البيانات الملكية
                       </>
                     )}
                   </Button>
@@ -225,37 +240,39 @@ export default function DeliveryCompaniesPage() {
           )}
 
           {loading ? (
-            <div className="py-20 text-center font-black animate-pulse text-primary/20">جاري تحميل القائمة...</div>
+            <div className="py-20 text-center font-black animate-pulse text-primary/20 text-lg">جاري تحميل القائمة...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {companies?.map((company: any) => (
-                <div key={company.id} className="nova-card p-8 bg-white border-border shadow-sm group">
+                <div key={company.id} className="nova-card p-8 bg-white border-border shadow-sm group hover:border-primary/20 transition-all">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 bg-accent rounded-xl flex items-center justify-center text-primary border border-border">
+                      <div className="h-12 w-12 bg-accent rounded-xl flex items-center justify-center text-primary border border-border group-hover:bg-primary/5 transition-colors">
                         <Truck className="h-6 w-6" />
                       </div>
                       <div>
                         <h4 className="font-black text-primary text-lg">{company.name}</h4>
-                        <span className="text-[10px] font-bold text-primary/40 uppercase">{company.isActive ? 'نشطة' : 'معطلة'}</span>
+                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${company.isActive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                          {company.isActive ? 'نشطة' : 'معطلة'}
+                        </span>
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => startEdit(company)} className="p-2 text-primary/20 hover:text-primary transition-colors"><Edit className="h-4 w-4" /></button>
-                      <button onClick={() => handleDelete(company.id, company.name)} className="p-2 text-primary/20 hover:text-red-500 transition-colors"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => startEdit(company)} className="p-2 text-primary/20 hover:text-primary hover:bg-accent rounded-lg transition-all"><Edit className="h-4 w-4" /></button>
+                      <button onClick={() => handleDelete(company.id, company.name)} className="p-2 text-primary/20 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
                   {company.phone && (
-                    <div className="flex items-center gap-2 text-sm font-bold text-primary/60 dir-ltr">
-                      <Phone className="h-3 w-3" /> {company.phone}
+                    <div className="flex items-center gap-2 text-sm font-bold text-primary/60 dir-ltr justify-end">
+                      {company.phone} <Phone className="h-3 w-3 text-secondary" />
                     </div>
                   )}
                 </div>
               ))}
-              {companies?.length === 0 && (
-                <div className="col-span-full py-20 text-center opacity-20 text-primary">
-                  <Truck className="h-16 w-16 mx-auto mb-4" />
-                  <p className="font-black">لا توجد شركات توصيل مضافة حالياً</p>
+              {companies?.length === 0 && !queryError && (
+                <div className="col-span-full py-32 text-center opacity-20 text-primary border-4 border-dashed border-accent rounded-[3rem]">
+                  <Truck className="h-20 w-20 mx-auto mb-6" />
+                  <p className="font-black text-xl">لا توجد شركات توصيل مضافة حالياً</p>
                 </div>
               )}
             </div>

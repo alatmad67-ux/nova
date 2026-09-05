@@ -109,6 +109,29 @@
         "storeId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "DeliveryCompany": {
+      "title": "Delivery Company",
+      "description": "Logistics partner configuration.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "apiUrl": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "storeId": { "type": "string" }
+      }
+    },
+    "ShippingRate": {
+      "title": "Shipping Rate",
+      "description": "Delivery fees per governorate.",
+      "type": "object",
+      "properties": {
+        "governorate": { "type": "string" },
+        "price": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "storeId": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -149,6 +172,14 @@
     },
     "/settings/general": {
       "schema": "Store",
+      "description": "PUBLIC_READ, ADMIN_WRITE"
+    },
+    "/delivery-companies/{companyId}": {
+      "schema": "DeliveryCompany",
+      "description": "ADMIN_ALL"
+    },
+    "/shipping-rates/{rateId}": {
+      "schema": "ShippingRate",
       "description": "PUBLIC_READ, ADMIN_WRITE"
     }
   }

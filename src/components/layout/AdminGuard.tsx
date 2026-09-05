@@ -8,6 +8,7 @@ import { useUser } from '@/firebase';
 // الثوابت الموحدة للمديرة
 const ADMIN_EMAIL_1 = '07858833838@novafashion.iq';
 const ADMIN_EMAIL_2 = '+9647858833838@nova-auth.local';
+const ADMIN_PHONE = '07858833838';
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -17,7 +18,12 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading) {
       const email = user?.email?.toLowerCase() || '';
-      if (!user || (email !== ADMIN_EMAIL_1 && email !== ADMIN_EMAIL_2)) {
+      const phone = user?.phoneNumber?.replace(/\D/g, '') || '';
+      
+      const isEmailMatch = email === ADMIN_EMAIL_1 || email === ADMIN_EMAIL_2;
+      const isPhoneMatch = phone.endsWith('7858833838');
+
+      if (!user || (!isEmailMatch && !isPhoneMatch)) {
         console.warn('Unauthorized access attempt to admin area');
         router.push('/admin/login');
       } else {
