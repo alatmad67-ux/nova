@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "Store": {
@@ -132,6 +131,22 @@
     "/orders/{orderId}": {
       "schema": "object",
       "description": "AUTH_CREATE: allow create if request.auth != null. OWNER_READ: allow read if resource.data.customerId == request.auth.uid. ADMIN: allow all. VERSION_87"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "object",
+      "description": "OWNER_READ: allow read if resource.data.userId == request.auth.uid. VERSION_87"
+    },
+    "/sliders/{sliderId}": {
+      "schema": "object",
+      "description": "PUBLIC_READ: allow read. ADMIN: allow write. VERSION_87"
+    },
+    "/delivery-companies/{companyId}": {
+      "schema": "object",
+      "description": "ADMIN: allow all. VERSION_87"
+    },
+    "/settings/general": {
+      "schema": "Store",
+      "description": "PUBLIC_READ: allow read. ADMIN: allow write. VERSION_87"
     }
   }
 }

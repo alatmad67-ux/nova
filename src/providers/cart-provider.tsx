@@ -1,10 +1,11 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, onSnapshot, query } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export interface CartItem {
   id: string;
@@ -58,11 +59,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     // Real-time listener for user favorites in Firestore
     const favsRef = collection(db, 'users', user.uid, 'favorites');
-    const unsubscribe = onSnapshot(favsRef, (snapshot) => {
-      const favIds = snapshot.docs.map(doc => doc.id);
-      setFavorites(favIds);
-      localStorage.setItem('nova_favorites', JSON.stringify(favIds));
-    });
+    const unsubscribe = onSnapshot(
+      favsRef, 
+      (snapshot) => {
+        const favIds = snapshot.docs.map(doc => doc.id);
+        setFavorites(favIds);
+        localStorage.setItem('nova_favorites', JSON.stringify(favIds));
+      },
+      (serverError: any) => {
+        // Emit rich contextual error for favorites listener
+        const permissionError = new FirestorePermissionError({
+          path: favsRef.path,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      }
+    );
 
     return () => unsubscribe();
   }, [db, user]);
@@ -90,7 +102,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const toggleFavorite = async (id: string) => {
     if (!user) {
       toast({ title: "تنبيه", description: "يرجى تسجيل الدخول لحفظ المفضلات سحابياً" });
-      // Update local only for guests
       setFavorites(prev => {
         const next = prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id];
         localStorage.setItem('nova_favorites', JSON.stringify(next));
@@ -103,9 +114,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const favRef = doc(db, 'users', user.uid, 'favorites', id);
     
     if (favorites.includes(id)) {
-      await deleteDoc(favRef);
+      deleteDoc(favRef).catch((e) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: favRef.path, operation: 'delete' }));
+      });
     } else {
-      await setDoc(favRef, { createdAt: new Date().toISOString() });
+      setDoc(favRef, { createdAt: new Date().toISOString() }).catch((e) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: favRef.path, operation: 'create' }));
+      });
     }
   };
 
