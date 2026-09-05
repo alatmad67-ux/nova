@@ -14,11 +14,9 @@ import {
   Search, 
   ShieldCheck, 
   Truck, 
-  Heart, 
   MessageCircle, 
   Star 
 } from 'lucide-react';
-import { Input } from "@/components/ui/input";
 import Link from 'next/link';
 
 export default function Home() {
@@ -28,7 +26,7 @@ export default function Home() {
   const { data: profile } = useDoc(profileRef);
 
   return (
-    <div className="min-h-screen flex flex-col relative bg-background font-arabic pb-32">
+    <div className="min-h-screen flex flex-col relative bg-background font-arabic pb-32" dir="rtl">
       <Header />
       
       <main className="flex-grow space-y-6">

@@ -86,21 +86,20 @@ export default function AddressesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#3d3333] font-arabic pb-32">
-      {/* Main Header - Matches Image Style */}
+    <div className="min-h-screen bg-primary font-arabic pb-32" dir="rtl">
+      {/* Main Header */}
       <header className="h-20 flex items-center px-6 justify-between text-white relative z-10">
-        <div className="w-10" /> {/* Spacer */}
+        <div className="w-10" /> 
         <h1 className="text-xl font-bold">العناوين</h1>
         <button 
           onClick={() => router.back()}
           className="h-10 w-10 flex items-center justify-center"
         >
-          <ChevronRight className="h-6 w-6" />
+          <ChevronRight className="h-6 w-6 rotate-180" />
         </button>
       </header>
 
       <main className="container mx-auto px-0 max-w-lg">
-        {/* If not adding, show list and "Add" button */}
         {!isAdding ? (
           <div className="px-6 py-4">
              <Button 
@@ -121,7 +120,7 @@ export default function AddressesPage() {
                       <p className="text-sm text-primary/60 font-bold">{addr.governorate} - {addr.area}</p>
                       <p className="text-xs text-primary/40 mt-1">{addr.street}</p>
                     </div>
-                    <button onClick={() => handleDelete(addr.id)} className="p-3 text-red-400 hover:bg-red-50 rounded-full transition-colors">
+                    <button onClick={() => handleDelete(addr.id)} className="p-3 text-primary/20 hover:text-red-500 rounded-full transition-colors">
                       <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
@@ -130,7 +129,6 @@ export default function AddressesPage() {
             </div>
           </div>
         ) : (
-          /* The "Add Address" Form - Matches Image Panel */
           <div className="bg-white rounded-t-[3rem] min-h-[85vh] p-8 animate-in slide-in-from-bottom-10 duration-500 shadow-2xl">
             <div className="flex justify-between items-center mb-8">
               <button type="button" onClick={() => setIsAdding(false)} className="p-2 text-primary/20">
@@ -140,7 +138,6 @@ export default function AddressesPage() {
             </div>
 
             <form onSubmit={handleSave} className="space-y-8">
-              {/* المحافظة */}
               <div className="space-y-3">
                 <Label className="text-sm font-bold text-primary/80 pr-2 block text-right">المحافظة</Label>
                 <div className="relative">
@@ -151,12 +148,11 @@ export default function AddressesPage() {
                   >
                     {IRAQI_GOVERNORATES.map(g => <option key={g} value={g}>{g}</option>)}
                   </select>
-                  <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500" />
+                  <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary" />
                   <ChevronRight className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/20 rotate-90" />
                 </div>
               </div>
 
-              {/* المنطقة / الحي */}
               <div className="space-y-3">
                 <Label className="text-sm font-bold text-primary/80 pr-2 block text-right">المنطقة / الحي</Label>
                 <div className="relative">
@@ -167,11 +163,10 @@ export default function AddressesPage() {
                     className="h-16 pr-12 bg-accent/30 border-none rounded-[1.5rem] text-primary font-bold text-right focus-visible:ring-0"
                     required
                   />
-                  <Map className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-800/60" />
+                  <Map className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary" />
                 </div>
               </div>
 
-              {/* العنوان التفصيلي */}
               <div className="space-y-3">
                 <Label className="text-sm font-bold text-primary/80 pr-2 block text-right">العنوان التفصيلي</Label>
                 <div className="relative">
@@ -182,11 +177,10 @@ export default function AddressesPage() {
                     className="h-16 pr-12 bg-accent/30 border-none rounded-[1.5rem] text-primary font-bold text-right focus-visible:ring-0"
                     required
                   />
-                  <Home className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-800/60" />
+                  <Home className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary" />
                 </div>
               </div>
 
-              {/* أقرب نقطة دالة */}
               <div className="space-y-3">
                 <Label className="text-sm font-bold text-primary/80 pr-2 block text-right">أقرب نقطة دالة</Label>
                 <div className="relative">
@@ -196,26 +190,24 @@ export default function AddressesPage() {
                     placeholder="مثال: مقابل صيدلية النور"
                     className="h-16 pr-12 bg-accent/30 border-none rounded-[1.5rem] text-primary font-bold text-right focus-visible:ring-0"
                   />
-                  <Flag className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500" />
+                  <Flag className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary" />
                 </div>
               </div>
 
-              {/* موقع التوصيل على الخريطة */}
               <div className="space-y-3">
                 <Label className="text-sm font-bold text-primary/80 pr-2 block text-right">موقع التوصيل على الخريطة</Label>
                 <button type="button" className="w-full h-16 px-12 bg-accent/30 rounded-[1.5rem] flex items-center justify-between text-primary/40 font-bold">
-                  <LocateFixed className="h-5 w-5 text-red-500" />
+                  <LocateFixed className="h-5 w-5 text-secondary" />
                   <span>حدّدي موقعكِ على الخريطة</span>
                   <div className="w-5" />
                 </button>
               </div>
 
-              {/* حفظ العنوان */}
               <div className="pt-6">
                 <Button 
                   type="submit" 
                   disabled={loading}
-                  className="w-full h-16 rounded-[1.5rem] bg-[#d32f2f] text-white text-xl font-bold shadow-xl shadow-red-500/10 hover:bg-red-700 transition-all"
+                  className="w-full h-16 rounded-[1.5rem] bg-primary text-white text-xl font-bold shadow-xl shadow-primary/10 hover:opacity-90 transition-all"
                 >
                   {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "حفظ العنوان"}
                 </Button>
