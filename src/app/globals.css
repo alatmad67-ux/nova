@@ -5,30 +5,54 @@
 
 @layer base {
   :root {
-    --background: 0 30% 98%;
-    --foreground: 0 10% 20%;
-    --primary: 355 65% 45%; /* اللون الأحمر الوردي من الصورة */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 15 30% 60%;
-    --accent: 0 40% 96%;
-    --border: 0 10% 90%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 263.4 70% 50.4%; /* اللون البنفسجي الأصلي */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 263.4 70% 50.4%;
     --radius: 2rem;
   }
 
   .dark {
-    --background: 0 10% 5%;
-    --foreground: 0 10% 95%;
-    --primary: 355 65% 55%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 15 30% 50%;
-    --accent: 0 20% 10%;
-    --border: 0 20% 15%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 263.4 70% 50.4%;
   }
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground font-arabic antialiased overflow-x-hidden transition-colors duration-300;
+    @apply bg-background text-foreground font-arabic antialiased overflow-x-hidden;
     -webkit-tap-highlight-color: transparent;
   }
 }
@@ -42,20 +66,14 @@
 }
 
 .shadow-premium {
-  box-shadow: 0 15px 40px -10px rgba(197, 48, 48, 0.05);
+  box-shadow: 0 15px 40px -10px rgba(76, 29, 149, 0.1);
 }
 
 .dir-ltr { direction: ltr; }
 .dir-rtl { direction: rtl; }
 
-/* Safe Area for Bottom Nav */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* Custom Gradients matching the new theme */
-.nova-gradient {
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, #e53e3e 100%);
 }
 
 @media print {
@@ -63,28 +81,14 @@
     margin: 1cm;
     size: auto;
   }
-  
   body {
     background: white !important;
     padding: 0 !important;
-    margin: 0 !important;
   }
-
   .print\:hidden {
     display: none !important;
   }
-
   .print\:block {
     display: block !important;
-  }
-
-  .nova-card {
-    box-shadow: none !important;
-    border: none !important;
-  }
-
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
   }
 }

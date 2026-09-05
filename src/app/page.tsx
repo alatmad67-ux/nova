@@ -59,11 +59,11 @@ export default function Home() {
     <div className="min-h-screen flex flex-col relative bg-background font-arabic pb-32" dir="rtl">
       <Header />
       
-      <main className="flex-grow space-y-8">
-        {/* Top Greeting Styled like the screenshot */}
+      <main className="flex-grow space-y-8 pt-24">
+        {/* Top Greeting */}
         <section className="container mx-auto px-6 flex justify-end">
-          <p className="text-[#555] text-lg font-medium">
-            أهلاً، {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Gskin'}
+          <p className="text-muted-foreground text-sm font-medium">
+            أهلاً، {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'جميلة نوفا'}
           </p>
         </section>
 
@@ -72,7 +72,7 @@ export default function Home() {
           <Link href="/search" className="block">
             <div className="relative group">
               <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/30" />
-              <div className="h-14 w-full bg-white border border-primary/5 rounded-2xl flex items-center pr-12 text-sm text-primary/20 font-bold shadow-sm">
+              <div className="h-14 w-full bg-white border border-primary/10 rounded-2xl flex items-center pr-12 text-sm text-primary/20 font-bold shadow-sm">
                 عن ماذا تبحثين اليوم؟
               </div>
               <div className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
