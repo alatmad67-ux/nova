@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
 import { 
@@ -22,7 +22,7 @@ import { Smartphone, Mail, Sparkles, ChevronLeft, Loader2, Apple } from 'lucide-
 import { toast } from '@/hooks/use-toast';
 import { STORE_ID } from '@/lib/constants';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useAuth();
@@ -59,6 +59,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
+    if (!auth) return;
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
@@ -73,6 +74,7 @@ export default function LoginPage() {
   };
 
   const handleAppleLogin = async () => {
+    if (!auth) return;
     setLoading(true);
     try {
       const provider = new OAuthProvider('apple.com');
@@ -87,6 +89,7 @@ export default function LoginPage() {
   };
 
   const setupRecaptcha = () => {
+    if (!auth) return;
     if (!(window as any).recaptchaVerifier) {
       (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible'
@@ -96,6 +99,7 @@ export default function LoginPage() {
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
     if (!phone.startsWith('+964')) {
       toast({ variant: "destructive", title: "تنبيه", description: "يرجى إدخال الرقم بصيغة +964" });
       return;
@@ -229,5 +233,17 @@ export default function LoginPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
