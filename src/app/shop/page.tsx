@@ -17,11 +17,14 @@ export default function ShopPage() {
   const { storeId } = useStore();
   const [sortBy, setSortBy] = useState('newest');
 
-  const productsQuery = useMemo(() => query(
-    collection(db, 'products'),
-    where('storeId', '==', storeId),
-    where('status', '==', 'active')
-  ), [db, storeId]);
+  const productsQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'products'),
+      where('storeId', '==', storeId),
+      where('status', '==', 'active')
+    );
+  }, [db, storeId]);
 
   const { data: rawProducts, loading } = useCollection(productsQuery);
 

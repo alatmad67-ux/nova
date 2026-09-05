@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -31,7 +30,7 @@ import { toast } from '@/hooks/use-toast';
 export default function ProductPage() {
   const { id } = useParams();
   const db = useFirestore();
-  const docRef = useMemo(() => id ? doc(db, 'products', id as string) : null, [db, id]);
+  const docRef = useMemo(() => (db && id) ? doc(db, 'products', id as string) : null, [db, id]);
   const { data: product, loading } = useDoc(docRef);
   
   const { addToCart, toggleFavorite, favorites } = useCart();
@@ -103,11 +102,10 @@ export default function ProductPage() {
       
       <main className="flex-grow container mx-auto px-4 py-8 md:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-24">
-          {/* Product Images */}
           <div className="space-y-6">
             <div className="relative aspect-[3/4] rounded-[3rem] overflow-hidden bg-accent border border-border shadow-premium group">
               <Image
-                src={product.images[activeImage]}
+                src={product.images[activeImage] || 'https://picsum.photos/seed/placeholder/400/600'}
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-1000 group-hover:scale-105"
@@ -131,7 +129,7 @@ export default function ProductPage() {
             </div>
             
             <div className="flex gap-4 overflow-x-auto py-2 no-scrollbar justify-center md:justify-start">
-              {product.images.map((img: string, idx: number) => (
+              {product.images?.map((img: string, idx: number) => (
                 <button
                   key={idx}
                   onClick={() => setActiveImage(idx)}
@@ -146,7 +144,6 @@ export default function ProductPage() {
             </div>
           </div>
 
-          {/* Product Details */}
           <div className="flex flex-col">
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
@@ -174,7 +171,7 @@ export default function ProductPage() {
 
             <div className="bg-accent p-8 rounded-[2.5rem] border border-border/50 mb-10 shadow-sm">
               <div className="flex items-baseline gap-4 mb-2">
-                <span className="text-5xl font-black text-primary">{product.price.toLocaleString()}</span>
+                <span className="text-5xl font-black text-primary">{product.price?.toLocaleString()}</span>
                 <span className="text-sm font-bold text-primary/40">د.ع</span>
               </div>
               {product.originalPrice && (
@@ -185,7 +182,6 @@ export default function ProductPage() {
               )}
             </div>
 
-            {/* Selection Options */}
             <div className="space-y-8 mb-12">
               <div className="space-y-4">
                 <label className="text-sm font-black text-primary/60 tracking-widest block uppercase">اللون المتوفر</label>
@@ -248,7 +244,6 @@ export default function ProductPage() {
               </Button>
             </div>
 
-            {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-4 border-t border-border pt-10">
               <div className="flex flex-col items-center text-center gap-3">
                 <div className="p-4 bg-accent rounded-3xl border border-border/50">
@@ -272,7 +267,6 @@ export default function ProductPage() {
           </div>
         </div>
 
-        {/* Info Tabs */}
         <section className="mt-24">
           <Tabs defaultValue="description" className="w-full">
             <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none h-16 p-0 gap-12">

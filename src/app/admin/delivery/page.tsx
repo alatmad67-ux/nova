@@ -50,6 +50,7 @@ export default function DeliveryCompaniesPage() {
   });
 
   const handleSave = () => {
+    if (!db) return;
     if (!formData.name) {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى إدخال اسم الشركة" });
       return;
@@ -96,6 +97,7 @@ export default function DeliveryCompaniesPage() {
   };
 
   const handleDelete = (id: string, name: string) => {
+    if (!db) return;
     if (!window.confirm(`هل أنتِ متأكدة من حذف شركة ${name}؟`)) return;
     
     const docRef = doc(db, 'delivery-companies', id);

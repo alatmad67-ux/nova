@@ -9,16 +9,14 @@ import Image from 'next/image';
 
 export function Footer() {
   const db = useFirestore();
-  const settingsRef = useMemo(() => doc(db, 'settings', 'general'), [db]);
+  const settingsRef = useMemo(() => db ? doc(db, 'settings', 'general') : null, [db]);
   const { data: settings } = useDoc(settingsRef);
 
   return (
     <footer className="bg-primary text-white pt-20 pb-12 relative overflow-hidden">
-      {/* Decorative Wave or Line from image */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-secondary/50 to-transparent" />
       
       <div className="container mx-auto px-4">
-        {/* Features from the reference image footer */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20 pb-20 border-b border-white/10">
           <div className="flex flex-col items-center text-center gap-4 group">
             <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-secondary/20 transition-colors">
@@ -107,7 +105,7 @@ export function Footer() {
                 <Facebook className="h-5 w-5 text-secondary" />
                 <Phone className="h-5 w-5 text-secondary" />
               </li>
-              <li className="text-white/60 font-bold">+964 780 123 4567</li>
+              <li className="text-white/60 font-bold">{settings?.whatsapp || '+964 780 123 4567'}</li>
               <li className="text-white/40 text-xs font-medium">info@nova-fashion.com</li>
             </ul>
           </div>

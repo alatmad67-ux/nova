@@ -60,6 +60,7 @@ export default function NewProductPage() {
   });
 
   const handleSave = () => {
+    if (!db) return;
     if (!productData.name || !productData.price || !productData.categoryId) {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "الاسم والسعر والقسم مطلوبون" });
       return;

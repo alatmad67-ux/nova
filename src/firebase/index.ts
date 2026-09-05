@@ -2,21 +2,21 @@
 
 /**
  * NOVA FIREBASE CORE - STRICT SINGLETON ARCHITECTURE
- * Eliminates "INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9)"
+ * Prevents "INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9)"
  */
 
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { initializeFirestore, Firestore, getFirestore } from 'firebase/firestore';
+import { initializeFirestore, Firestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
-// Use globalThis to persist instances across HMR and page transitions
+// Use globalThis to persist instances across HMR and page transitions in development
 const g = globalThis as any;
 
 export function initializeFirebase() {
-  // Ensure this only runs on the client
+  // Return null services for Server-Side Rendering
   if (typeof window === 'undefined') {
-    return { app: null as any, db: null as any, auth: null as any };
+    return { app: null, db: null, auth: null };
   }
 
   // 1. Initialize App exactly once
@@ -24,23 +24,21 @@ export function initializeFirebase() {
     const apps = getApps();
     g._NOVA_APP = apps.length > 0 ? apps[0] : initializeApp(firebaseConfig);
   }
-  const app = g._NOVA_APP;
+  const app = g._NOVA_APP as FirebaseApp;
 
   // 2. Initialize Firestore exactly once
-  // This is the CRITICAL part: call initializeFirestore ONLY if we haven't already.
-  // Using experimentalForceLongPolling because Firebase Studio/Cloud Workstations often require it for stable streams.
   if (!g._NOVA_DB) {
     g._NOVA_DB = initializeFirestore(app, {
       experimentalForceLongPolling: true,
     });
   }
-  const db = g._NOVA_DB;
+  const db = g._NOVA_DB as Firestore;
 
   // 3. Initialize Auth exactly once
   if (!g._NOVA_AUTH) {
     g._NOVA_AUTH = getAuth(app);
   }
-  const auth = g._NOVA_AUTH;
+  const auth = g._NOVA_AUTH as Auth;
 
   return { app, db, auth };
 }

@@ -42,10 +42,13 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const db = useFirestore();
   
-  const orderRef = useMemo(() => id ? doc(db, 'orders', id as string) : null, [db, id]);
+  const orderRef = useMemo(() => (db && id) ? doc(db, 'orders', id as string) : null, [db, id]);
   const { data: order, loading } = useDoc(orderRef);
 
-  const companiesQuery = useMemo(() => query(collection(db, 'delivery-companies')), [db]);
+  const companiesQuery = useMemo(() => {
+    if (!db) return null;
+    return query(collection(db, 'delivery-companies'));
+  }, [db]);
   const { data: companies } = useCollection(companiesQuery);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -55,7 +58,6 @@ export default function OrderDetailPage() {
     status: 'لم يتم الشحن'
   });
 
-  // CORRECT: Sync form data with document using useEffect, NOT useMemo
   useEffect(() => {
     if (order?.shippingInfo) {
       setShippingForm({

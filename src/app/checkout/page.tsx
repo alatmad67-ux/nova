@@ -34,7 +34,10 @@ const PROVINCES = [
 export default function CheckoutPage() {
   const { cart, clearCart } = useCart();
   const db = useFirestore();
-  const settingsRef = useMemo(() => doc(db, 'settings', 'general'), [db]);
+  const settingsRef = useMemo(() => {
+    if (!db) return null;
+    return doc(db, 'settings', 'general');
+  }, [db]);
   const { data: settings } = useDoc(settingsRef);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +59,7 @@ export default function CheckoutPage() {
   const formatPrice = (price: number) => price.toLocaleString() + ' د.ع';
 
   const handlePlaceOrder = async () => {
-    if (!formData.name || !formData.phone || !formData.address || !formData.region) {
+    if (!db || !formData.name || !formData.phone || !formData.address || !formData.region) {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى ملء جميع الحقول المطلوبة للتوصيل" });
       return;
     }
@@ -122,7 +125,6 @@ export default function CheckoutPage() {
       });
 
       toast({ title: "تم تثبيت الطلب", description: "يرجى الضغط على زر الواتساب لإكمال التأكيد" });
-      // Don't clear cart yet, wait for WhatsApp redirect
     } catch (error: any) {
       console.error("Order error:", error);
       toast({ variant: "destructive", title: "فشل الطلب", description: error.message || "حدث خطأ أثناء معالجة الطلب" });
@@ -206,7 +208,6 @@ ${itemsText}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Form */}
           <div className="lg:col-span-7 space-y-12">
             <section>
               <h2 className="text-2xl font-black text-primary mb-8 flex items-center gap-3">
@@ -315,7 +316,6 @@ ${itemsText}
             </section>
           </div>
 
-          {/* Sidebar Summary */}
           <div className="lg:col-span-5">
             <div className="sticky top-28 space-y-8">
               <div className="nova-card p-10 border-border shadow-premium">
@@ -360,15 +360,6 @@ ${itemsText}
                 >
                   {isSubmitting ? "جاري المعالجة..." : "تأكيد الطلب الآن"}
                 </Button>
-
-                <div className="mt-8 flex items-center justify-center gap-4 text-primary/20">
-                   <div className="flex items-center gap-2">
-                     <AlertCircle className="h-4 w-4" />
-                     <span className="text-[10px] font-bold uppercase tracking-widest">تأمين نوفا</span>
-                   </div>
-                   <div className="h-1 w-1 bg-primary/10 rounded-full" />
-                   <span className="text-[10px] font-bold uppercase tracking-widest">صنع في العراق</span>
-                </div>
               </div>
             </div>
           </div>

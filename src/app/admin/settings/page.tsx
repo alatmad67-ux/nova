@@ -31,7 +31,10 @@ import { cn } from "@/lib/utils";
 
 export default function AdminSettingsPage() {
   const db = useFirestore();
-  const settingsRef = useMemo(() => doc(db, 'settings', 'general'), [db]);
+  const settingsRef = useMemo(() => {
+    if (!db) return null;
+    return doc(db, 'settings', 'general');
+  }, [db]);
   const { data: settings, loading } = useDoc(settingsRef);
 
   const [formData, setFormData] = useState<any>({
@@ -58,6 +61,7 @@ export default function AdminSettingsPage() {
   }, [settings]);
 
   const handleSave = async () => {
+    if (!settingsRef) return;
     try {
       await setDoc(settingsRef, { 
         ...formData, 

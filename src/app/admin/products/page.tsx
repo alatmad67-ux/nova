@@ -34,12 +34,14 @@ export default function AdminProductsPage() {
   const { storeId } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const productsQuery = useMemo(() => 
-    query(
+  const productsQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
       collection(db, 'products'), 
       where('storeId', '==', storeId),
       orderBy('createdAt', 'desc')
-    ), [db, storeId]);
+    );
+  }, [db, storeId]);
     
   const { data: products, loading } = useCollection(productsQuery);
 
@@ -52,7 +54,7 @@ export default function AdminProductsPage() {
   }, [products, searchTerm]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('هل أنتِ متأكدة من حذف هذا المنتج نهائياً؟')) return;
+    if (!db || !confirm('هل أنتِ متأكدة من حذف هذا المنتج نهائياً؟')) return;
     try {
       await deleteDoc(doc(db, 'products', id));
       toast({ title: "تم الحذف" });
@@ -62,6 +64,7 @@ export default function AdminProductsPage() {
   };
 
   const toggleStatus = async (id: string, currentStatus: string) => {
+    if (!db) return;
     const newStatus = currentStatus === 'active' ? 'draft' : 'active';
     try {
       await updateDoc(doc(db, 'products', id), { status: newStatus });

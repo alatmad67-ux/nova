@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -14,12 +13,14 @@ export function AdminHeader() {
   const auth = useAuth();
   const router = useRouter();
   const db = useFirestore();
-  const settingsRef = useMemo(() => doc(db, 'settings', 'general'), [db]);
+  const settingsRef = useMemo(() => db ? doc(db, 'settings', 'general') : null, [db]);
   const { data: settings } = useDoc(settingsRef);
 
   const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/admin/login');
+    if (auth) {
+      await signOut(auth);
+      router.push('/admin/login');
+    }
   };
 
   return (

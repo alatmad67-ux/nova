@@ -81,6 +81,7 @@ export default function InventoryPage() {
   }, [products, searchTerm, filterLowStock]);
 
   const handleUpdateStock = (productId: string, variantIndex: number, newStock: number, variants: any[]) => {
+    if (!db) return;
     if (newStock < 0) {
       toast({ variant: "destructive", title: "خطأ", description: "لا يمكن أن يكون المخزون سالباً" });
       return;

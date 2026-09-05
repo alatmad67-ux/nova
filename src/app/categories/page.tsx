@@ -16,10 +16,13 @@ export default function CategoriesPage() {
   const db = useFirestore();
   const { storeId } = useStore();
 
-  const catQuery = useMemo(() => query(
-    collection(db, 'categories'),
-    where('storeId', '==', storeId)
-  ), [db, storeId]);
+  const catQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'categories'),
+      where('storeId', '==', storeId)
+    );
+  }, [db, storeId]);
 
   const { data: categories, loading } = useCollection(catQuery);
 
@@ -60,7 +63,7 @@ export default function CategoriesPage() {
                     src={cat.image || 'https://picsum.photos/seed/cat/800/1000'}
                     alt={cat.name}
                     fill
-                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
                     data-ai-hint="fashion category"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

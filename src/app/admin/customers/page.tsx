@@ -20,7 +20,12 @@ import { Badge } from "@/components/ui/badge";
 
 export default function CustomersPage() {
   const db = useFirestore();
-  const ordersQuery = useMemo(() => query(collection(db, 'orders'), orderBy('createdAt', 'desc')), [db]);
+  
+  const ordersQuery = useMemo(() => {
+    if (!db) return null;
+    return query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+  }, [db]);
+
   const { data: orders, loading } = useCollection(ordersQuery);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -29,6 +34,7 @@ export default function CustomersPage() {
     const customerMap = new Map();
 
     orders.forEach(order => {
+      if (!order.customer?.phone) return;
       const phone = order.customer.phone;
       if (!customerMap.has(phone)) {
         customerMap.set(phone, {
@@ -44,7 +50,7 @@ export default function CustomersPage() {
       const stats = customerMap.get(phone);
       stats.orderCount += 1;
       if (order.status !== 'ملغي') {
-        stats.totalSpent += order.totals.total;
+        stats.totalSpent += (order.totals?.total || 0);
       }
     });
 
@@ -54,7 +60,7 @@ export default function CustomersPage() {
     );
   }, [orders, searchTerm]);
 
-  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-primary">جاري تحميل سجلات العملاء...</div>;
+  if (loading && !orders) return <div className="min-h-screen bg-black flex items-center justify-center text-primary font-black animate-pulse">جاري تحميل سجلات العملاء...</div>;
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white font-arabic">
@@ -119,7 +125,7 @@ export default function CustomersPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {customers.length === 0 && (
+              {customers.length === 0 && !loading && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-20 text-white/20 font-bold">لا يوجد عملاء بعد</TableCell>
                 </TableRow>

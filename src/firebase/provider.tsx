@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, ReactNode } from 'react';
@@ -8,9 +7,9 @@ import { Auth } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseContextType {
-  app: FirebaseApp;
-  db: Firestore;
-  auth: Auth;
+  app: FirebaseApp | null;
+  db: Firestore | null;
+  auth: Auth | null;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -32,7 +31,9 @@ export function FirebaseProvider({
 
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
-  if (!context) throw new Error('useFirebase must be used within FirebaseProvider');
+  if (context === undefined) {
+    throw new Error('useFirebase must be used within FirebaseProvider');
+  }
   return context;
 };
 

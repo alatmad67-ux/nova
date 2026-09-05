@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -19,11 +18,14 @@ export default function WishlistPage() {
   const db = useFirestore();
   const { storeId } = useStore();
 
-  const productsQuery = useMemo(() => query(
-    collection(db, 'products'),
-    where('storeId', '==', storeId),
-    where('status', '==', 'active')
-  ), [db, storeId]);
+  const productsQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'products'),
+      where('storeId', '==', storeId),
+      where('status', '==', 'active')
+    );
+  }, [db, storeId]);
 
   const { data: allProducts, loading } = useCollection(productsQuery);
 

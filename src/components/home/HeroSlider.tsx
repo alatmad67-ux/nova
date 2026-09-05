@@ -20,11 +20,14 @@ export function HeroSlider() {
   const db = useFirestore();
   const { storeId } = useStore();
 
-  const sliderQuery = useMemo(() => query(
-    collection(db, 'sliders'), 
-    where('storeId', '==', storeId), 
-    where('isActive', '==', true)
-  ), [db, storeId]);
+  const sliderQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'sliders'), 
+      where('storeId', '==', storeId), 
+      where('isActive', '==', true)
+    );
+  }, [db, storeId]);
   
   const { data: slides, loading } = useCollection(sliderQuery);
 

@@ -47,6 +47,7 @@ export default function AdminCategoriesPage() {
   const [formData, setFormData] = useState({ name: '', slug: '', image: '', order: 0 });
 
   const handleSave = () => {
+    if (!db) return;
     if (!formData.name) return toast({ variant: "destructive", title: "الاسم مطلوب" });
 
     setIsSaving(true);
@@ -94,6 +95,7 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDelete = (id: string, name: string) => {
+    if (!db) return;
     if (!confirm(`هل أنتِ متأكدة من حذف قسم ${name}؟ سيؤدي ذلك لإزالته من المتجر.`)) return;
     deleteDoc(doc(db, 'categories', id))
       .then(() => {

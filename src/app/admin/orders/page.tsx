@@ -39,12 +39,14 @@ export default function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const ordersQuery = useMemo(() => 
-    query(
+  const ordersQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
       collection(db, 'orders'), 
       where('storeId', '==', storeId),
       orderBy('createdAt', 'desc')
-    ), [db, storeId]);
+    );
+  }, [db, storeId]);
     
   const { data: orders, loading } = useCollection(ordersQuery);
 
@@ -62,6 +64,7 @@ export default function AdminOrdersPage() {
   }, [orders, searchTerm, statusFilter]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
+    if (!db) return;
     try {
       const orderRef = doc(db, 'orders', orderId);
       await updateDoc(orderRef, { status: newStatus });

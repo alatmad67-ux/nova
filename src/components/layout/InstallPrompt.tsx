@@ -19,7 +19,8 @@ export function InstallPrompt() {
   
   const db = useFirestore();
   // استخدام useMemo لمنع إعادة إنشاء المرجع في كل ريندر وتجنب الـ Infinite Loop
-  const settingsRef = useMemo(() => doc(db, 'settings', 'general'), [db]);
+  // تم إضافة فحص db لمنع خطأ Expected first argument to collection()
+  const settingsRef = useMemo(() => db ? doc(db, 'settings', 'general') : null, [db]);
   const { data: settings } = useDoc(settingsRef);
 
   useEffect(() => {

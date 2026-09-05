@@ -17,34 +17,35 @@ export default function CategoryProductsPage() {
   const db = useFirestore();
   const { storeId } = useStore();
 
-  // 1. Fetch Categories to find the one matching slug (to get its name)
-  const catQuery = useMemo(() => query(
-    collection(db, 'categories'),
-    where('slug', '==', slug),
-    where('storeId', '==', storeId)
-  ), [db, slug, storeId]);
+  const catQuery = useMemo(() => {
+    if (!db || !slug || !storeId) return null;
+    return query(
+      collection(db, 'categories'),
+      where('slug', '==', slug),
+      where('storeId', '==', storeId)
+    );
+  }, [db, slug, storeId]);
   
   const { data: categoryData } = useCollection(catQuery);
   const category = categoryData?.[0];
 
-  // 2. Fetch Products for this category
-  // Using client-side filter for slug if needed, or if stored as categoryId
-  const productsQuery = useMemo(() => query(
-    collection(db, 'products'),
-    where('storeId', '==', storeId),
-    where('status', '==', 'active')
-  ), [db, storeId]);
+  const productsQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'products'),
+      where('storeId', '==', storeId),
+      where('status', '==', 'active')
+    );
+  }, [db, storeId]);
 
   const { data: rawProducts, loading } = useCollection(productsQuery);
 
   const products = useMemo(() => {
-    if (!rawProducts || !slug) return [];
-    // Filter by slug (assuming products have categoryId or categorySlug)
-    // Here we'll filter by categoryName or categoryId matching our found category
+    if (!rawProducts || !category) return [];
     return rawProducts
       .filter((p: any) => p.categoryId === category?.id)
       .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-  }, [rawProducts, category, slug]);
+  }, [rawProducts, category]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

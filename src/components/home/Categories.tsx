@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -13,7 +14,7 @@ export function Categories() {
   const { storeId } = useStore();
 
   const catQuery = useMemo(() => {
-    if (!db) return null;
+    if (!db || !storeId) return null;
     return query(
       collection(db, 'categories'),
       where('storeId', '==', storeId)

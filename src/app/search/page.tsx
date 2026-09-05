@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -22,11 +21,14 @@ export default function SearchPage() {
   const db = useFirestore();
   const { storeId } = useStore();
 
-  const productsQuery = useMemo(() => query(
-    collection(db, 'products'),
-    where('storeId', '==', storeId),
-    where('status', '==', 'active')
-  ), [db, storeId]);
+  const productsQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'products'),
+      where('storeId', '==', storeId),
+      where('status', '==', 'active')
+    );
+  }, [db, storeId]);
 
   const { data: allProducts, loading: productsLoading } = useCollection(productsQuery);
 
@@ -40,7 +42,6 @@ export default function SearchPage() {
       setAiKeywords(result.keywords);
     } catch (error) {
       console.error("AI Search Error:", error);
-      // Fallback to manual keywords
       setAiKeywords(searchTerm.split(' '));
     } finally {
       setIsSearching(false);
@@ -53,13 +54,9 @@ export default function SearchPage() {
 
     return allProducts.filter((p: any) => {
       const content = `${p.name} ${p.description} ${p.categoryName} ${p.material || ''}`.toLowerCase();
-      
-      // If AI keyword exists, use them for more intelligent matching
       if (aiKeywords.length > 0) {
         return aiKeywords.some(kw => content.includes(kw.toLowerCase()));
       }
-      
-      // Fallback to basic search
       return content.includes(searchTerm.toLowerCase());
     });
   }, [allProducts, searchTerm, aiKeywords]);

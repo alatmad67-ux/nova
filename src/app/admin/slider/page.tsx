@@ -31,10 +31,13 @@ export default function AdminSliderPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({ title: '', subtitle: '', image: '', order: 0, link: '' });
 
-  const sliderQuery = useMemo(() => query(
-    collection(db, 'sliders'), 
-    where('storeId', '==', storeId)
-  ), [db, storeId]);
+  const sliderQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(
+      collection(db, 'sliders'), 
+      where('storeId', '==', storeId)
+    );
+  }, [db, storeId]);
   
   const { data: slides, loading } = useCollection(sliderQuery);
 
@@ -44,6 +47,7 @@ export default function AdminSliderPage() {
   }, [slides]);
 
   const handleSave = () => {
+    if (!db) return;
     if (!formData.image || !formData.title) {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "الصورة والعنوان مطلوبان" });
       return;
@@ -57,7 +61,6 @@ export default function AdminSliderPage() {
       createdAt: serverTimestamp()
     };
 
-    // إضافة الوثيقة مباشرة لمجموعة sliders
     addDoc(collection(db, 'sliders'), sliderData)
       .then(() => {
         toast({ title: "تم الحفظ بنجاح", description: "تمت إضافة شريحة السلايدر لقاعدة البيانات" });
@@ -79,6 +82,7 @@ export default function AdminSliderPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!db) return;
     if (!confirm('هل تريد حذف هذه الشريحة؟')) return;
     deleteDoc(doc(db, 'sliders', id))
       .then(() => {
