@@ -1,45 +1,46 @@
-
 'use client';
 
 /**
- * NOVA FIREBASE CORE - STRICT SINGLETON v11.1.0
- * الحل النهائي والمستقر لمشكلة Assertion Failed (ID: ca9 / b815)
+ * NOVA FIREBASE CORE - STRICT SINGLETON ARCHITECTURE
+ * Eliminates "INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9)"
  */
 
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
+import { initializeFirestore, Firestore, getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
-// استخدام globalThis لضمان بقاء النسخة واحدة فقط حتى مع الـ HMR
+// Use globalThis to persist instances across HMR and page transitions
 const g = globalThis as any;
 
 export function initializeFirebase() {
+  // Ensure this only runs on the client
   if (typeof window === 'undefined') {
     return { app: null as any, db: null as any, auth: null as any };
   }
 
-  // 1. تهيئة تطبيق Firebase كـ Singleton
-  if (!g.__NOVA_APP__) {
-    const existingApps = getApps();
-    g.__NOVA_APP__ = existingApps.length > 0 ? existingApps[0] : initializeApp(firebaseConfig);
+  // 1. Initialize App exactly once
+  if (!g._NOVA_APP) {
+    const apps = getApps();
+    g._NOVA_APP = apps.length > 0 ? apps[0] : initializeApp(firebaseConfig);
   }
-  const app = g.__NOVA_APP__;
+  const app = g._NOVA_APP;
 
-  // 2. تهيئة Firestore كـ Singleton صارم
-  // نستخدم initializeFirestore مرة واحدة فقط لضبط الإعدادات، ثم نستخدم النسخة المخزنة
-  if (!g.__NOVA_DB__) {
-    g.__NOVA_DB__ = initializeFirestore(app, {
+  // 2. Initialize Firestore exactly once
+  // This is the CRITICAL part: call initializeFirestore ONLY if we haven't already.
+  // Using experimentalForceLongPolling because Firebase Studio/Cloud Workstations often require it for stable streams.
+  if (!g._NOVA_DB) {
+    g._NOVA_DB = initializeFirestore(app, {
       experimentalForceLongPolling: true,
     });
   }
-  const db = g.__NOVA_DB__;
+  const db = g._NOVA_DB;
 
-  // 3. تهيئة Auth كـ Singleton
-  if (!g.__NOVA_AUTH__) {
-    g.__NOVA_AUTH__ = getAuth(app);
+  // 3. Initialize Auth exactly once
+  if (!g._NOVA_AUTH) {
+    g._NOVA_AUTH = getAuth(app);
   }
-  const auth = g.__NOVA_AUTH__;
+  const auth = g._NOVA_AUTH;
 
   return { app, db, auth };
 }

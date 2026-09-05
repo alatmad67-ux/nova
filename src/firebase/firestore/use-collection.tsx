@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -17,6 +16,7 @@ export function useCollection(query: Query | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
+  // Track active query to prevent setting state on stale listeners
   const activeQueryRef = useRef<Query | null>(null);
 
   useEffect(() => {
@@ -45,7 +45,8 @@ export function useCollection(query: Query | null) {
         setLoading(false);
       },
       (serverError: any) => {
-        // معالجة متزامنة تماماً لمنع خطأ ca9
+        // MUST BE SYNCHRONOUS: async callbacks in onSnapshot error handling 
+        // can lead to Firestore internal state corruption (ID: ca9)
         if (activeQueryRef.current !== query) return;
 
         if (serverError.code === 'permission-denied') {

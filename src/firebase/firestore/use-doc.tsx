@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -31,7 +30,7 @@ export function useDoc(docRef: DocumentReference | null) {
         setLoading(false);
       },
       (serverError: any) => {
-        // IMPORTANT: Callback must be synchronous to avoid internal SDK state corruption (ID: ca9)
+        // MUST BE SYNCHRONOUS: Prevent ca9 errors caused by microtask delays in error handling
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'get',
