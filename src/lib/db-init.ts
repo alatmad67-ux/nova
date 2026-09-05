@@ -15,11 +15,15 @@ import {
 } from 'firebase/firestore';
 
 /**
- * وظيفة تهيئة قاعدة البيانات الملكية لنوفا (Idempotent DB Initialization)
- * تضمن وجود الوثائق والمجموعات الأساسية دون مسح البيانات الحالية.
- * تم التحديث لتشمل شركة التوصيل الافتراضية.
+ * وظيفة تهيئة قاعدة البيانات الملكية لنوفا (True Idempotent DB Initialization)
+ * تضمن عدم تشغيل عمليات التحقق أكثر من مرة واحدة في الجلسة.
  */
 export async function initializeDatabase(db: Firestore, storeId: string) {
+  const g = globalThis as any;
+  
+  // منع التشغيل المتكرر بسبب React Renders
+  if (g.__NOVA_DB_INITIALIZED__) return true;
+
   try {
     console.log('Initiating Secure DB Setup for:', storeId);
 
@@ -84,6 +88,7 @@ export async function initializeDatabase(db: Firestore, storeId: string) {
       });
     }
 
+    g.__NOVA_DB_INITIALIZED__ = true;
     console.log('Database Architecture is Verified and Ready.');
     return true;
   } catch (error) {

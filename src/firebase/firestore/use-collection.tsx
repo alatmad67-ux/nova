@@ -45,7 +45,7 @@ export function useCollection(query: Query | null) {
         setLoading(false);
       },
       (serverError: any) => {
-        // مزامنة فورية لمنع خطأ ca9
+        // معالجة متزامنة تماماً لمنع خطأ ca9
         if (activeQueryRef.current !== query) return;
 
         if (serverError.code === 'permission-denied') {
