@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,45 +7,19 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 280 50% 15%;
-    
-    --card: 340 30% 98%;
-    --card-foreground: 280 50% 15%;
-    
-    --popover: 0 0% 100%;
-    --popover-foreground: 280 50% 15%;
-    
     --primary: 280 50% 25%;
     --primary-foreground: 0 0% 100%;
-    
     --secondary: 45 40% 60%;
-    --secondary-foreground: 280 50% 15%;
-    
-    --muted: 280 10% 95%;
-    --muted-foreground: 280 10% 40%;
-    
-    --accent: 340 30% 95%;
-    --accent-foreground: 280 50% 25%;
-    
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    
-    --border: 280 10% 90%;
-    --input: 280 10% 90%;
-    --ring: 280 50% 25%;
-    
-    --radius: 1rem;
+    --accent: 340 30% 98%;
+    --border: 280 10% 92%;
+    --radius: 1.5rem;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
-    @apply bg-background text-foreground font-arabic;
-    background-image: 
-      radial-gradient(circle at 10% 10%, rgba(226, 179, 188, 0.05) 0%, transparent 40%),
-      radial-gradient(circle at 90% 90%, rgba(226, 179, 188, 0.05) 0%, transparent 40%);
+    @apply bg-background text-foreground font-arabic antialiased overflow-x-hidden;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
@@ -52,42 +27,31 @@
   font-family: 'IBM Plex Sans Arabic', sans-serif;
 }
 
-.gold-text {
-  @apply text-secondary;
-}
-
-.nova-card {
-  @apply bg-white border border-border/40 rounded-[2rem] transition-all duration-500 hover:shadow-xl hover:shadow-primary/5;
-}
-
-.celestial-glow {
-  box-shadow: 0 10px 40px rgba(120, 40, 160, 0.03);
+.shadow-premium {
+  box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.04), 0 10px 30px -15px rgba(0, 0, 0, 0.03);
 }
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-.shadow-premium {
-  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.05);
+/* Mobile-First Spacing Fixes */
+@media (max-width: 768px) {
+  .container {
+    @apply px-5;
+  }
 }
 
-/* RTL Helpers */
-[dir="rtl"] .dir-ltr {
-  direction: ltr;
+/* Safe Area for Bottom Nav */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-.dir-rtl {
-  direction: rtl;
-}
+.dir-ltr { direction: ltr; }
+.dir-rtl { direction: rtl; }
 
-/* Custom Scrollbar for Luxury feel */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  @apply bg-background;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-primary/20 rounded-full hover:bg-primary/40;
+/* Product Card Luxury Glow */
+.product-card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 30px 60px -12px rgba(76, 29, 149, 0.08);
 }

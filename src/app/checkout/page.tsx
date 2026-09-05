@@ -1,9 +1,10 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { 
   ArrowRight, 
   MapPin, 
@@ -14,89 +15,76 @@ import {
   CheckCircle2,
   MessageCircle,
   ChevronLeft,
-  AlertCircle
+  Loader2,
+  Plus
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { useCart } from '@/providers/cart-provider';
-import { useDoc, useFirestore } from '@/firebase';
-import { doc, collection, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { useFirestore, useUser, useCollection } from '@/firebase';
+import { doc, collection, serverTimestamp, runTransaction, query, where, getDoc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
-
-const PROVINCES = [
-  "بغداد", "البصرة", "نينوى", "أربيل", "النجف", "كربلاء", "ذي قار", "بابل", "الأنبار", "كركوك", "ديالى", "صلاح الدين", "المثنى", "القادسية", "ميسان", "واسط", "السليمانية", "دهوك"
-];
+import { STORE_ID } from '@/lib/constants';
+import { cn } from "@/lib/utils";
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const { cart, clearCart } = useCart();
+  const { user, loading: userLoading } = useUser();
   const db = useFirestore();
-  const settingsRef = useMemo(() => {
-    if (!db) return null;
-    return doc(db, 'settings', 'general');
-  }, [db]);
-  const { data: settings } = useDoc(settingsRef);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderResult, setOrderResult] = useState<{ id: string, number: string } | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    province: 'بغداد',
-    region: '',
-    address: '',
-    landmark: '',
-    notes: ''
-  });
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [deliveryPrice, setDeliveryPrice] = useState(5000);
+
+  const addrQuery = useMemo(() => {
+    if (!db || !user) return null;
+    return query(collection(db, 'users', user.uid, 'addresses'), where('storeId', '==', STORE_ID));
+  }, [db, user]);
+
+  const { data: addresses, loading: addressesLoading } = useCollection(addrQuery);
+
+  const selectedAddress = useMemo(() => {
+    return addresses?.find(a => a.id === selectedAddressId) || addresses?.find(a => a.isDefault) || addresses?.[0];
+  }, [addresses, selectedAddressId]);
+
+  useEffect(() => {
+    if (selectedAddress && db) {
+      const fetchRate = async () => {
+        const rateRef = doc(db, 'shipping-rates', `${STORE_ID}_${selectedAddress.governorate}`);
+        const snap = await getDoc(rateRef);
+        if (snap.exists()) {
+          setDeliveryPrice(snap.data().price);
+        } else {
+          setDeliveryPrice(5000); // Default if not set
+        }
+      };
+      fetchRate();
+    }
+  }, [selectedAddress, db]);
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const shippingFee = settings?.deliveryFees?.[formData.province] ?? 5000;
-  const total = subtotal + shippingFee;
-
-  const formatPrice = (price: number) => price.toLocaleString() + ' د.ع';
+  const total = subtotal + deliveryPrice;
 
   const handlePlaceOrder = async () => {
-    if (!db || !formData.name || !formData.phone || !formData.address || !formData.region) {
-      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى ملء جميع الحقول المطلوبة للتوصيل" });
+    if (!db || !user || !selectedAddress) {
+      toast({ variant: "destructive", title: "تنبيه", description: "يرجى اختيار عنوان للتوصيل" });
       return;
     }
 
-    if (cart.length === 0) return;
-
     setIsSubmitting(true);
-
     try {
-      const orderNumber = `NOVA-${Math.floor(1000 + Math.random() * 9000)}`;
+      const orderNumber = `NOVA-${Math.floor(100000 + Math.random() * 900000)}`;
       
       await runTransaction(db, async (transaction) => {
-        // 1. Check stock for all items
-        for (const item of cart) {
-          const productRef = doc(db, 'products', item.id);
-          const productDoc = await transaction.get(productRef);
-          
-          if (!productDoc.exists()) throw new Error(`المنتج ${item.name} غير موجود`);
-          
-          const productData = productDoc.data();
-          const variantIndex = productData.variants?.findIndex((v: any) => v.sku === item.variant.sku);
-          
-          if (variantIndex !== undefined && variantIndex !== -1) {
-            const currentStock = productData.variants[variantIndex].stock;
-            if (currentStock < item.quantity) {
-              throw new Error(`عذراً، المخزون الحالي لـ ${item.name} لا يكفي`);
-            }
-            const newVariants = [...productData.variants];
-            newVariants[variantIndex].stock -= item.quantity;
-            transaction.update(productRef, { variants: newVariants });
-          }
-        }
-
-        // 2. Create Order Record
+        // Create Order Record
         const orderData = {
           orderNumber,
-          customer: formData,
+          customerId: user.uid,
+          customerName: user.displayName || 'عميل',
+          shippingAddress: selectedAddress,
           items: cart.map(item => ({
             productId: item.id,
             name: item.name,
@@ -108,265 +96,141 @@ export default function CheckoutPage() {
           })),
           totals: {
             subtotal,
-            shipping: shippingFee,
-            discount: 0,
+            shipping: deliveryPrice,
             total
           },
           status: 'جديد',
-          storeId: 'nova-official',
+          storeId: STORE_ID,
           createdAt: serverTimestamp()
         };
 
-        const ordersCol = collection(db, 'orders');
-        const newOrderRef = doc(ordersCol);
+        const newOrderRef = doc(collection(db, 'orders'));
         transaction.set(newOrderRef, orderData);
-        
         setOrderResult({ id: newOrderRef.id, number: orderNumber });
       });
-
-      toast({ title: "تم تثبيت الطلب", description: "يرجى الضغط على زر الواتساب لإكمال التأكيد" });
     } catch (error: any) {
-      console.error("Order error:", error);
-      toast({ variant: "destructive", title: "فشل الطلب", description: error.message || "حدث خطأ أثناء معالجة الطلب" });
+      toast({ variant: "destructive", title: "فشل الطلب", description: "حدث خطأ أثناء معالجة الطلب" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleWhatsAppConfirm = () => {
-    if (!orderResult || !settings?.whatsapp) return;
-
-    const itemsText = cart.map(i => `- ${i.name} (${i.variant.color}/${i.variant.size}) × ${i.quantity}`).join('\n');
-
-    const message = `🛍️ طلب جديد من NOVA
-
-رقم الطلب: ${orderResult.number}
-
-👤 العميل: ${formData.name}
-📞 الهاتف: ${formData.phone}
-📍 العنوان: ${formData.province} - ${formData.region}
-🏠 التفاصيل: ${formData.address}
-💡 نقطة دالة: ${formData.landmark || 'لا يوجد'}
-
-🛒 المشتريات:
-${itemsText}
-
-🚚 التوصيل: ${formatPrice(shippingFee)}
-💰 الإجمالي: ${formatPrice(total)}
-
-📝 ملاحظات: ${formData.notes || 'لا يوجد'}`;
-
-    window.open(`https://wa.me/${settings.whatsapp.replace(/\+/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
-    clearCart();
-  };
+  if (!user && !userLoading) {
+    router.push('/login?redirect=/checkout');
+    return null;
+  }
 
   if (orderResult) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background font-arabic">
         <Header />
         <main className="flex-grow flex flex-col items-center justify-center p-6 text-center">
           <div className="max-w-md w-full p-12 rounded-[4rem] bg-white border border-border shadow-premium">
-            <div className="bg-green-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-green-100">
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
-            </div>
-            <h1 className="text-3xl font-black text-primary mb-4">خطوة واحدة متبقية!</h1>
-            <p className="text-primary/60 mb-10 font-medium">
-              رقم طلبك هو <span className="text-primary font-bold">#{orderResult.number}</span>. 
-              يجب الضغط على الزر أدناه لتأكيد طلبكِ عبر الواتساب وإرسال العنوان للمندوب.
-            </p>
-            
-            <div className="space-y-4">
-              <Button 
-                onClick={handleWhatsAppConfirm}
-                className="w-full h-16 rounded-full text-lg font-black bg-green-500 text-white hover:bg-green-600 hover:scale-105 transition-all gap-3 shadow-xl shadow-green-200"
-              >
-                <MessageCircle className="h-6 w-6" />
-                تأكيد عبر واتساب الآن
-              </Button>
-              <Button asChild variant="ghost" className="w-full h-14 rounded-full text-primary/40 hover:text-primary">
-                <Link href="/">العودة للمتجر</Link>
-              </Button>
-            </div>
+            <CheckCircle2 className="h-20 w-20 text-green-500 mx-auto mb-8" />
+            <h1 className="text-3xl font-black text-primary mb-4">تم تثبيت طلبكِ!</h1>
+            <p className="text-primary/60 mb-10 font-bold">رقم الطلب: #{orderResult.number}</p>
+            <Button asChild className="w-full h-16 rounded-full bg-primary text-white font-black">
+              <Link href="/account/orders">متابعة الطلبات</Link>
+            </Button>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background font-arabic pb-20">
       <Header />
-      
-      <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
-        <div className="flex items-center gap-4 mb-12">
-          <Link href="/cart" className="text-primary/40 hover:text-primary transition-colors flex items-center gap-2 font-bold">
-            السلة
-            <ChevronLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="text-3xl md:text-5xl font-black text-primary">إتمام الطلب</h1>
-        </div>
-
+      <main className="container mx-auto px-4 py-8 md:py-12">
+        <h1 className="text-3xl font-black text-primary mb-12">إتمام الطلبية الملكية</h1>
+        
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-7 space-y-12">
             <section>
-              <h2 className="text-2xl font-black text-primary mb-8 flex items-center gap-3">
-                <MapPin className="h-6 w-6 text-secondary" />
-                معلومات التوصيل
-              </h2>
-              
-              <div className="nova-card p-8 md:p-12 space-y-8 border-border">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-3">
-                    <Label className="text-primary/60 font-black text-xs uppercase tracking-widest pr-2">الاسم الكامل *</Label>
-                    <div className="relative group">
-                      <User className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
-                      <Input 
-                        placeholder="أدخلي اسمكِ بالكامل" 
-                        className="h-14 pr-12 bg-accent/30 border-border rounded-2xl text-primary font-bold focus:border-primary/50"
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-primary/60 font-black text-xs uppercase tracking-widest pr-2">رقم الهاتف *</Label>
-                    <div className="relative group">
-                      <Phone className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
-                      <Input 
-                        placeholder="07XX XXX XXXX" 
-                        className="h-14 pr-12 bg-accent/30 border-border rounded-2xl text-primary font-bold focus:border-primary/50 text-left dir-ltr"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-black text-primary flex items-center gap-3">
+                  <MapPin className="h-6 w-6 text-secondary" /> عنوان التوصيل
+                </h2>
+                <Link href="/account/addresses" className="text-xs font-black text-primary/40 hover:text-primary transition-colors">إدارة العناوين</Link>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-3">
-                    <Label className="text-primary/60 font-black text-xs uppercase tracking-widest pr-2">المحافظة *</Label>
-                    <select 
-                      className="w-full h-14 px-4 bg-accent/30 border border-border rounded-2xl text-primary font-bold focus:border-primary/50 outline-none appearance-none cursor-pointer"
-                      value={formData.province}
-                      onChange={(e) => setFormData({...formData, province: e.target.value})}
+              <div className="grid grid-cols-1 gap-4">
+                {addressesLoading ? (
+                  <div className="h-32 bg-accent animate-pulse rounded-3xl" />
+                ) : addresses?.length === 0 ? (
+                  <Button asChild variant="outline" className="h-32 rounded-[2.5rem] border-dashed border-primary/20 flex flex-col gap-2">
+                    <Link href="/account/addresses">
+                      <Plus className="h-6 w-6" /> إضافة عنوانكِ الأول للتوصيل
+                    </Link>
+                  </Button>
+                ) : (
+                  addresses?.map((addr: any) => (
+                    <button 
+                      key={addr.id}
+                      onClick={() => setSelectedAddressId(addr.id)}
+                      className={cn(
+                        "p-6 rounded-[2rem] border text-right transition-all flex items-center justify-between",
+                        (selectedAddressId === addr.id || (!selectedAddressId && addr.isDefault)) ? "border-primary bg-primary/5 shadow-md" : "border-border bg-white"
+                      )}
                     >
-                      {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-primary/60 font-black text-xs uppercase tracking-widest pr-2">المنطقة / الحي *</Label>
-                    <Input 
-                      placeholder="اسم الحي أو المنطقة" 
-                      className="h-14 bg-accent/30 border-border rounded-2xl text-primary font-bold focus:border-primary/50"
-                      value={formData.region}
-                      onChange={(e) => setFormData({...formData, region: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-primary/60 font-black text-xs uppercase tracking-widest pr-2">العنوان التفصيلي *</Label>
-                  <Input 
-                    placeholder="رقم الدار، الزقاق، أو تفاصيل الموقع" 
-                    className="h-14 bg-accent/30 border-border rounded-2xl text-primary font-bold focus:border-primary/50"
-                    value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-primary/60 font-black text-xs uppercase tracking-widest pr-2">أقرب نقطة دالة</Label>
-                  <Input 
-                    placeholder="مدرسة، جامع، أو محل معروف" 
-                    className="h-14 bg-accent/30 border-border rounded-2xl text-primary font-bold focus:border-primary/50"
-                    value={formData.landmark}
-                    onChange={(e) => setFormData({...formData, landmark: e.target.value})}
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-primary/60 font-black text-xs uppercase tracking-widest pr-2">ملاحظات إضافية</Label>
-                  <Textarea 
-                    placeholder="أي ملاحظات للمندوب أو المتجر..." 
-                    className="min-h-[100px] bg-accent/30 border-border rounded-2xl text-primary font-bold focus:border-primary/50"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                  />
-                </div>
+                      <div>
+                        <p className="font-black text-primary mb-1">{addr.label}</p>
+                        <p className="text-xs text-primary/60 font-bold">{addr.governorate} - {addr.area}</p>
+                      </div>
+                      {(selectedAddressId === addr.id || (!selectedAddressId && addr.isDefault)) && <CheckCircle2 className="h-6 w-6 text-primary" />}
+                    </button>
+                  ))
+                )}
               </div>
             </section>
 
             <section>
-              <h2 className="text-2xl font-black text-primary mb-8 flex items-center gap-3">
-                <CreditCard className="h-6 w-6 text-secondary" />
-                طريقة الدفع
+              <h2 className="text-xl font-black text-primary mb-8 flex items-center gap-3">
+                <Truck className="h-6 w-6 text-secondary" /> طريقة الدفع
               </h2>
-              
-              <div className="nova-card p-6 flex items-center gap-6 border-primary bg-primary/5">
-                <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-xl shadow-primary/5">
-                  <Truck className="h-8 w-8" />
-                </div>
+              <div className="bg-white p-6 rounded-[2rem] border border-primary/20 flex items-center gap-6">
+                <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary"><CreditCard className="h-6 w-6" /></div>
                 <div className="flex-1">
-                  <h4 className="text-xl font-black text-primary">الدفع عند الاستلام</h4>
-                  <p className="text-sm text-primary/40 font-medium mt-1">خدمة الدفع نقداً للمندوب عند وصول طلبيتكِ الملكية</p>
+                  <p className="font-black text-primary">الدفع عند الاستلام</p>
+                  <p className="text-[10px] text-primary/40 font-bold">خدمة الدفع نقداً للمندوب عند وصول الطلبية</p>
                 </div>
-                <CheckCircle2 className="h-8 w-8 text-primary" />
+                <CheckCircle2 className="h-6 w-6 text-primary" />
               </div>
             </section>
           </div>
 
           <div className="lg:col-span-5">
-            <div className="sticky top-28 space-y-8">
-              <div className="nova-card p-10 border-border shadow-premium">
-                <h3 className="text-2xl font-black text-primary mb-10 border-b border-border pb-6">ملخص الحقيبة</h3>
-                
-                <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto no-scrollbar">
-                  {cart.map((item) => (
-                    <div key={item.variant.sku} className="flex gap-4 p-4 bg-accent/20 rounded-2xl border border-border/50">
-                      <div className="h-20 w-16 relative rounded-xl overflow-hidden flex-shrink-0">
-                        <Image src={item.image} alt={item.name} fill className="object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-black text-primary text-sm truncate">{item.name}</p>
-                        <p className="text-xs text-primary/40 mt-1">{item.variant.color} / {item.variant.size} × {item.quantity}</p>
-                      </div>
-                      <p className="font-black text-primary text-sm whitespace-nowrap">{formatPrice(item.price * item.quantity)}</p>
+            <div className="bg-white p-10 rounded-[3rem] border border-border shadow-premium sticky top-28">
+              <h3 className="text-xl font-black text-primary mb-8 border-b border-border pb-4">ملخص الحقيبة</h3>
+              <div className="space-y-6 mb-8 max-h-60 overflow-y-auto no-scrollbar">
+                {cart.map(item => (
+                  <div key={item.variant.sku} className="flex gap-4">
+                    <div className="h-16 w-12 relative rounded-xl overflow-hidden bg-accent"><Image src={item.image} alt={item.name} fill className="object-cover" /></div>
+                    <div className="flex-1">
+                      <p className="text-xs font-black text-primary line-clamp-1">{item.name}</p>
+                      <p className="text-[10px] text-primary/40 font-bold">{item.variant.color} / {item.variant.size} × {item.quantity}</p>
                     </div>
-                  ))}
-                </div>
-
-                <div className="space-y-6 mb-10">
-                  <div className="flex justify-between text-primary/40 font-bold">
-                    <span>المجموع الفرعي</span>
-                    <span>{formatPrice(subtotal)}</span>
+                    <p className="text-sm font-black text-primary">{(item.price * item.quantity).toLocaleString()} د.ع</p>
                   </div>
-                  <div className="flex justify-between text-primary/40 font-bold">
-                    <span>أجور التوصيل ({formData.province})</span>
-                    <span>{formatPrice(shippingFee)}</span>
-                  </div>
-                  <div className="h-px bg-border my-6" />
-                  <div className="flex justify-between text-3xl font-black text-primary">
-                    <span>الإجمالي</span>
-                    <span className="text-secondary">{formatPrice(total)}</span>
-                  </div>
-                </div>
-
-                <Button 
-                  disabled={isSubmitting || cart.length === 0}
-                  onClick={handlePlaceOrder}
-                  size="lg" 
-                  className="w-full h-20 rounded-full text-2xl font-black bg-primary text-white shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-all"
-                >
-                  {isSubmitting ? "جاري المعالجة..." : "تأكيد الطلب الآن"}
-                </Button>
+                ))}
               </div>
+              <div className="space-y-4 border-t border-border pt-6">
+                <div className="flex justify-between text-primary/40 font-bold text-sm"><span>المجموع الفرعي</span><span>{subtotal.toLocaleString()} د.ع</span></div>
+                <div className="flex justify-between text-primary/40 font-bold text-sm"><span>أجور التوصيل ({selectedAddress?.governorate || 'بغداد'})</span><span>{deliveryPrice.toLocaleString()} د.ع</span></div>
+                <div className="h-px bg-border my-4" />
+                <div className="flex justify-between text-2xl font-black text-primary"><span>الإجمالي</span><span className="text-secondary">{total.toLocaleString()} د.ع</span></div>
+              </div>
+              <Button 
+                onClick={handlePlaceOrder} 
+                disabled={isSubmitting || !selectedAddress}
+                className="w-full h-16 rounded-full bg-primary text-white text-xl font-black mt-8 shadow-2xl shadow-primary/20 transition-all hover:scale-[1.02]"
+              >
+                {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : "تأكيد الطلب الآن"}
+              </Button>
             </div>
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

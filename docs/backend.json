@@ -20,16 +20,44 @@
         "storeId": { "type": "string" }
       }
     },
-    "SliderItem": {
-      "title": "Slider Item",
-      "description": "Items for the homepage hero slider.",
+    "CustomerProfile": {
+      "title": "Customer Profile",
+      "description": "User profile data for shoppers.",
       "type": "object",
       "properties": {
-        "title": { "type": "string" },
-        "subtitle": { "type": "string" },
-        "image": { "type": "string" },
-        "link": { "type": "string" },
-        "order": { "type": "number" },
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "provider": { "type": "string" },
+        "storeId": { "type": "string", "default": "nova-official" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Address": {
+      "title": "Shipping Address",
+      "description": "Customer delivery address.",
+      "type": "object",
+      "properties": {
+        "label": { "type": "string", "enum": ["المنزل", "العمل", "أخرى"] },
+        "governorate": { "type": "string" },
+        "area": { "type": "string" },
+        "street": { "type": "string" },
+        "nearestLandmark": { "type": "string" },
+        "notes": { "type": "string" },
+        "isDefault": { "type": "boolean" },
+        "storeId": { "type": "string" }
+      }
+    },
+    "ShippingRate": {
+      "title": "Shipping Rate",
+      "description": "Delivery price per Iraqi governorate.",
+      "type": "object",
+      "properties": {
+        "governorate": { "type": "string" },
+        "price": { "type": "number" },
         "isActive": { "type": "boolean" },
         "storeId": { "type": "string" }
       }
@@ -71,48 +99,39 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "price", "categoryId", "storeId"]
-    },
-    "DeliveryCompany": {
-      "title": "Delivery Company",
-      "description": "Logistics partner configuration for NOVA.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "phone": { "type": "string" },
-        "apiUrl": { "type": "string" },
-        "isActive": { "type": "boolean" },
-        "storeId": { "type": "string" }
-      },
-      "required": ["name", "storeId"]
     }
   },
   "auth": {
-    "providers": ["password"]
+    "providers": ["google", "apple", "phone", "password"]
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": "CustomerProfile",
+      "description": "OWNER_READ_WRITE: allow read, write if request.auth.uid == userId. ADMIN: allow all. VERSION_87"
+    },
+    "/users/{userId}/addresses/{addressId}": {
+      "schema": "Address",
+      "description": "OWNER_READ_WRITE: allow read, write if request.auth.uid == userId. VERSION_87"
+    },
+    "/users/{userId}/favorites/{productId}": {
+      "schema": "object",
+      "description": "OWNER_READ_WRITE: allow read, write if request.auth.uid == userId. VERSION_87"
+    },
+    "/shipping-rates/{rateId}": {
+      "schema": "ShippingRate",
+      "description": "PUBLIC_READ: allow read. ADMIN: allow write. VERSION_87"
+    },
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
+      "description": "PUBLIC_READ: allow get, list. ADMIN: allow write. VERSION_87"
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
+      "description": "PUBLIC_READ: allow get, list. ADMIN: allow write. VERSION_87"
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "PUBLIC_CREATE: allow create. ADMIN_OWNER: allow read, update, delete if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
-    },
-    "/settings/{settingId}": {
-      "schema": "Store",
-      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
-    },
-    "/sliders/{sliderId}": {
-      "schema": "SliderItem",
-      "description": "PUBLIC_READ: allow get, list. ADMIN_OWNER: allow write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
-    },
-    "/delivery-companies/{companyId}": {
-      "schema": "DeliveryCompany",
-      "description": "ADMIN_OWNER: allow read, write if request.auth.token.email == '07858833838@novafashion.iq'. VERSION_85"
+      "description": "AUTH_CREATE: allow create if request.auth != null. OWNER_READ: allow read if resource.data.customerId == request.auth.uid. ADMIN: allow all. VERSION_87"
     }
   }
 }
