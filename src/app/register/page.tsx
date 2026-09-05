@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Header } from '@/components/layout/Header';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,10 +36,18 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth || !db) return;
+    if (!auth || !db) {
+      toast({ variant: "destructive", title: "خطأ", description: "النظام غير جاهز حالياً" });
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       toast({ variant: "destructive", title: "تنبيه", description: "كلمات المرور غير متطابقة" });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast({ variant: "destructive", title: "تنبيه", description: "كلمة المرور يجب أن تكون 6 رموز على الأقل" });
       return;
     }
 
@@ -49,10 +56,13 @@ export default function RegisterPage() {
       const normalized = normalizePhone(formData.phone);
       const virtualEmail = `${normalized}@nova-auth.local`;
       
+      // 1. Create Auth Account
       const result = await createUserWithEmailAndPassword(auth, virtualEmail, formData.password);
       
+      // 2. Update Profile Display Name
       await updateProfile(result.user, { displayName: formData.name });
 
+      // 3. Create Firestore Document (Wait for it)
       await setDoc(doc(db, 'users', result.user.uid), {
         uid: result.user.uid,
         displayName: formData.name,
@@ -63,12 +73,17 @@ export default function RegisterPage() {
         updatedAt: serverTimestamp()
       });
 
-      toast({ title: "تم إنشاء الحساب", description: "أهلاً بكِ في عالم NOVA ✨" });
-      router.push('/account');
+      toast({ title: "تم إنشاء الحساب بنجاح ✨", description: `أهلاً بكِ ${formData.name} في عالم NOVA` });
+      
+      // 4. Force redirect after successful sync
+      router.replace('/account');
     } catch (error: any) {
+      console.error("Registration Error:", error);
       let msg = "فشل إنشاء الحساب، يرجى المحاولة لاحقاً";
-      if (error.code === 'auth/email-already-in-use') msg = "هذا الرقم مسجل مسبقاً";
-      toast({ variant: "destructive", title: "خطأ", description: msg });
+      if (error.code === 'auth/email-already-in-use') msg = "هذا الرقم مسجل مسبقاً، يرجى تسجيل الدخول";
+      if (error.code === 'auth/invalid-email') msg = "رقم الهاتف غير صالح";
+      
+      toast({ variant: "destructive", title: "حدث خطأ", description: msg });
     } finally {
       setLoading(false);
     }
@@ -101,6 +116,7 @@ export default function RegisterPage() {
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 className="h-14 pr-12 bg-accent/30 border-none rounded-2xl font-bold text-primary"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -115,6 +131,7 @@ export default function RegisterPage() {
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
                 className="h-14 pr-12 bg-accent/30 border-none rounded-2xl font-bold text-primary dir-ltr text-right"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -130,6 +147,7 @@ export default function RegisterPage() {
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                 className="h-14 pr-12 bg-accent/30 border-none rounded-2xl font-bold text-primary dir-ltr text-right"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -145,6 +163,7 @@ export default function RegisterPage() {
                 onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                 className="h-14 pr-12 bg-accent/30 border-none rounded-2xl font-bold text-primary dir-ltr text-right"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -154,7 +173,7 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <div className="text-center">
+        <div className="text-center pb-10">
           <p className="text-sm font-bold text-primary/40">لديكِ حساب بالفعل؟ <Link href="/login" className="text-primary font-black underline">سجلي دخولكِ</Link></p>
         </div>
       </main>

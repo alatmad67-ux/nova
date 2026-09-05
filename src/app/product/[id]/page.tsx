@@ -6,9 +6,7 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   Heart, 
-  Share2, 
   ShoppingBag, 
-  Star, 
   ShieldCheck, 
   Truck, 
   RotateCcw,
@@ -18,8 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Header } from '@/components/layout/Header';
-import { BottomNav } from '@/components/layout/BottomNav';
+import { Label } from "@/components/ui/label";
 import { useCart } from '@/providers/cart-provider';
 import { useDoc, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -47,32 +44,43 @@ export default function ProductPage() {
     </div>
   );
   
-  if (!product) return <div className="min-h-screen bg-background flex items-center justify-center font-black">المنتج غير موجود</div>;
+  if (!product) return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center font-arabic p-6 text-center">
+      <h2 className="text-2xl font-black text-primary mb-4">المنتج غير موجود</h2>
+      <p className="text-primary/40 font-bold mb-8">عذراً، يبدو أن هذه القطعة لم تعد متوفرة في مجموعتنا الحالية.</p>
+      <Button onClick={() => router.push('/shop')} className="rounded-full bg-primary text-white px-10 h-14 font-black">العودة للمتجر</Button>
+    </div>
+  );
 
-  const currentVariant = product.variants?.find((v: any) => 
+  const images = product.images || ['https://picsum.photos/seed/placeholder/800/1000'];
+  const price = product.price || 0;
+  const originalPrice = product.originalPrice || 0;
+  const variants = product.variants || [];
+
+  const currentVariant = variants.find((v: any) => 
     v.color === selectedColor && v.size === selectedSize
   );
 
-  const availableColors = Array.from(new Set(product.variants?.map((v: any) => v.color) || [])) as string[];
+  const availableColors = Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean))) as string[];
   const availableSizes = selectedColor 
-    ? product.variants?.filter((v: any) => v.color === selectedColor).map((v: any) => v.size)
-    : Array.from(new Set(product.variants?.map((v: any) => v.size) || []));
+    ? variants.filter((v: any) => v.color === selectedColor).map((v: any) => v.size).filter(Boolean)
+    : Array.from(new Set(variants.map((v: any) => v.size).filter(Boolean))) as string[];
 
   const handleAddToCart = () => {
-    if (!selectedColor || !selectedSize) {
+    if ((availableColors.length > 0 && !selectedColor) || (availableSizes.length > 0 && !selectedSize)) {
       toast({ variant: "destructive", title: "تنبيه", description: "يرجى اختيار اللون والقياس أولاً" });
       return;
     }
     
     addToCart({
       id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images[0],
+      name: product.name || 'منتج نوفا',
+      price: price,
+      image: images[0],
       variant: {
-        color: selectedColor,
-        size: selectedSize,
-        sku: currentVariant?.sku || `${product.id}-${selectedColor}-${selectedSize}`
+        color: selectedColor || 'عام',
+        size: selectedSize || 'واحد',
+        sku: currentVariant?.sku || `${product.id}-${selectedColor || 'any'}-${selectedSize || 'any'}`
       },
       quantity: 1
     });
@@ -82,37 +90,34 @@ export default function ProductPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background font-arabic pb-32">
-      {/* Dynamic Header */}
       <header className="h-20 flex items-center px-6 justify-between sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border/30">
         <button onClick={() => router.back()} className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-primary shadow-sm">
           <ChevronLeft className="h-6 w-6" />
         </button>
-        <span className="text-sm font-black text-primary truncate max-w-[200px]">{product.name}</span>
+        <span className="text-sm font-black text-primary truncate max-w-[200px]">{product.name || 'تفاصيل المنتج'}</span>
         <button onClick={() => toggleFavorite(product.id)} className={cn("h-10 w-10 rounded-full bg-accent flex items-center justify-center shadow-sm", isFav ? "text-primary" : "text-primary/20")}>
           <Heart className={cn("h-5 w-5", isFav && "fill-current")} />
         </button>
       </header>
       
       <main className="flex-grow">
-        {/* Image Gallery */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-accent">
           <Image
-            src={product.images[activeImage] || 'https://picsum.photos/seed/placeholder/800/1000'}
-            alt={product.name}
+            src={images[activeImage]}
+            alt={product.name || 'Product'}
             fill
             className="object-cover"
             priority
           />
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-            {product.images.map((_: any, i: number) => (
+            {images.map((_: any, i: number) => (
               <div key={i} className={cn("h-1.5 rounded-full transition-all", activeImage === i ? "w-8 bg-primary" : "w-2 bg-white/50")} />
             ))}
           </div>
         </div>
 
-        {/* Thumbnails */}
         <div className="flex gap-3 px-5 py-4 overflow-x-auto no-scrollbar">
-           {product.images.map((img: string, i: number) => (
+           {images.map((img: string, i: number) => (
              <button key={i} onClick={() => setActiveImage(i)} className={cn("h-16 w-12 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all", activeImage === i ? "border-primary" : "border-transparent")}>
                <Image src={img} alt="thumb" width={64} height={64} className="object-cover h-full w-full" />
              </button>
@@ -123,62 +128,62 @@ export default function ProductPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-secondary" />
-              <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">{product.categoryName}</span>
+              <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">{product.categoryName || 'مجموعة NOVA'}</span>
             </div>
-            <h1 className="text-2xl font-black text-primary leading-tight">{product.name}</h1>
+            <h1 className="text-2xl font-black text-primary leading-tight">{product.name || 'منتج حصري'}</h1>
             
             <div className="mt-4 flex items-center justify-between">
                <div className="flex items-baseline gap-2">
-                 <span className="text-3xl font-black text-primary">{product.price.toLocaleString()}</span>
+                 <span className="text-3xl font-black text-primary">{price.toLocaleString()}</span>
                  <span className="text-xs font-bold text-primary/40">د.ع</span>
                </div>
-               {product.originalPrice && (
-                 <Badge className="bg-secondary text-white font-black">خصم {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%</Badge>
+               {originalPrice > price && (
+                 <Badge className="bg-secondary text-white font-black">خصم {Math.round(((originalPrice - price) / originalPrice) * 100)}%</Badge>
                )}
             </div>
           </div>
 
           <div className="h-px bg-border/50" />
 
-          {/* Options */}
-          <div className="space-y-6">
-             <div className="space-y-3">
-               <Label className="text-xs font-black text-primary/40 uppercase">اللون المتاح</Label>
-               <div className="flex flex-wrap gap-2">
-                 {availableColors.map(c => (
-                   <button 
-                    key={c} 
-                    onClick={() => setSelectedColor(c)}
-                    className={cn("px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all", selectedColor === c ? "border-primary bg-primary/5 text-primary" : "border-border text-primary/40")}
-                   >
-                     {c}
-                   </button>
-                 ))}
-               </div>
-             </div>
+          {availableColors.length > 0 && (
+            <div className="space-y-3">
+              <Label className="text-xs font-black text-primary/40 uppercase">اللون المتاح</Label>
+              <div className="flex flex-wrap gap-2">
+                {availableColors.map(c => (
+                  <button 
+                   key={c} 
+                   onClick={() => setSelectedColor(c)}
+                   className={cn("px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all", selectedColor === c ? "border-primary bg-primary/5 text-primary" : "border-border text-primary/40")}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-             <div className="space-y-3">
-               <Label className="text-xs font-black text-primary/40 uppercase">القياس</Label>
-               <div className="flex flex-wrap gap-2">
-                 {availableSizes.map((s: any) => (
-                   <button 
-                    key={s} 
-                    onClick={() => setSelectedSize(s)}
-                    className={cn("h-12 w-12 rounded-2xl border-2 flex items-center justify-center font-black text-xs transition-all", selectedSize === s ? "border-primary bg-primary/5 text-primary" : "border-border text-primary/40")}
-                   >
-                     {s}
-                   </button>
-                 ))}
-               </div>
-             </div>
-          </div>
+          {availableSizes.length > 0 && (
+            <div className="space-y-3">
+              <Label className="text-xs font-black text-primary/40 uppercase">القياس</Label>
+              <div className="flex flex-wrap gap-2">
+                {availableSizes.map((s: any) => (
+                  <button 
+                   key={s} 
+                   onClick={() => setSelectedSize(s)}
+                   className={cn("h-12 w-12 rounded-2xl border-2 flex items-center justify-center font-black text-xs transition-all", selectedSize === s ? "border-primary bg-primary/5 text-primary" : "border-border text-primary/40")}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-4">
              <Label className="text-xs font-black text-primary/40 uppercase">الوصف</Label>
-             <p className="text-sm font-bold text-primary/60 leading-relaxed">{product.description}</p>
+             <p className="text-sm font-bold text-primary/60 leading-relaxed whitespace-pre-line">{product.description || 'لا يوجد وصف متاح لهذا المنتج حالياً.'}</p>
           </div>
 
-          {/* Trust Flags */}
           <div className="grid grid-cols-3 gap-3 pt-6">
              {[
                { icon: Truck, label: 'توصيل سريع' },
@@ -194,7 +199,6 @@ export default function ProductPage() {
         </div>
       </main>
 
-      {/* Action Bar */}
       <div className="fixed bottom-20 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-border/30 flex gap-3 z-40">
          <Button onClick={handleAddToCart} className="flex-[2] h-16 rounded-3xl bg-primary text-white text-lg font-black shadow-xl shadow-primary/20 gap-3">
             <ShoppingBag className="h-6 w-6" />
@@ -204,8 +208,6 @@ export default function ProductPage() {
             <MessageCircle className="h-8 w-8" />
          </Button>
       </div>
-
-      <BottomNav />
     </div>
   );
 }

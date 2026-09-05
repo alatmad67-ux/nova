@@ -1,8 +1,8 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
 import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProductCard } from '@/components/home/ProductCard';
 import { useCollection, useFirestore } from '@/firebase';
@@ -85,7 +85,6 @@ export default function WishlistPage() {
         )}
       </main>
 
-      <Footer />
       <BottomNav />
     </div>
   );

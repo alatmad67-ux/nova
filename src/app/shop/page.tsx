@@ -8,8 +8,7 @@ import { ProductCard } from '@/components/home/ProductCard';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import { useStore } from '@/providers/store-provider';
-import { Search, Filter, ListFilter, SlidersHorizontal, Package } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Search, SlidersHorizontal, Package } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 export default function ShopPage() {
@@ -49,7 +48,6 @@ export default function ShopPage() {
       <Header />
       
       <main className="flex-grow container mx-auto px-5 py-6">
-        {/* Mobile App Header Style */}
         <div className="mb-8">
            <h1 className="text-3xl font-black text-primary mb-6">اكتشفي المجموعة</h1>
            
@@ -69,7 +67,6 @@ export default function ShopPage() {
            </div>
         </div>
 
-        {/* Filters & Sorting */}
         <div className="flex items-center justify-between mb-8 overflow-x-auto no-scrollbar py-1">
           <div className="flex gap-2">
             {['الكل', 'فساتين', 'بناطيل', 'بلوزات'].map(cat => (
@@ -80,7 +77,6 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* Product Grid */}
         {loading ? (
           <div className="grid grid-cols-2 gap-4">
             {[1, 2, 3, 4, 5, 6].map(i => (
