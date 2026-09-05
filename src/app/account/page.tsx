@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser, useAuth, useDoc, useFirestore } from '@/firebase';
@@ -28,7 +28,8 @@ import {
   CheckCircle2,
   Instagram,
   Facebook,
-  Music2
+  Music2,
+  Sparkles
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
@@ -43,6 +44,12 @@ export default function AccountPage() {
   const profileRef = useMemo(() => (db && user) ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: profile } = useDoc(profileRef);
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
   const handleLogout = async () => {
     if (auth) {
       await signOut(auth);
@@ -50,16 +57,11 @@ export default function AccountPage() {
     }
   };
 
-  if (loading) return (
+  if (loading || !user) return (
     <div className="min-h-screen bg-[#fff9f9] flex items-center justify-center text-primary font-black animate-pulse">
       جاري تحميل عالمكِ الخاص...
     </div>
   );
-  
-  if (!user) {
-    router.push('/login');
-    return null;
-  }
 
   const MENU_ITEMS = [
     { label: "الطلبات", icon: ReceiptText, href: "/account/orders" },

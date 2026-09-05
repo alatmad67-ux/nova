@@ -20,6 +20,49 @@
         "storeId": { "type": "string" }
       }
     },
+    "Category": {
+      "title": "Category",
+      "description": "Product category grouping.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "image": { "type": "string" },
+        "order": { "type": "number" },
+        "mainCategory": { 
+          "type": "string", 
+          "enum": ["fashion", "accessories", "skincare", "beauty-devices"] 
+        },
+        "isActive": { "type": "boolean" },
+        "storeId": { "type": "string" }
+      }
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Product items in the store.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "mainCategory": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "categoryName": { "type": "string" },
+        "sku": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "draft"] },
+        "brand": { "type": "string" },
+        "material": { "type": "string" },
+        "ingredients": { "type": "string" },
+        "howToUse": { "type": "string" },
+        "specifications": { "type": "string" },
+        "variants": { "type": "array" },
+        "storeId": { "type": "string" },
+        "isNew": { "type": "boolean" },
+        "isBestSeller": { "type": "boolean" }
+      }
+    },
     "CustomerProfile": {
       "title": "Customer Profile",
       "description": "User profile data for shoppers.",
@@ -52,17 +95,6 @@
         "storeId": { "type": "string" }
       }
     },
-    "ShippingRate": {
-      "title": "Shipping Rate",
-      "description": "Delivery price per Iraqi governorate.",
-      "type": "object",
-      "properties": {
-        "governorate": { "type": "string" },
-        "price": { "type": "number" },
-        "isActive": { "type": "boolean" },
-        "storeId": { "type": "string" }
-      }
-    },
     "Notification": {
       "title": "Notification",
       "description": "In-app alerts for users.",
@@ -85,43 +117,39 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "CustomerProfile",
-      "description": "OWNER_READ_WRITE: allow read, write if request.auth.uid == userId. ADMIN: allow all. VERSION_87"
+      "description": "OWNER_READ_WRITE"
     },
     "/users/{userId}/addresses/{addressId}": {
       "schema": "Address",
-      "description": "OWNER_READ_WRITE: allow read, write if request.auth.uid == userId. VERSION_87"
+      "description": "OWNER_READ_WRITE"
     },
     "/users/{userId}/favorites/{productId}": {
       "schema": "object",
-      "description": "OWNER_READ_WRITE: allow read, write if request.auth.uid == userId. VERSION_87"
-    },
-    "/shipping-rates/{rateId}": {
-      "schema": "ShippingRate",
-      "description": "PUBLIC_READ: allow read. ADMIN: allow write. VERSION_87"
+      "description": "OWNER_READ_WRITE"
     },
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "PUBLIC_READ: allow get, list. ADMIN: allow write. VERSION_87"
+      "description": "PUBLIC_READ, ADMIN_WRITE"
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "PUBLIC_READ: allow get, list. ADMIN: allow write. VERSION_87"
+      "description": "PUBLIC_READ, ADMIN_WRITE"
     },
     "/orders/{orderId}": {
       "schema": "object",
-      "description": "AUTH_CREATE: allow create if request.auth != null. OWNER_READ: allow read if resource.data.customerId == request.auth.uid. ADMIN: allow all. VERSION_87"
+      "description": "AUTH_CREATE, OWNER_READ, ADMIN_ALL"
     },
     "/notifications/{notificationId}": {
       "schema": "Notification",
-      "description": "OWNER_READ: allow read if resource.data.userId == request.auth.uid. VERSION_87"
+      "description": "OWNER_READ"
     },
     "/sliders/{sliderId}": {
       "schema": "object",
-      "description": "PUBLIC_READ: allow read. ADMIN: allow write. VERSION_87"
+      "description": "PUBLIC_READ, ADMIN_WRITE"
     },
     "/settings/general": {
       "schema": "Store",
-      "description": "PUBLIC_READ: allow read. ADMIN: allow write. VERSION_87"
+      "description": "PUBLIC_READ, ADMIN_WRITE"
     }
   }
 }
