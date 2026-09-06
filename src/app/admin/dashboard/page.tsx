@@ -51,7 +51,6 @@ export default function AdminDashboard() {
     }
   }, [db, storeId, user]);
   
-  // استعلام الطلبات مع مراعاة تأخير الفهارس
   const ordersQuery = useMemo(() => {
     if (!db || !storeId) return null;
     return query(
@@ -101,12 +100,10 @@ export default function AdminDashboard() {
     const data = [];
     for (let i = 6; i >= 0; i--) {
       const date = subDays(new Date(), i);
-      const formattedDate = format(date, 'yyyy-MM-dd');
-      
       const dayTotal = orders
         .filter(o => {
           const oDate = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : null;
-          return oDate && isValid(oDate) && format(oDate, 'yyyy-MM-dd') === formattedDate && o.status !== 'ملغي';
+          return oDate && isValid(oDate) && format(oDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') && o.status !== 'ملغي';
         })
         .reduce((acc, o) => acc + (o.totals?.total || 0), 0);
         
@@ -119,6 +116,8 @@ export default function AdminDashboard() {
     { label: 'إدارة الطلبات', icon: Package, href: '/admin/orders', color: 'bg-primary' },
     { label: 'إضافة منتج', icon: ShoppingBag, href: '/admin/products/new', color: 'bg-secondary' },
     { label: 'إدارة الأقسام', icon: LayoutGrid, href: '/admin/categories', color: 'bg-blue-600' },
+    { label: 'السلايدر', icon: ImageIcon, href: '/admin/slider', color: 'bg-indigo-600' },
+    { label: 'إعدادات المتجر', icon: SettingsIcon, href: '/admin/settings', color: 'bg-gray-600' },
     { label: 'أسعار التوصيل', icon: Truck, href: '/admin/shipping-rates', color: 'bg-green-600' },
   ];
 
@@ -148,7 +147,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {[
               { label: 'مبيعات اليوم', val: `${stats.todaySales.toLocaleString()} د.ع`, icon: ShoppingBag },
@@ -156,7 +154,7 @@ export default function AdminDashboard() {
               { label: 'العملاء', val: stats.totalCustomers, icon: Users },
               { label: 'المنتجات', val: stats.totalProducts, icon: Package },
             ].map((s, i) => (
-              <div key={i} className="bg-white p-6 rounded-[2rem] border border-border shadow-sm flex flex-col gap-2">
+              <div key={i} className="bg-white p-6 rounded-[2rem] border border-border shadow-premium flex flex-col gap-2">
                 <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><s.icon className="h-5 w-5" /></div>
                 <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">{s.label}</p>
                 <p className="text-xl md:text-2xl font-black text-primary">{s.val}</p>
@@ -165,9 +163,8 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Sales Chart */}
             <div className="lg:col-span-2 space-y-8">
-              <div className="bg-white p-6 md:p-10 rounded-[2.5rem] border border-border shadow-sm">
+              <div className="bg-white p-6 md:p-10 rounded-[2.5rem] border border-border shadow-premium">
                 <h3 className="text-xl font-black text-primary mb-10">المبيعات (آخر 7 أيام)</h3>
                 <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -188,8 +185,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Recent Orders Section */}
-              <div className="bg-white p-8 rounded-[2.5rem] border border-border shadow-sm">
+              <div className="bg-white p-8 rounded-[2.5rem] border border-border shadow-premium">
                 <div className="flex items-center justify-between mb-8">
                   <h3 className="text-xl font-black text-primary">أحدث الطلبات</h3>
                   <Link href="/admin/orders" className="text-xs font-black text-primary/40 flex items-center gap-1 hover:text-primary transition-colors">
@@ -231,7 +227,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Quick Actions & Sidebar */}
             <div className="space-y-8">
               <h3 className="text-lg font-black text-primary px-2">إجراءات سريعة</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -244,32 +239,9 @@ export default function AdminDashboard() {
                     <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center text-white shadow-lg", action.color)}>
                       <action.icon className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60 group-hover:text-primary">{action.label}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60 group-hover:text-primary text-center">{action.label}</span>
                   </button>
                 ))}
-              </div>
-
-              {/* Status Summary */}
-              <div className="bg-primary text-white p-8 rounded-[2.5rem] shadow-xl shadow-primary/20 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
-                <h4 className="text-sm font-black mb-6 flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  ملخص الحالة
-                </h4>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="opacity-60">طلبات جديدة</span>
-                    <span className="font-black">{(rawOrders || []).filter(o => o.status === 'جديد').length}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="opacity-60">قيد التجهيز</span>
-                    <span className="font-black">{(rawOrders || []).filter(o => o.status === 'قيد التجهيز').length}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="opacity-60">مع شركة التوصيل</span>
-                    <span className="font-black">{(rawOrders || []).filter(o => o.status === 'مع شركة التوصيل').length}</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

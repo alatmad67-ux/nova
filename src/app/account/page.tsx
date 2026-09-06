@@ -29,7 +29,6 @@ import {
   Instagram,
   Facebook,
   Music2,
-  Sparkles,
   ShieldAlert
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -51,7 +50,6 @@ export default function AccountPage() {
     }
   }, [user, loading, router]);
 
-  // التحقق مما إذا كان المستخدم الحالي هو مدير النظام
   const isAdmin = useMemo(() => {
     const email = user?.email?.toLowerCase() || '';
     return email === '07858833838@novafashion.iq' || email === '+9647858833838@nova-auth.local';
@@ -74,14 +72,12 @@ export default function AccountPage() {
     { label: "الطلبات", icon: ReceiptText, href: "/account/orders" },
     { label: "العناوين", icon: MapPin, href: "/account/addresses" },
     { label: "المفضلة", icon: Heart, href: "/wishlist" },
-    { label: "الإشعارات", subLabel: "تنبيهات حالة الطلب", icon: Bell, href: "/account/notifications" },
-    { label: "إعدادات الحساب", icon: Settings, href: "/account/details" },
   ];
 
   const SECONDARY_MENU = [
-    { label: "المساعدة والدعم", subLabel: "استشارة مجانية عبر واتساب", icon: MessageSquare, href: "/support" },
-    { label: "سياسة الخصوصية", icon: ShieldCheck, href: "/privacy" },
-    { label: "عن التطبيق", icon: Info, href: "/about" },
+    { label: "الإشعارات", icon: Bell, href: "/account/notifications" },
+    { label: "إعدادات الحساب", icon: Settings, href: "/account/details" },
+    { label: "المساعدة والدعم", icon: MessageSquare, href: "/support" },
   ];
 
   const TRACKING_STEPS = [
@@ -93,62 +89,69 @@ export default function AccountPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fff9f9] font-arabic pb-32 relative overflow-hidden" dir="rtl">
+      {/* Aesthetic Background Blobs */}
       <div className="absolute top-[-5%] right-[-10%] w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
       
       <main className="flex-grow container mx-auto px-5 py-6 relative z-10 max-w-lg">
         
-        {/* Profile Card Header */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-primary/5 flex items-center justify-between mb-8">
-           <div className="flex items-center gap-4 text-right">
-             <Avatar className="h-16 w-16 border-4 border-accent shadow-sm">
-                <AvatarImage src={profile?.photoURL || user.photoURL || ''} />
-                <AvatarFallback className="bg-primary/5 text-primary font-black text-xl">
-                  {profile?.displayName?.[0] || user.displayName?.[0] || 'N'}
-                </AvatarFallback>
-              </Avatar>
+        {/* Profile Card Header - Matching the screenshot top card */}
+        <div className="bg-white rounded-[2.5rem] p-8 shadow-premium flex items-center justify-between mb-8">
+           <div className="flex items-center gap-5 text-right">
+             <div className="relative">
+                <Avatar className="h-16 w-16 border-4 border-accent shadow-sm">
+                  <AvatarImage src={profile?.photoURL || user.photoURL || ''} />
+                  <AvatarFallback className="bg-primary/5 text-primary font-black text-xl">
+                    {profile?.displayName?.[0] || user.displayName?.[0] || 'N'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                  5
+                </div>
+             </div>
               <div className="text-right">
-                <h2 className="text-lg font-black text-primary">
+                <h2 className="text-xl font-black text-primary">
                   {profile?.displayName || user.displayName || 'جميلة نوفا'}
                 </h2>
-                <p className="text-[10px] text-primary/30 font-bold dir-ltr text-right">
+                <p className="text-[10px] text-primary/30 font-bold dir-ltr text-right mt-1">
                   {user.phoneNumber || user.email}
                 </p>
               </div>
            </div>
-           <button onClick={() => router.push('/')} className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-primary/20">
+           <button onClick={() => router.push('/')} className="h-12 w-12 rounded-full bg-accent flex items-center justify-center text-primary/20 hover:bg-primary/5 transition-all">
              <ChevronLeft className="h-6 w-6 rotate-180" />
            </button>
         </div>
 
-        {/* Admin Shortcut (Appears only for the Super Admin) */}
+        {/* Admin Banner - Matching the screenshot plum banner */}
         {isAdmin && (
-          <div className="mb-8 px-2 animate-in zoom-in-95 duration-500">
+          <div className="mb-8 px-0 animate-in zoom-in-95 duration-500">
             <Link 
               href="/admin/dashboard" 
-              className="flex items-center justify-between p-6 bg-primary text-white rounded-[2.5rem] shadow-xl shadow-primary/20 border-b-4 border-black/10 group"
+              className="flex items-center justify-between p-7 bg-primary text-white rounded-[3rem] shadow-xl shadow-primary/20 group relative overflow-hidden"
             >
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center">
-                  <ShieldAlert className="h-6 w-6 text-secondary" />
+              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center gap-5 relative z-10">
+                <div className="h-14 w-14 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md">
+                  <ShieldAlert className="h-7 w-7 text-white/90" />
                 </div>
                 <div>
-                  <h4 className="font-black text-sm">لوحة تحكم المديرة</h4>
+                  <h4 className="font-black text-lg">لوحة تحكم المديرة</h4>
                   <p className="text-[10px] text-white/60 font-bold">إدارة المنتجات، الطلبات، والزبائن</p>
                 </div>
               </div>
-              <ChevronLeft className="h-5 w-5 text-white/40 group-hover:translate-x-[-4px] transition-transform" />
+              <ChevronLeft className="h-6 w-6 text-white/40 group-hover:translate-x-[-4px] transition-transform relative z-10" />
             </Link>
           </div>
         )}
 
-        {/* Order Tracking Section */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-primary/5 mb-8">
-          <h3 className="text-sm font-black text-primary mb-6 text-right pr-2">تتبع الطلبات</h3>
+        {/* Order Tracking Section - Matching the screenshot row */}
+        <div className="bg-white rounded-[2.5rem] p-8 shadow-premium mb-8">
+          <h3 className="text-sm font-black text-primary mb-8 text-right pr-2">تتبع الطلبات</h3>
           <div className="flex justify-between items-start px-2">
             {TRACKING_STEPS.map((step, idx) => (
               <div key={idx} className="flex flex-col items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-accent flex items-center justify-center text-primary/40">
-                  <step.icon className="h-5 w-5" />
+                <div className="h-14 w-14 rounded-full bg-accent flex items-center justify-center text-primary/40">
+                  <step.icon className="h-6 w-6" strokeWidth={1.5} />
                 </div>
                 <span className="text-[9px] font-black text-primary/30">{step.label}</span>
               </div>
@@ -156,88 +159,43 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Main Menu List */}
-        <div className="bg-white rounded-[2.5rem] border border-primary/5 shadow-sm overflow-hidden mb-4">
-          {MENU_ITEMS.map((item, idx) => (
+        {/* Menu List - Matching the screenshot separated items style */}
+        <div className="space-y-4 mb-10">
+          {[...MENU_ITEMS, ...SECONDARY_MENU].map((item, idx) => (
             <Link 
               key={idx} 
               href={item.href}
-              className="flex items-center justify-between p-5 hover:bg-accent/30 transition-colors border-b border-primary/5 last:border-none group"
+              className="bg-white rounded-[2rem] p-5 shadow-premium flex items-center justify-between group hover:border-primary/10 border border-transparent transition-all"
             >
-              <ChevronLeft className="h-5 w-5 text-primary/20 group-hover:translate-x-[-4px] transition-transform" />
+              <ChevronLeft className="h-5 w-5 text-primary/10 group-hover:text-primary transition-all" />
               <div className="flex items-center gap-4 text-right">
-                <div className="flex flex-col">
-                  <span className="font-black text-primary text-sm">{item.label}</span>
-                  {item.subLabel && <span className="text-[9px] text-primary/30 font-bold">{item.subLabel}</span>}
-                </div>
-                <div className="h-10 w-10 rounded-full bg-primary/5 flex items-center justify-center text-primary/60">
+                <span className="font-black text-primary text-sm">{item.label}</span>
+                <div className="h-11 w-11 rounded-full bg-primary/5 flex items-center justify-center text-primary/40">
                   <item.icon className="h-5 w-5" />
                 </div>
               </div>
             </Link>
           ))}
-
-          {/* Night Mode Toggle */}
-          <div className="flex items-center justify-between p-5 border-t border-primary/5">
+          
+          <div className="bg-white rounded-[2rem] p-5 shadow-premium flex items-center justify-between group">
             <Switch className="data-[state=checked]:bg-primary" />
             <div className="flex items-center gap-4 text-right">
               <span className="font-black text-primary text-sm">الوضع الليلي</span>
-              <div className="h-10 w-10 rounded-full bg-primary/5 flex items-center justify-center text-primary/60">
+              <div className="h-11 w-11 rounded-full bg-primary/5 flex items-center justify-center text-primary/40">
                 <Moon className="h-5 w-5" />
               </div>
             </div>
           </div>
-
-          {/* Secondary Menu Items */}
-          {SECONDARY_MENU.map((item, idx) => (
-            <Link 
-              key={idx} 
-              href={item.href}
-              className="flex items-center justify-between p-5 hover:bg-accent/30 transition-colors border-t border-primary/5 group"
-            >
-              <ChevronLeft className="h-5 w-5 text-primary/20 group-hover:translate-x-[-4px] transition-transform" />
-              <div className="flex items-center gap-4 text-right">
-                <div className="flex flex-col">
-                  <span className="font-black text-primary text-sm">{item.label}</span>
-                  {item.subLabel && <span className="text-[9px] text-primary/30 font-bold">{item.subLabel}</span>}
-                </div>
-                <div className="h-10 w-10 rounded-full bg-primary/5 flex items-center justify-center text-primary/60">
-                  <item.icon className="h-5 w-5" />
-                </div>
-              </div>
-            </Link>
-          ))}
         </div>
 
-        {/* Logout Section */}
-        <div className="bg-white rounded-[2rem] border border-primary/5 shadow-sm p-4 mb-10">
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center justify-between px-4 py-2 text-primary font-black group"
-          >
-            <ChevronLeft className="h-5 w-5 text-primary/20 group-hover:translate-x-[-4px] transition-transform" />
-            <div className="flex items-center gap-4">
-              <span>تسجيل الخروج</span>
-              <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
-                <LogOut className="h-5 w-5" />
-              </div>
-            </div>
-          </button>
-        </div>
-
-        {/* Social Icons */}
-        <div className="flex justify-center gap-4 mb-8">
-          {[
-            { icon: Send, color: "text-primary" },
-            { icon: Music2, color: "text-primary" },
-            { icon: Instagram, color: "text-primary" },
-            { icon: Facebook, color: "text-primary" },
-          ].map((social, i) => (
-            <button key={i} className="h-14 w-14 rounded-full bg-white border border-primary/5 shadow-sm flex items-center justify-center hover:scale-110 transition-transform">
-              <social.icon className={cn("h-6 w-6", social.color)} />
-            </button>
-          ))}
-        </div>
+        {/* Logout */}
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-3 h-16 rounded-[2rem] bg-white border border-primary/5 text-primary/40 font-black shadow-sm mb-12 hover:bg-red-50 hover:text-red-500 transition-all"
+        >
+          <LogOut className="h-5 w-5" />
+          <span>تسجيل الخروج</span>
+        </button>
 
       </main>
 
