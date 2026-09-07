@@ -25,9 +25,9 @@ export function ProductCarousel({ title, products, viewAllHref }: ProductCarouse
         </Link>
       </div>
 
-      <div className="flex overflow-x-auto gap-3 px-5 pb-4 no-scrollbar snap-x">
+      <div className="flex overflow-x-auto gap-4 px-5 pb-6 no-scrollbar snap-x">
         {products.map((product) => (
-          <div key={product.id} className="min-w-[145px] md:min-w-[200px] snap-start">
+          <div key={product.id} className="min-w-[155px] md:min-w-[220px] snap-start flex flex-col">
             <ProductCard 
               product={{
                 id: product.id,
@@ -36,7 +36,6 @@ export function ProductCarousel({ title, products, viewAllHref }: ProductCarouse
                 price: product.price,
                 originalPrice: product.originalPrice,
                 image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/600',
-                rating: 5.0,
                 badge: product.isNew ? 'جديد' : undefined
               }} 
             />
