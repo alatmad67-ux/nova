@@ -51,7 +51,7 @@ service cloud.firestore {
       }
     }
 
-    // الطلبات (الزبون ينشئ ويقرأ طلبه، الأدمن يتحكم بكل شيء)
+    // الطلبات (الزبون ينشئ ويقرأ طلبه الخاص فقط، الأدمن يتحكم بكل شيء)
     match /orders/{orderId} {
       allow create: if request.auth != null;
       allow read: if request.auth != null && (request.auth.uid == resource.data.customerId || isAdmin());

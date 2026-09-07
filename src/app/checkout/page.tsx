@@ -76,7 +76,7 @@ export default function CheckoutPage() {
       
       const orderData = {
         orderNumber,
-        customerId: user.uid,
+        customerId: user.uid, // استخدام الـ UID الحقيقي للزبون
         customerName: user.displayName || 'جميلة نوفا',
         customerPhone: user.phoneNumber || selectedAddress.phone || '',
         customerEmail: user.email || '',
@@ -105,7 +105,7 @@ export default function CheckoutPage() {
 
       await setDoc(newOrderRef, orderData);
       
-      // Send internal notification (Permissions fixed in rules)
+      // إرسال إشعار داخلي للزبون
       await setDoc(doc(collection(db, 'notifications')), {
         userId: user.uid,
         title: 'تم استلام طلبكِ بنجاح ✨',
@@ -129,7 +129,7 @@ export default function CheckoutPage() {
       toast({ 
         variant: "destructive", 
         title: "فشل إرسال الطلب", 
-        description: error.message?.includes('permission') ? "خطأ في الصلاحيات، يرجى المحاولة لاحقاً" : "يرجى التأكد من اتصالكِ بالإنترنت" 
+        description: "يرجى التأكد من اتصالكِ بالإنترنت" 
       });
     } finally {
       setIsSubmitting(false);
@@ -219,23 +219,6 @@ export default function CheckoutPage() {
                 <p className="text-[10px] text-primary/30 mt-1">{selectedAddress?.street}</p>
               </div>
             )}
-          </div>
-        </section>
-
-        {/* Payment Method */}
-        <section>
-           <h2 className="text-xl font-black text-primary flex items-center gap-3 mb-6">
-            <CreditCard className="h-5 w-5 text-secondary" /> طريقة الدفع
-          </h2>
-          <div className="bg-white p-6 rounded-[2.5rem] border border-primary/10 flex items-center gap-5 shadow-sm">
-             <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary">
-                <Package className="h-6 w-6" />
-             </div>
-             <div>
-               <p className="font-black text-primary text-sm">الدفع عند الاستلام</p>
-               <p className="text-[10px] text-primary/40 font-bold">نقداً للمندوب عند وصول الطلبية</p>
-             </div>
-             <CheckCircle2 className="mr-auto h-6 w-6 text-primary" />
           </div>
         </section>
 

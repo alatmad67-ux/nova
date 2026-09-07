@@ -29,6 +29,7 @@ export default function MyOrdersPage() {
   const db = useFirestore();
   const { user, loading: userLoading } = useUser();
 
+  // الاستعلام يعتمد على الـ customerId المخزن عند إنشاء الطلب
   const ordersQuery = useMemo(() => {
     if (!db || !user) return null;
     return query(

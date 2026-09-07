@@ -5,25 +5,25 @@
 
 @layer base {
   :root {
-    --background: 343 100% 99%; /* #fff9f9 */
-    --foreground: 264 67% 15%;
+    --background: 45 33% 97%; /* #FAF8F5 - Off-White */
+    --foreground: 271 52% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 264 67% 15%;
+    --card-foreground: 271 52% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 264 67% 15%;
-    --primary: 264 67% 35%; /* #4c1d95 */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 45 93% 47%; /* Gold for accents */
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 264 20% 96%;
-    --muted-foreground: 264 10% 40%;
-    --accent: 264 30% 97%;
-    --accent-foreground: 264 67% 35%;
+    --popover-foreground: 271 52% 15%;
+    --primary: 271 52% 35%; /* #5B2A86 - Deep Purple */
+    --primary-foreground: 45 33% 97%;
+    --secondary: 40 52% 58%; /* #C9A45C - Soft Gold */
+    --secondary-foreground: 271 52% 15%;
+    --muted: 271 20% 94%;
+    --muted-foreground: 271 10% 40%;
+    --accent: 271 30% 96%;
+    --accent-foreground: 271 52% 35%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 264 20% 94%;
-    --input: 264 20% 94%;
-    --ring: 264 67% 35%;
+    --border: 271 20% 92%;
+    --input: 271 20% 92%;
+    --ring: 271 52% 35%;
     --radius: 2.5rem;
   }
 
@@ -34,9 +34,9 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 264 67% 35%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 240 3.7% 15.9%;
+    --primary: 271 52% 35%;
+    --primary-foreground: 45 33% 97%;
+    --secondary: 40 52% 58%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
@@ -46,7 +46,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 264 67% 35%;
+    --ring: 271 52% 35%;
   }
 }
 
@@ -66,7 +66,7 @@
 }
 
 .shadow-premium {
-  box-shadow: 0 10px 30px -5px rgba(76, 29, 149, 0.05);
+  box-shadow: 0 10px 30px -5px rgba(91, 42, 134, 0.05);
 }
 
 .dir-ltr { direction: ltr; }
