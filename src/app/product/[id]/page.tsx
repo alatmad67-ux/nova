@@ -119,31 +119,31 @@ export default function ProductPage() {
       </header>
       
       <main className="flex-grow">
-        {/* Adjusted Image Size for Mobile Focus */}
-        <div className="relative aspect-square md:aspect-[3/2] w-full overflow-hidden bg-accent border-b border-border/10">
+        {/* Main Image Container with Fixed Ratio and object-contain */}
+        <div className="relative aspect-square md:aspect-[4/3] w-full overflow-hidden bg-white border-b border-border/10">
           <Image
             src={images[activeImage]}
             alt={product.name || 'Product'}
             fill
-            className="object-cover"
+            className="object-contain p-4"
             priority
           />
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
             {images.map((_: any, i: number) => (
-              <div key={i} className={cn("h-1 rounded-full transition-all", activeImage === i ? "w-6 bg-primary" : "w-1.5 bg-white/50")} />
+              <div key={i} className={cn("h-1 rounded-full transition-all", activeImage === i ? "w-6 bg-primary" : "w-1.5 bg-primary/20")} />
             ))}
           </div>
         </div>
 
-        <div className="flex gap-2.5 px-5 py-3 overflow-x-auto no-scrollbar">
+        <div className="flex gap-2.5 px-5 py-3 overflow-x-auto no-scrollbar bg-white">
            {images.map((img: string, i: number) => (
-             <button key={i} onClick={() => setActiveImage(i)} className={cn("h-14 w-11 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all", activeImage === i ? "border-primary" : "border-transparent")}>
-               <Image src={img} alt="thumb" width={56} height={56} className="object-cover h-full w-full" />
+             <button key={i} onClick={() => setActiveImage(i)} className={cn("h-16 w-16 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all bg-[#FAF8F5] relative", activeImage === i ? "border-primary" : "border-transparent")}>
+               <Image src={img} alt="thumb" fill className="object-contain p-1" />
              </button>
            ))}
         </div>
 
-        <div className="px-6 py-2 space-y-6">
+        <div className="px-6 py-4 space-y-6">
           {/* Header Info */}
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
@@ -245,7 +245,7 @@ export default function ProductPage() {
                { icon: ShieldCheck, label: 'جودة ملكية' },
                { icon: RotateCcw, label: 'إرجاع سهل' },
              ].map((f, i) => (
-               <div key={i} className="bg-accent/30 rounded-xl p-3 flex flex-col items-center gap-1.5 border border-border/20">
+               <div key={i} className="bg-white rounded-xl p-3 flex flex-col items-center gap-1.5 border border-border/20 shadow-sm">
                  <f.icon className="h-4 w-4 text-secondary" />
                  <span className="text-[8px] font-black text-primary/40 text-center">{f.label}</span>
                </div>
@@ -254,11 +254,9 @@ export default function ProductPage() {
         </div>
       </main>
 
-      {/* Fixed Action Bar with Quantity Selector at the absolute bottom */}
+      {/* Fixed Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-border/30 z-50 pb-safe shadow-2xl">
          <div className="container mx-auto max-w-lg flex items-center gap-3">
-            
-            {/* Quantity Controls */}
             <div className="flex items-center bg-accent/50 rounded-2xl p-1 border border-border/20 h-14">
               <button 
                 onClick={() => setQuantity(Math.max(1, qty - 1))}
@@ -289,7 +287,6 @@ export default function ProductPage() {
             >
                <MessageCircle className="h-7 w-7" />
             </button>
-
          </div>
       </div>
     </div>

@@ -62,8 +62,9 @@ export default function CartPage() {
 
         {cart.map((item) => (
           <div key={item.variant.sku} className="bg-white rounded-[2.5rem] p-5 border border-border/50 shadow-sm flex gap-5">
-            <div className="h-32 w-24 rounded-3xl overflow-hidden bg-accent flex-shrink-0 relative border border-border/30">
-              <Image src={item.image} alt={item.name} fill className="object-cover" />
+            {/* Fixed Aspect Ratio for Cart Images */}
+            <div className="h-32 w-24 rounded-3xl overflow-hidden bg-[#FAF8F5] flex-shrink-0 relative border border-border/30">
+              <Image src={item.image} alt={item.name} fill className="object-contain p-2" />
             </div>
             
             <div className="flex-1 flex flex-col justify-between py-1">

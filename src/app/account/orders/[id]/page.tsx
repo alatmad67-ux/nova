@@ -93,8 +93,12 @@ export default function OrderDetailsPage() {
           <div className="space-y-3">
             {order.items?.map((item: any, idx: number) => (
               <div key={idx} className="bg-white rounded-3xl p-4 flex gap-4 border border-border/30">
-                <div className="h-20 w-16 bg-accent rounded-2xl overflow-hidden relative">
-                   <div className="absolute inset-0 flex items-center justify-center text-primary/10"><Package className="h-6 w-6" /></div>
+                <div className="h-20 w-16 bg-[#FAF8F5] rounded-2xl overflow-hidden relative border border-border/20">
+                   {item.image ? (
+                     <Image src={item.image} alt={item.name} fill className="object-contain p-1" />
+                   ) : (
+                     <div className="absolute inset-0 flex items-center justify-center text-primary/10"><Package className="h-6 w-6" /></div>
+                   )}
                 </div>
                 <div className="flex-1">
                   <h4 className="text-sm font-black text-primary line-clamp-1">{item.name}</h4>

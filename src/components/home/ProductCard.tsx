@@ -31,12 +31,13 @@ export function ProductCard({ product }: ProductProps) {
 
   return (
     <div className="bg-white rounded-[2rem] group relative overflow-hidden flex flex-col h-full border border-border/30 hover:shadow-lg transition-all duration-500">
-      <Link href={`/product/${product.id}`} className="block relative aspect-[4/5] overflow-hidden bg-accent/30 m-1.5 rounded-[1.6rem]">
+      {/* Fixed Aspect Ratio Container for Product Images */}
+      <Link href={`/product/${product.id}`} className="block relative aspect-[3/4] overflow-hidden bg-[#FAF8F5] m-1.5 rounded-[1.6rem]">
         <Image
           src={product.image}
           alt={product.name}
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-110"
+          className="object-contain p-2 transition-transform duration-700 group-hover:scale-105"
           sizes="(max-width: 768px) 45vw, 20vw"
         />
         
