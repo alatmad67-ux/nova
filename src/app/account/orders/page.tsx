@@ -75,7 +75,7 @@ export default function MyOrdersPage() {
                 <p className="font-black text-sm">يجب تفعيل الفهرس في Firebase</p>
              </div>
              <p className="text-[10px] font-bold opacity-80 leading-relaxed mb-4">
-               Firestore يتطلب بناء فهرس لهذا البحث المتقدم. يرجى الضغط على الرابط الذي يظهر في "Inspect -> Console" في متصفحكِ لتفعيله بنقرة واحدة.
+               Firestore يتطلب بناء فهرس لهذا البحث المتقدم. يرجى الضغط على الرابط الذي يظهر في "Inspect &rarr; Console" في متصفحكِ لتفعيله بنقرة واحدة.
              </p>
           </div>
         )}
