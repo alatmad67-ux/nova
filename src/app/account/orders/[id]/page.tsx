@@ -18,7 +18,7 @@ import {
   Calendar,
   Sparkles,
   XCircle,
-  ChevronLeft
+  MessageCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -35,17 +35,25 @@ export default function OrderDetailsPage() {
   const orderRef = useMemo(() => (db && id) ? doc(db, 'orders', id as string) : null, [db, id]);
   const { data: order, loading } = useDoc(orderRef);
 
-  // تعريف مراحل الطلب بناءً على الحالات المعتمدة في النظام
+  // تعريف مراحل الطلب بدقة لضمان التتبع المستمر
   const steps = [
-    { label: 'طلب جديد', status: ['جديد', 'تم التأكيد', 'قيد التجهيز', 'جاهز للشحن', 'مع شركة التوصيل', 'تم التسليم'] },
-    { label: 'تم التأكيد', status: ['تم التأكيد', 'قيد التجهيز', 'جاهز للشحن', 'مع شركة التوصيل', 'تم التسليم'] },
-    { label: 'قيد التجهيز', status: ['قيد التجهيز', 'جاهز للشحن', 'مع شركة التوصيل', 'تم التسليم'] },
-    { label: 'في الطريق', status: ['مع شركة التوصيل', 'تم التسليم'] },
-    { label: 'تم التسليم', status: ['تم التسليم'] },
+    { label: 'طلب جديد', key: 'جديد' },
+    { label: 'تم التأكيد', key: 'تم التأكيد' },
+    { label: 'قيد التجهيز', key: 'قيد التجهيز' },
+    { label: 'في الطريق', key: 'تم الشحن' },
+    { label: 'تم التسليم', key: 'تم التسليم' },
   ];
 
-  const currentStatusIndex = steps.findIndex(step => step.status[0] === order?.status);
-  const isCancelled = order?.status === 'ملغي';
+  // دالة لتحديد ما إذا كانت المرحلة مكتملة بناءً على الترتيب التصاعدي
+  const getStepStatus = (stepKey: string) => {
+    const statusOrder = ['جديد', 'تم التأكيد', 'قيد التجهيز', 'تم الشحن', 'تم التسليم'];
+    const currentIndex = statusOrder.indexOf(order?.status || 'جديد');
+    const stepIndex = statusOrder.indexOf(stepKey);
+    
+    if (order?.status === 'ملغي') return 'cancelled';
+    if (currentIndex >= stepIndex) return 'completed';
+    return 'pending';
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-background dark:bg-[#050505] flex flex-col items-center justify-center font-black text-primary dark:text-zinc-100 animate-pulse">
@@ -54,7 +62,9 @@ export default function OrderDetailsPage() {
     </div>
   );
   
-  if (!order) return <div className="min-h-screen bg-background dark:bg-[#050505] flex items-center justify-center font-black">الطلب غير موجود</div>;
+  if (!order) return <div className="min-h-screen bg-background dark:bg-[#050505] flex items-center justify-center font-black text-primary dark:text-zinc-100">الطلب غير موجود</div>;
+
+  const isCancelled = order.status === 'ملغي';
 
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] font-arabic pb-32" dir="rtl">
@@ -97,18 +107,19 @@ export default function OrderDetailsPage() {
                <div className="absolute top-5 left-8 right-8 h-0.5 bg-accent dark:bg-zinc-800 -z-0" />
                <div 
                  className="absolute top-5 right-8 h-0.5 bg-primary transition-all duration-1000 -z-0" 
-                 style={{ width: `${(steps.findIndex(s => s.status.includes(order.status)) / (steps.length - 1)) * 80}%` }}
+                 style={{ 
+                   width: isCancelled ? '0%' : `${(steps.findIndex(s => s.key === order.status) / (steps.length - 1)) * 80}%` 
+                 }}
                />
 
                {steps.map((step, idx) => {
-                 const isCompleted = step.status.includes(order.status);
-                 const isCurrent = step.status[0] === order.status;
+                 const stepStatus = getStepStatus(step.key);
                  return (
                    <div key={idx} className="flex flex-col items-center gap-3 relative z-10 flex-1">
                      <div className={cn(
                        "h-10 w-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-zinc-900",
-                       isCompleted ? "bg-primary text-white shadow-lg" : "bg-accent dark:bg-zinc-800 text-primary/20 dark:text-zinc-700",
-                       isCurrent && "animate-pulse ring-4 ring-primary/10"
+                       stepStatus === 'completed' ? "bg-primary text-white shadow-lg" : "bg-accent dark:bg-zinc-800 text-primary/20 dark:text-zinc-700",
+                       order.status === step.key && "animate-pulse ring-4 ring-primary/10"
                      )}>
                        {idx === 0 ? <Clock className="h-4 w-4" /> : 
                         idx === 1 ? <CheckCircle2 className="h-4 w-4" /> :
@@ -118,7 +129,7 @@ export default function OrderDetailsPage() {
                      </div>
                      <span className={cn(
                        "text-[9px] font-black text-center leading-tight transition-colors",
-                       isCompleted ? "text-primary dark:text-zinc-100" : "text-primary/20 dark:text-zinc-700"
+                       stepStatus === 'completed' ? "text-primary dark:text-zinc-100" : "text-primary/20 dark:text-zinc-700"
                      )}>
                        {step.label}
                      </span>
@@ -128,62 +139,6 @@ export default function OrderDetailsPage() {
              </div>
           </div>
         )}
-
-        {/* Header Info Card */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 shadow-sm border border-border/50 dark:border-zinc-800 flex items-center justify-between">
-           <div className="space-y-1">
-              <p className="text-[10px] font-black text-primary/30 dark:text-zinc-500 uppercase tracking-[0.2em]">تاريخ الطلب</p>
-              <h4 className="font-black text-primary dark:text-zinc-100">
-                {order.createdAt?.seconds ? format(new Date(order.createdAt.seconds * 1000), 'PPPP', { locale: ar }) : ''}
-              </h4>
-              <div className="flex items-center gap-2 text-[10px] text-primary/40 dark:text-zinc-500 font-bold">
-                 <Clock className="h-3 w-3" />
-                 {order.createdAt?.seconds ? format(new Date(order.createdAt.seconds * 1000), 'p', { locale: ar }) : ''}
-              </div>
-           </div>
-           <div className="h-16 w-16 bg-accent dark:bg-zinc-800 rounded-3xl flex items-center justify-center text-primary/20 dark:text-zinc-700">
-              <Calendar className="h-8 w-8" strokeWidth={1.5} />
-           </div>
-        </div>
-
-        {/* Shipping Info */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 shadow-sm border border-border/50 dark:border-zinc-800 space-y-6">
-          <div className="flex items-center gap-3 border-b border-border/50 dark:border-zinc-800 pb-4">
-            <div className="h-10 w-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
-               <MapPin className="h-5 w-5" />
-            </div>
-            <h3 className="text-sm font-black text-primary dark:text-zinc-100">معلومات التوصيل</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-6">
-            <div className="space-y-4">
-               <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-primary/30 dark:text-zinc-500 uppercase">المستلم</span>
-                  <span className="text-sm font-black text-primary dark:text-zinc-100">{order.customerName}</span>
-               </div>
-               <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-primary/30 dark:text-zinc-500 uppercase">الهاتف</span>
-                  <span className="text-sm font-black text-primary dark:text-zinc-100 dir-ltr">{order.customerPhone}</span>
-               </div>
-               <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-primary/30 dark:text-zinc-500 uppercase">المحافظة</span>
-                  <span className="text-sm font-black text-primary dark:text-zinc-100">{order.governorate}</span>
-               </div>
-               <div className="space-y-1">
-                  <span className="text-[10px] font-black text-primary/30 dark:text-zinc-500 uppercase">العنوان التفصيلي</span>
-                  <p className="text-xs font-bold text-primary/60 dark:text-zinc-400 leading-relaxed">
-                    {order.shippingAddress?.area} - {order.shippingAddress?.street}
-                  </p>
-               </div>
-               {order.shippingAddress?.nearestLandmark && (
-                 <div className="bg-accent/50 dark:bg-zinc-800/50 p-3 rounded-xl border border-primary/5 dark:border-zinc-700 flex gap-3">
-                    <Info className="h-4 w-4 text-secondary flex-shrink-0" />
-                    <p className="text-[10px] font-bold text-primary/60 dark:text-zinc-400">نقطة دالة: {order.shippingAddress.nearestLandmark}</p>
-                 </div>
-               )}
-            </div>
-          </div>
-        </div>
 
         {/* Order Items */}
         <div className="space-y-4">
@@ -208,8 +163,8 @@ export default function OrderDetailsPage() {
                   <div>
                     <h4 className="text-sm font-black text-primary dark:text-zinc-100 line-clamp-1">{item.name}</h4>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {item.color && <span className="text-[9px] font-black bg-accent dark:bg-zinc-800 text-primary/60 dark:text-zinc-400 px-2 py-0.5 rounded-lg border border-primary/5 dark:border-zinc-700">لون: {item.color}</span>}
-                      {item.size && <span className="text-[9px] font-black bg-accent dark:bg-zinc-800 text-primary/60 dark:text-zinc-400 px-2 py-0.5 rounded-lg border border-primary/5 dark:border-zinc-700">قياس: {item.size}</span>}
+                      {item.color && <span className="text-[9px] font-black bg-accent dark:bg-zinc-800 text-primary/60 dark:text-zinc-400 px-2 py-0.5 rounded-lg">اللون: {item.color}</span>}
+                      {item.size && <span className="text-[9px] font-black bg-accent dark:bg-zinc-800 text-primary/60 dark:text-zinc-400 px-2 py-0.5 rounded-lg">القياس: {item.size}</span>}
                       <span className="text-[9px] font-black bg-primary/5 text-primary dark:text-zinc-100 px-2 py-0.5 rounded-lg">الكمية: {item.quantity}</span>
                     </div>
                   </div>
@@ -223,12 +178,49 @@ export default function OrderDetailsPage() {
           </div>
         </div>
 
-        {/* Order Totals Summary */}
+        {/* Shipping Info */}
+        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 shadow-sm border border-border/50 dark:border-zinc-800 space-y-6">
+          <div className="flex items-center gap-3 border-b border-border/50 dark:border-zinc-800 pb-4">
+            <div className="h-10 w-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
+               <MapPin className="h-5 w-5" />
+            </div>
+            <h3 className="text-sm font-black text-primary dark:text-zinc-100">معلومات التوصيل</h3>
+          </div>
+          
+          <div className="space-y-4">
+               <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-primary/30 dark:text-zinc-500 uppercase">المستلم</span>
+                  <span className="text-sm font-black text-primary dark:text-zinc-100">{order.customerName}</span>
+               </div>
+               <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-primary/30 dark:text-zinc-500 uppercase">الهاتف</span>
+                  <span className="text-sm font-black text-primary dark:text-zinc-100 dir-ltr">{order.customerPhone}</span>
+               </div>
+               <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-primary/30 dark:text-zinc-500 uppercase">المحافظة</span>
+                  <span className="text-sm font-black text-primary dark:text-zinc-100">{order.governorate}</span>
+               </div>
+               <div className="space-y-1">
+                  <span className="text-[10px] font-black text-primary/30 dark:text-zinc-500 uppercase">العنوان التفصيلي</span>
+                  <p className="text-xs font-bold text-primary/60 dark:text-zinc-400 leading-relaxed">
+                    {order.shippingAddress?.area} - {order.shippingAddress?.street}
+                  </p>
+               </div>
+               {order.shippingAddress?.nearestLandmark && (
+                 <div className="bg-accent/50 dark:bg-zinc-800/50 p-3 rounded-xl border border-primary/5 dark:border-zinc-700 flex gap-3">
+                    <Info className="h-4 w-4 text-secondary flex-shrink-0" />
+                    <p className="text-[10px] font-bold text-primary/60 dark:text-zinc-400">نقطة دالة: {order.shippingAddress.nearestLandmark}</p>
+                 </div>
+               )}
+          </div>
+        </div>
+
+        {/* Totals Summary */}
         <div className="bg-primary dark:bg-zinc-900 text-white p-10 rounded-[3.5rem] shadow-2xl shadow-primary/20 space-y-6 relative overflow-hidden">
            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl" />
            <div className="absolute bottom-0 left-0 w-24 h-24 bg-secondary/10 rounded-full -ml-12 -mb-12 blur-2xl" />
            
-           <h3 className="text-lg font-black border-b border-white/10 pb-4 flex items-center gap-3">
+           <h3 className="text-lg font-black border-b border-white/10 pb-4 flex items-center gap-3 relative z-10">
               <Info className="h-5 w-5 text-secondary" /> ملخص الفاتورة
            </h3>
            
@@ -258,18 +250,12 @@ export default function OrderDetailsPage() {
               </div>
            </div>
         </div>
-
-        {/* Footer Branding */}
-        <div className="text-center opacity-20 pt-10 pb-4">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] dark:text-zinc-600">NOVA OFFICIAL — AUTHENTIC COLLECTION</p>
-        </div>
-
       </main>
 
-      {/* Action Button Fixed */}
-      <div className="fixed bottom-20 left-0 right-0 p-4 bg-background/80 dark:bg-[#050505]/80 backdrop-blur-md z-40 max-w-lg mx-auto md:hidden">
+      {/* WhatsApp Inquiry Fixed */}
+      <div className="fixed bottom-24 left-0 right-0 p-4 z-40 max-w-lg mx-auto md:hidden">
          <Button 
-          onClick={() => window.open('https://wa.me/9647858833838', '_blank')}
+          onClick={() => window.open(`https://wa.me/9647858833838?text=أود الاستفسار عن طلبي رقم ${order.orderNumber}`, '_blank')}
           className="w-full h-14 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-black shadow-lg transition-all gap-2"
          >
            <MessageCircle className="h-5 w-5" />

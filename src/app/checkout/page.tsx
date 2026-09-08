@@ -7,12 +7,10 @@ import { useRouter } from 'next/navigation';
 import { 
   ArrowRight, 
   MapPin, 
-  CreditCard,
   CheckCircle2,
   ChevronLeft,
   Loader2,
   Plus,
-  Package,
   MessageCircle
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -53,7 +51,7 @@ export default function CheckoutPage() {
         if (snap.exists() && snap.data().isActive) {
           setDeliveryPrice(snap.data().price);
         } else {
-          setDeliveryPrice(5000); // Fallback default
+          setDeliveryPrice(5000); 
         }
       };
       fetchRate();
@@ -74,7 +72,6 @@ export default function CheckoutPage() {
       const orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
       const newOrderRef = doc(collection(db, 'orders'));
       
-      // تأكيد ربط المعرف الحقيقي للزبون
       const orderData = {
         orderNumber,
         customerId: user.uid, 
@@ -83,7 +80,6 @@ export default function CheckoutPage() {
         customerEmail: user.email || '',
         shippingAddress: {
           ...selectedAddress,
-          // التأكد من حفظ تفاصيل العنوان كاملة داخل الطلب للتوثيق
           fullAddress: `${selectedAddress.governorate}, ${selectedAddress.area}, ${selectedAddress.street}`,
           landmark: selectedAddress.nearestLandmark || ''
         },
@@ -111,7 +107,6 @@ export default function CheckoutPage() {
 
       await setDoc(newOrderRef, orderData);
       
-      // إرسال إشعار داخلي للزبون
       await setDoc(doc(collection(db, 'notifications')), {
         userId: user.uid,
         title: 'تم استلام طلبكِ بنجاح ✨',
@@ -132,11 +127,7 @@ export default function CheckoutPage() {
       clearCart();
     } catch (error: any) {
       console.error("Order Error:", error);
-      toast({ 
-        variant: "destructive", 
-        title: "فشل إرسال الطلب", 
-        description: "يرجى التأكد من اتصالكِ بالإنترنت" 
-      });
+      toast({ variant: "destructive", title: "فشل إرسال الطلب", description: "يرجى التأكد من اتصالكِ بالإنترنت" });
     } finally {
       setIsSubmitting(false);
     }
@@ -201,7 +192,6 @@ export default function CheckoutPage() {
       </header>
 
       <main className="flex-grow container mx-auto px-5 py-8 space-y-10">
-        {/* Address Section */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-black text-primary flex items-center gap-3">
@@ -218,7 +208,7 @@ export default function CheckoutPage() {
                 <Link href="/account/addresses"><Plus className="h-6 w-6" /> أضيفي عنوانكِ الأول</Link>
               </Button>
             ) : (
-              <div className="bg-white p-6 rounded-[2.5rem] border border-primary/10 shadow-sm relative overflow-hidden group">
+              <div className="bg-white p-6 rounded-[2.5rem] border border-primary/10 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
                 <p className="font-black text-primary text-lg mb-1">{selectedAddress?.label}</p>
                 <p className="text-xs font-bold text-primary/60">{selectedAddress?.governorate} - {selectedAddress?.area}</p>
@@ -229,7 +219,6 @@ export default function CheckoutPage() {
           </div>
         </section>
 
-        {/* Summary Card */}
         <div className="bg-primary text-white p-10 rounded-[3.5rem] shadow-2xl shadow-primary/30 space-y-6 relative overflow-hidden">
            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
            <h3 className="text-xl font-black border-b border-white/10 pb-4">ملخص الطلبية الملكية</h3>

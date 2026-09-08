@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -13,7 +14,8 @@ import {
   CheckCircle2, 
   XCircle,
   Calendar,
-  ShoppingBag
+  ShoppingBag,
+  AlertCircle
 } from 'lucide-react';
 import { STORE_ID } from '@/lib/constants';
 import { cn } from "@/lib/utils";
@@ -27,25 +29,28 @@ export default function MyOrdersPage() {
   const db = useFirestore();
   const { user, loading: userLoading } = useUser();
 
-  // تبسيط الاستعلام ليكون متوافقاً مع الفهرس الأساسي المقبول في Firebase
+  // الاستعلام المحدث ليتطابق تماماً مع الفهرس المركب المفعّل في Console
   const ordersQuery = useMemo(() => {
     if (!db || !user) return null;
     return query(
       collection(db, 'orders'),
+      where('storeId', '==', STORE_ID),
       where('customerId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
   }, [db, user]);
 
-  const { data: orders, loading: ordersLoading } = useCollection(ordersQuery);
+  const { data: orders, loading: ordersLoading, error } = useCollection(ordersQuery);
 
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'جديد': return { icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' };
       case 'تم التأكيد': return { icon: CheckCircle2, color: 'text-cyan-500', bg: 'bg-cyan-50 dark:bg-cyan-900/20' };
+      case 'قيد التجهيز': return { icon: Package, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' };
+      case 'تم الشحن': return { icon: Truck, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' };
       case 'تم التسليم': return { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' };
       case 'ملغي': return { icon: XCircle, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20' };
-      default: return { icon: Truck, color: 'text-secondary', bg: 'bg-accent dark:bg-zinc-800' };
+      default: return { icon: Package, color: 'text-primary', bg: 'bg-accent dark:bg-zinc-800' };
     }
   };
 
@@ -57,15 +62,25 @@ export default function MyOrdersPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] font-arabic pb-32" dir="rtl">
-      <header className="h-20 flex items-center px-6 justify-between bg-white dark:bg-zinc-900 sticky top-0 z-40 border-b border-border/50 dark:border-zinc-800 transition-colors">
-        <button onClick={() => router.push('/account')} className="h-10 w-10 rounded-full bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-300">
+      <header className="h-20 flex items-center px-6 justify-between bg-white dark:bg-zinc-900 sticky top-0 z-40 border-b border-border/50 dark:border-zinc-800">
+        <button onClick={() => router.push('/account')} className="h-10 w-10 rounded-full bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-300 shadow-sm">
           <ChevronRight className="h-6 w-6" />
         </button>
-        <h1 className="text-xl font-black text-primary dark:text-zinc-100 uppercase tracking-widest">طلباتي</h1>
+        <h1 className="text-xl font-black text-primary dark:text-zinc-100">طلباتي</h1>
         <div className="w-10" />
       </header>
 
       <main className="container mx-auto px-5 py-6 space-y-4 max-w-lg">
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/10 p-6 rounded-[2rem] border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400">
+             <div className="flex items-center gap-3 mb-2">
+                <AlertCircle className="h-5 w-5" />
+                <h4 className="font-black">عذراً، حدث خطأ</h4>
+             </div>
+             <p className="text-xs font-bold opacity-80 leading-relaxed">يرجى التأكد من استقرار الإنترنت أو التواصل مع الدعم الفني لمتجر NOVA.</p>
+          </div>
+        )}
+
         {orders && orders.length > 0 ? (
           orders.map((order: any) => {
             const statusInfo = getStatusInfo(order.status);
