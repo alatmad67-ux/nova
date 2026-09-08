@@ -43,9 +43,11 @@ export default function AccountPage() {
       router.push('/login');
     }
     // Check initial dark mode state
-    const savedMode = localStorage.getItem('nova_theme');
-    if (savedMode === 'dark' || (typeof window !== 'undefined' && document.documentElement.classList.contains('dark'))) {
-      setIsDarkMode(true);
+    if (typeof window !== 'undefined') {
+      const savedMode = localStorage.getItem('nova_theme');
+      if (savedMode === 'dark' || document.documentElement.classList.contains('dark')) {
+        setIsDarkMode(true);
+      }
     }
   }, [user, loading, router]);
 

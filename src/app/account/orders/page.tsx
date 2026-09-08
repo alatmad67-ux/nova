@@ -28,7 +28,6 @@ export default function MyOrdersPage() {
   const db = useFirestore();
   const { user, loading: userLoading } = useUser();
 
-  // هذا الاستعلام يحتاج إلى فهرس مركب (storeId + customerId + createdAt)
   const ordersQuery = useMemo(() => {
     if (!db || !user) return null;
     return query(
@@ -59,7 +58,7 @@ export default function MyOrdersPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] font-arabic pb-32" dir="rtl">
-      <header className="h-20 flex items-center px-6 justify-between bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-40 border-b border-border/50 dark:border-zinc-800">
+      <header className="h-20 flex items-center px-6 justify-between bg-white dark:bg-zinc-900 sticky top-0 z-40 border-b border-border/50 dark:border-zinc-800">
         <button onClick={() => router.push('/account')} className="h-10 w-10 rounded-full bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-300">
           <ChevronRight className="h-6 w-6" />
         </button>
@@ -92,7 +91,7 @@ export default function MyOrdersPage() {
                 <div className="flex justify-between items-start mb-5">
                   <div>
                     <h3 className="font-black text-primary dark:text-zinc-100 text-lg">طلب #{order.orderNumber}</h3>
-                    <div className="flex items-center gap-2 text-[10px] text-primary/40 dark:text-zinc-500 font-bold mt-1">
+                    <div className="flex items-center gap-2 text-[10px] text-primary/40 dark:text-zinc-500 font-bold mt-1 text-right">
                       <Calendar className="h-3 w-3" />
                       {order.createdAt?.seconds ? format(new Date(order.createdAt.seconds * 1000), 'PPP', { locale: ar }) : 'قيد المزامنة'}
                     </div>
@@ -107,9 +106,9 @@ export default function MyOrdersPage() {
                    <div className="h-14 w-14 rounded-2xl bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary/40 dark:text-zinc-600">
                       <Package className="h-7 w-7" strokeWidth={1.5} />
                    </div>
-                   <div className="flex-1">
+                   <div className="flex-1 text-right">
                       <p className="text-xs font-black text-primary/60 dark:text-zinc-400">{order.items?.length || 0} قطع في الطلبية</p>
-                      <div className="flex items-baseline gap-1 mt-1">
+                      <div className="flex items-baseline gap-1 mt-1 justify-end">
                          <p className="text-lg font-black text-primary dark:text-zinc-100">{(order.totals?.total || 0).toLocaleString()}</p>
                          <p className="text-[10px] font-bold text-primary/30 dark:text-zinc-600">د.ع</p>
                       </div>
@@ -119,9 +118,9 @@ export default function MyOrdersPage() {
                    </div>
                 </div>
 
-                <div className="pt-4 flex items-center gap-2 opacity-40">
-                  <div className="h-1 w-1 rounded-full bg-primary" />
+                <div className="pt-4 flex items-center gap-2 opacity-40 justify-end">
                   <p className="text-[9px] font-black text-primary dark:text-zinc-500 uppercase tracking-widest">NOVA Official Store</p>
+                  <div className="h-1 w-1 rounded-full bg-primary" />
                 </div>
               </Link>
             );
