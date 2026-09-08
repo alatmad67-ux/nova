@@ -5,16 +5,13 @@ import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { collection, query, where, orderBy, updateDoc, doc } from 'firebase/firestore';
-import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { 
   Bell, 
-  ChevronLeft, 
+  ChevronRight, 
   Clock, 
-  ShoppingBag, 
   Sparkles,
   Info,
-  CheckCircle2,
   Package
 } from 'lucide-react';
 import { STORE_ID } from '@/lib/constants';
@@ -49,19 +46,19 @@ export default function NotificationsPage() {
       case 'order': return <Package className="h-5 w-5 text-blue-500" />;
       case 'promo': return <Sparkles className="h-5 w-5 text-secondary" />;
       case 'alert': return <Info className="h-5 w-5 text-red-500" />;
-      default: return <Bell className="h-5 w-5 text-primary/40" />;
+      default: return <Bell className="h-5 w-5 text-primary/40 dark:text-zinc-500" />;
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center animate-pulse font-black text-primary">جاري تحميل تنبيهات NOVA...</div>;
+  if (loading) return <div className="min-h-screen bg-background dark:bg-zinc-950 flex items-center justify-center animate-pulse font-black text-primary dark:text-zinc-100">جاري تحميل تنبيهات NOVA...</div>;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background font-arabic pb-32" dir="rtl">
-      <header className="h-20 flex items-center px-6 justify-between bg-white sticky top-0 z-40 border-b border-border/50">
-        <button onClick={() => router.back()} className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-primary">
-          <ChevronLeft className="h-6 w-6" />
+    <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] font-arabic pb-32" dir="rtl">
+      <header className="h-20 flex items-center px-6 justify-between bg-white dark:bg-zinc-900 sticky top-0 z-40 border-b border-border/50 dark:border-zinc-800">
+        <button onClick={() => router.back()} className="h-10 w-10 rounded-full bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-300">
+          <ChevronRight className="h-6 w-6" />
         </button>
-        <h1 className="text-xl font-black text-primary">الإشعارات</h1>
+        <h1 className="text-xl font-black text-primary dark:text-zinc-100">الإشعارات</h1>
         <div className="w-10" />
       </header>
 
@@ -72,20 +69,22 @@ export default function NotificationsPage() {
               key={notif.id} 
               onClick={() => handleRead(notif.id)}
               className={cn(
-                "p-5 rounded-[2rem] border transition-all flex gap-4",
-                notif.isRead ? "bg-white border-border/50 opacity-60" : "bg-primary/5 border-primary/10 shadow-sm"
+                "p-5 rounded-[2rem] border transition-all flex gap-4 cursor-pointer",
+                notif.isRead 
+                  ? "bg-white dark:bg-zinc-900 border-border/50 dark:border-zinc-800 opacity-60" 
+                  : "bg-primary/5 dark:bg-zinc-900 border-primary/10 dark:border-zinc-700 shadow-sm"
               )}
             >
-              <div className="h-12 w-12 rounded-2xl bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+              <div className="h-12 w-12 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center flex-shrink-0 border border-primary/5 dark:border-zinc-700">
                 {getIcon(notif.type)}
               </div>
               <div className="flex-1">
-                <div className="flex justify-between items-start mb-1">
-                  <h4 className="text-sm font-black text-primary">{notif.title}</h4>
+                <div className="flex justify-between items-start mb-1 text-right">
+                  <h4 className="text-sm font-black text-primary dark:text-zinc-100">{notif.title}</h4>
                   {!notif.isRead && <div className="h-2 w-2 rounded-full bg-primary" />}
                 </div>
-                <p className="text-xs text-primary/60 font-bold leading-relaxed">{notif.body}</p>
-                <div className="flex items-center gap-1.5 text-[9px] text-primary/30 font-black mt-3">
+                <p className="text-xs text-primary/60 dark:text-zinc-400 font-bold leading-relaxed text-right">{notif.body}</p>
+                <div className="flex items-center gap-1.5 text-[9px] text-primary/30 dark:text-zinc-600 font-black mt-3 justify-start dir-ltr">
                   <Clock className="h-3 w-3" />
                   {notif.createdAt?.seconds ? format(new Date(notif.createdAt.seconds * 1000), 'PPP', { locale: ar }) : ''}
                 </div>
@@ -93,7 +92,7 @@ export default function NotificationsPage() {
             </div>
           ))
         ) : (
-          <div className="text-center py-20 opacity-20 text-primary">
+          <div className="text-center py-20 opacity-20 text-primary dark:text-zinc-600">
             <Bell className="h-16 w-16 mx-auto mb-4" />
             <p className="font-black">لا توجد إشعارات جديدة</p>
           </div>

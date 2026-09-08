@@ -21,10 +21,8 @@ export function BottomNav() {
   const { cart } = useCart();
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-  // In RTL layout (dir="rtl"), the first item in the grid appears on the right.
-  // We want Home on the right, so we keep the array as is.
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] h-20 bg-white border-t border-primary/5 md:hidden pb-safe shadow-xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] h-20 bg-white dark:bg-zinc-900 border-t border-primary/5 dark:border-zinc-800 md:hidden pb-safe shadow-xl">
       <div className="grid h-full grid-cols-5 items-center">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
@@ -36,13 +34,13 @@ export function BottomNav() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 transition-all",
-                isActive ? "text-primary" : "text-primary/30"
+                isActive ? "text-primary dark:text-zinc-100" : "text-primary/30 dark:text-zinc-600"
               )}
             >
               <div className="relative">
                 <Icon className={cn("h-6 w-6")} strokeWidth={isActive ? 2.5 : 2} />
                 {item.label === 'السلة' && cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 h-4 w-4 bg-primary text-white text-[8px] font-black flex items-center justify-center rounded-full shadow-md border border-white">
+                  <span className="absolute -top-2 -right-2 h-4 w-4 bg-primary text-white text-[8px] font-black flex items-center justify-center rounded-full shadow-md border border-white dark:border-zinc-900">
                     {cartCount}
                   </span>
                 )}

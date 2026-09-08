@@ -98,35 +98,35 @@ export default function Home() {
   const isViewSearchResults = searchTerm.length > 0 || aiKeywords.length > 0;
 
   return (
-    <div className="min-h-screen flex flex-col relative bg-background font-arabic pb-32" dir="rtl">
+    <div className="min-h-screen flex flex-col relative bg-background dark:bg-[#050505] font-arabic pb-32" dir="rtl">
       <Header />
       
       <main className="flex-grow space-y-4 pt-24">
-        {/* Top Greeting - Aligned to Right */}
+        {/* Top Greeting */}
         {!isViewSearchResults && (
           <section className="container mx-auto px-6 flex justify-start">
-            <p className="text-primary/40 text-sm font-medium">
+            <p className="text-primary/40 dark:text-zinc-500 text-sm font-medium">
               أهلاً، {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'جميلة نوفا'}
             </p>
           </section>
         )}
 
         {/* Integrated Sticky Search Bar Section */}
-        <section className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl py-4 border-b border-primary/5 transition-all">
+        <section className="sticky top-0 z-50 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl py-4 border-b border-primary/5 dark:border-zinc-800/50 transition-all">
           <div className="container mx-auto px-6">
             <form onSubmit={handleSearch} className="relative group">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/30 group-focus-within:text-primary transition-colors" />
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/30 dark:text-zinc-600 group-focus-within:text-primary dark:group-focus-within:text-zinc-300 transition-colors" />
               <Input 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="عن ماذا تبحثين اليوم؟"
-                className="h-14 w-full bg-accent/30 border-none rounded-2xl flex items-center pr-12 pl-12 text-sm text-primary font-bold shadow-sm focus-visible:ring-primary/20"
+                className="h-14 w-full bg-accent/30 dark:bg-zinc-900/50 border-none rounded-2xl flex items-center pr-12 pl-12 text-sm text-primary dark:text-zinc-100 font-bold shadow-sm focus-visible:ring-primary/20 dark:focus-visible:ring-zinc-800"
               />
               {searchTerm && (
                 <button 
                   type="button"
                   onClick={clearSearch}
-                  className="absolute left-14 top-1/2 -translate-y-1/2 p-1 text-primary/20 hover:text-primary transition-colors"
+                  className="absolute left-14 top-1/2 -translate-y-1/2 p-1 text-primary/20 dark:text-zinc-700 hover:text-primary dark:hover:text-zinc-400 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -134,7 +134,7 @@ export default function Home() {
               <button 
                 type="submit"
                 disabled={isSearching}
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all active:scale-95"
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-primary/5 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-primary dark:text-zinc-300 hover:bg-primary hover:text-white transition-all active:scale-95"
               >
                 {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               </button>
@@ -146,8 +146,8 @@ export default function Home() {
           /* Search Results View */
           <section className="container mx-auto px-6 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between mb-8">
-               <h3 className="text-xl font-black text-primary">نتائج البحث ({filteredProducts.length})</h3>
-               <button onClick={clearSearch} className="text-xs font-black text-secondary underline">عرض المتجر كاملاً</button>
+               <h3 className="text-xl font-black text-primary dark:text-zinc-100">نتائج البحث ({filteredProducts.length})</h3>
+               <button onClick={clearSearch} className="text-xs font-black text-secondary underline underline-offset-4">عرض المتجر كاملاً</button>
             </div>
             
             {filteredProducts.length > 0 ? (
@@ -169,9 +169,9 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-24 bg-accent/30 rounded-[3rem] border border-dashed border-primary/10">
-                <Package className="h-16 w-16 mx-auto mb-6 text-primary opacity-10" />
-                <p className="text-primary/40 font-black">لم نجد نتائج مطابقة لبحثكِ، جربي كلمات أخرى</p>
+              <div className="text-center py-24 bg-accent/30 dark:bg-zinc-900/30 rounded-[3rem] border border-dashed border-primary/10 dark:border-zinc-800">
+                <Package className="h-16 w-16 mx-auto mb-6 text-primary dark:text-zinc-700 opacity-20" />
+                <p className="text-primary/40 dark:text-zinc-500 font-black">لم نجد نتائج مطابقة لبحثكِ، جربي كلمات أخرى</p>
               </div>
             )}
           </section>
@@ -189,10 +189,10 @@ export default function Home() {
                 { label: 'دعم مباشر', icon: MessageCircle },
               ].map((item, idx) => (
                 <div key={idx} className="flex flex-col items-center text-center gap-2">
-                  <div className="h-12 w-12 rounded-full bg-white border border-primary/5 shadow-sm flex items-center justify-center text-primary/60">
+                  <div className="h-12 w-12 rounded-full bg-white dark:bg-zinc-900 border border-primary/5 dark:border-zinc-800 shadow-sm flex items-center justify-center text-primary/60 dark:text-zinc-400">
                     <item.icon className="h-5 w-5" />
                   </div>
-                  <span className="text-[9px] font-black text-primary/40 leading-tight">{item.label}</span>
+                  <span className="text-[9px] font-black text-primary/40 dark:text-zinc-600 leading-tight">{item.label}</span>
                 </div>
               ))}
             </section>
@@ -219,8 +219,8 @@ export default function Home() {
           </div>
         )}
 
-        <div className="text-center pt-8 opacity-20 pb-4">
-           <p className="text-[10px] font-black uppercase tracking-[0.3em]">بشرتكِ الزجاجية تبدأ من هنا © 2026</p>
+        <div className="text-center pt-8 opacity-20 dark:opacity-10 pb-4">
+           <p className="text-[10px] font-black uppercase tracking-[0.3em] dark:text-zinc-400">بشرتكِ الزجاجية تبدأ من هنا © 2026</p>
         </div>
       </main>
 
