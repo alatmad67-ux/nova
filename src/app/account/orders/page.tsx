@@ -13,8 +13,7 @@ import {
   CheckCircle2, 
   XCircle,
   Calendar,
-  ShoppingBag,
-  AlertCircle
+  ShoppingBag
 } from 'lucide-react';
 import { STORE_ID } from '@/lib/constants';
 import { cn } from "@/lib/utils";
@@ -28,17 +27,17 @@ export default function MyOrdersPage() {
   const db = useFirestore();
   const { user, loading: userLoading } = useUser();
 
+  // تبسيط الاستعلام ليكون متوافقاً مع الفهرس الأساسي المقبول في Firebase
   const ordersQuery = useMemo(() => {
     if (!db || !user) return null;
     return query(
       collection(db, 'orders'),
-      where('storeId', '==', STORE_ID),
       where('customerId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
   }, [db, user]);
 
-  const { data: orders, loading: ordersLoading, error } = useCollection(ordersQuery);
+  const { data: orders, loading: ordersLoading } = useCollection(ordersQuery);
 
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -50,7 +49,7 @@ export default function MyOrdersPage() {
     }
   };
 
-  if (userLoading || (ordersLoading && !error)) return (
+  if (userLoading || (ordersLoading && !orders)) return (
     <div className="min-h-screen bg-background dark:bg-[#050505] flex items-center justify-center text-primary dark:text-zinc-100 font-black animate-pulse">
       جاري تحميل حقيبة طلباتكِ...
     </div>
@@ -58,7 +57,7 @@ export default function MyOrdersPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] font-arabic pb-32" dir="rtl">
-      <header className="h-20 flex items-center px-6 justify-between bg-white dark:bg-zinc-900 sticky top-0 z-40 border-b border-border/50 dark:border-zinc-800">
+      <header className="h-20 flex items-center px-6 justify-between bg-white dark:bg-zinc-900 sticky top-0 z-40 border-b border-border/50 dark:border-zinc-800 transition-colors">
         <button onClick={() => router.push('/account')} className="h-10 w-10 rounded-full bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-300">
           <ChevronRight className="h-6 w-6" />
         </button>
@@ -67,18 +66,6 @@ export default function MyOrdersPage() {
       </header>
 
       <main className="container mx-auto px-5 py-6 space-y-4 max-w-lg">
-        {error && (
-          <div className="p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-[2rem] text-red-600 dark:text-red-400">
-             <div className="flex items-center gap-4 mb-4">
-                <AlertCircle className="h-6 w-6" />
-                <p className="font-black text-sm">يجب تفعيل الفهرس في Firebase</p>
-             </div>
-             <p className="text-[10px] font-bold opacity-80 leading-relaxed mb-4">
-               Firestore يتطلب بناء فهرس لهذا البحث المتقدم. يرجى الضغط على الرابط الذي يظهر في "Inspect &rarr; Console" في متصفحكِ لتفعيله بنقرة واحدة.
-             </p>
-          </div>
-        )}
-
         {orders && orders.length > 0 ? (
           orders.map((order: any) => {
             const statusInfo = getStatusInfo(order.status);
@@ -86,7 +73,7 @@ export default function MyOrdersPage() {
               <Link 
                 key={order.id} 
                 href={`/account/orders/${order.id}`}
-                className="block bg-white dark:bg-zinc-900 rounded-[2.5rem] p-6 shadow-sm border border-border/50 dark:border-zinc-800 hover:border-primary/20 dark:hover:border-primary/20 transition-all active:scale-[0.98]"
+                className="block bg-white dark:bg-zinc-900 rounded-[2.5rem] p-6 shadow-sm border border-border/50 dark:border-zinc-800 hover:border-primary/20 transition-all active:scale-[0.98]"
               >
                 <div className="flex justify-between items-start mb-5">
                   <div>
@@ -113,7 +100,7 @@ export default function MyOrdersPage() {
                          <p className="text-[10px] font-bold text-primary/30 dark:text-zinc-600">د.ع</p>
                       </div>
                    </div>
-                   <div className="h-10 w-10 rounded-full bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary/20 dark:text-zinc-600 group-hover:text-primary">
+                   <div className="h-10 w-10 rounded-full bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary/20 dark:text-zinc-600">
                       <ChevronRight className="h-5 w-5 rotate-180" />
                    </div>
                 </div>

@@ -41,7 +41,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Founder Section - Specially Highlighted */}
+        {/* Founder Section - High Highlight */}
         <div className="bg-primary dark:bg-zinc-900 text-white rounded-[4rem] p-12 relative overflow-hidden shadow-2xl shadow-primary/20 dark:shadow-none border border-transparent dark:border-zinc-800">
           <div className="absolute top-0 right-0 w-48 h-48 bg-secondary/10 rounded-full -mr-24 -mt-24 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16 blur-2xl" />
