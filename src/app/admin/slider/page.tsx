@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -94,7 +95,7 @@ export default function AdminSliderPage() {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] text-foreground font-arabic transition-colors">
+      <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] text-foreground font-arabic transition-colors" dir="rtl">
         <AdminHeader />
         
         <main className="container mx-auto px-4 py-12 max-w-6xl">
@@ -112,7 +113,7 @@ export default function AdminSliderPage() {
           </div>
 
           {isAdding && (
-            <div className="nova-card p-10 mb-12 border-primary/10 dark:border-zinc-800 animate-in fade-in zoom-in-95 bg-white dark:bg-zinc-900 shadow-premium transition-all">
+            <div className="nova-card p-10 mb-12 border border-primary/10 dark:border-zinc-800 animate-in fade-in zoom-in-95 bg-white dark:bg-zinc-900 shadow-premium transition-all">
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-black text-primary dark:text-zinc-100">شريحة جديدة</h3>
                 <button onClick={() => setIsAdding(false)} disabled={isSaving} className="p-2 hover:bg-accent dark:hover:bg-zinc-800 rounded-full transition-colors"><X className="h-6 w-6 text-primary/20 dark:text-zinc-700 hover:text-primary dark:hover:text-zinc-300" /></button>
@@ -121,20 +122,20 @@ export default function AdminSliderPage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">العنوان الرئيسي</Label>
-                    <Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="مثلاً: مجموعة الشتاء 2026" className="h-12 bg-accent/30 dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-xl text-primary dark:text-zinc-100 font-bold" />
+                    <Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="مثلاً: مجموعة الشتاء 2026" className="h-12 bg-accent/30 dark:bg-zinc-800 border-none rounded-xl text-primary dark:text-zinc-100 font-bold" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">العنوان الفرعي</Label>
-                    <Input value={formData.subtitle} onChange={(e) => setFormData({...formData, subtitle: e.target.value})} placeholder="وصف قصير جذاب..." className="h-12 bg-accent/30 dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-xl text-primary dark:text-zinc-100 font-bold" />
+                    <Input value={formData.subtitle} onChange={(e) => setFormData({...formData, subtitle: e.target.value})} placeholder="وصف قصير جذاب..." className="h-12 bg-accent/30 dark:bg-zinc-800 border-none rounded-xl text-primary dark:text-zinc-100 font-bold" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">الترتيب</Label>
-                      <Input type="number" value={formData.order} onChange={(e) => setFormData({...formData, order: parseInt(e.target.value) || 0})} className="h-12 bg-accent/30 dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-xl text-primary dark:text-zinc-100 font-black" />
+                      <Input type="number" value={formData.order} onChange={(e) => setFormData({...formData, order: parseInt(e.target.value) || 0})} className="h-12 bg-accent/30 dark:bg-zinc-800 border-none rounded-xl text-primary dark:text-zinc-100 font-black" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">الرابط (اختياري)</Label>
-                      <Input value={formData.link} onChange={(e) => setFormData({...formData, link: e.target.value})} placeholder="/shop" className="h-12 bg-accent/30 dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-xl text-primary dark:text-zinc-100 font-bold" />
+                      <Input value={formData.link} onChange={(e) => setFormData({...formData, link: e.target.value})} placeholder="/shop" className="h-12 bg-accent/30 dark:bg-zinc-800 border-none rounded-xl text-primary dark:text-zinc-100 font-bold" />
                     </div>
                   </div>
                 </div>
@@ -167,7 +168,7 @@ export default function AdminSliderPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {sortedSlides.map((slide: any, idx: number) => (
-              <div key={`${slide.id}-${idx}`} className="nova-card overflow-hidden group bg-white dark:bg-zinc-900 border-border dark:border-zinc-800 shadow-sm transition-all">
+              <div key={`${slide.id}-${idx}`} className="nova-card overflow-hidden group bg-white dark:bg-zinc-900 border border-border dark:border-zinc-800 shadow-sm transition-all">
                 <div className="relative h-56 w-full">
                   <Image src={slide.image} alt={slide.title} fill className="object-cover dark:brightness-90" />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 dark:from-black/80 to-transparent p-6 flex flex-col justify-end">

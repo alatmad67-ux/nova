@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState } from 'react';
@@ -114,7 +115,7 @@ export default function InventoryPage() {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] text-foreground font-arabic transition-colors">
+      <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] text-foreground font-arabic transition-colors" dir="rtl">
         <AdminHeader />
         
         <main className="flex-grow container mx-auto px-4 py-12">
@@ -143,7 +144,7 @@ export default function InventoryPage() {
                 <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 dark:text-zinc-600 group-focus-within:text-primary transition-colors" />
                 <Input 
                   placeholder="ابحثي بالمنتج أو SKU..." 
-                  className="h-12 pr-12 bg-accent/30 dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-2xl text-primary dark:text-zinc-100 font-bold focus:border-primary/50"
+                  className="h-12 pr-12 bg-accent/30 dark:bg-zinc-800 border-none dark:border-zinc-700 rounded-2xl text-primary dark:text-zinc-100 font-bold focus:ring-2 focus:ring-primary/20"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -151,7 +152,7 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          <div className="nova-card overflow-hidden border-border dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-premium transition-colors">
+          <div className="nova-card overflow-hidden border border-border dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-premium transition-colors">
             <Table>
               <TableHeader className="bg-accent/50 dark:bg-zinc-800/50">
                 <TableRow className="border-border dark:border-zinc-800 hover:bg-transparent">
@@ -199,7 +200,7 @@ export default function InventoryPage() {
                         <Input 
                           type="number"
                           defaultValue={item.stock}
-                          className="w-24 h-10 bg-accent/30 dark:bg-zinc-800 border-border dark:border-zinc-700 text-center font-black text-primary dark:text-zinc-100"
+                          className="w-24 h-10 bg-accent/30 dark:bg-zinc-800 border-none text-center font-black text-primary dark:text-zinc-100 transition-colors"
                           id={`stock-${item.productId}-${item.variantIndex}`}
                         />
                       </TableCell>

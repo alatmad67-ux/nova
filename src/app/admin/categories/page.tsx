@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -143,7 +144,7 @@ export default function AdminCategoriesPage() {
           </div>
 
           {isAdding && (
-            <div className="nova-card p-10 mb-12 border-primary/10 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-premium animate-in zoom-in-95 transition-all">
+            <div className="nova-card p-10 mb-12 border border-primary/10 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-premium animate-in zoom-in-95 transition-all">
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-black text-primary dark:text-zinc-100">{editingId ? 'تعديل بيانات القسم' : 'إضافة قسم جديد'}</h3>
                 <button onClick={resetState} disabled={isSaving} className="p-2 hover:bg-accent dark:hover:bg-zinc-800 rounded-full transition-colors">
@@ -182,7 +183,7 @@ export default function AdminCategoriesPage() {
                         value={formData.slug} 
                         onChange={(e) => setFormData({...formData, slug: e.target.value})} 
                         placeholder="dresses-2026"
-                        className="h-12 bg-accent/30 dark:bg-zinc-800 rounded-xl font-mono text-sm dark:text-zinc-300" 
+                        className="h-12 bg-accent/30 dark:bg-zinc-800 rounded-xl font-mono text-sm dark:text-zinc-300 border-none" 
                        />
                     </div>
                     <div className="space-y-2">
@@ -191,7 +192,7 @@ export default function AdminCategoriesPage() {
                         type="number"
                         value={formData.order} 
                         onChange={(e) => setFormData({...formData, order: parseInt(e.target.value) || 0})} 
-                        className="h-12 bg-accent/30 dark:bg-zinc-800 rounded-xl font-black dark:text-zinc-100" 
+                        className="h-12 bg-accent/30 dark:bg-zinc-800 rounded-xl font-black dark:text-zinc-100 border-none" 
                        />
                     </div>
                   </div>
@@ -207,7 +208,7 @@ export default function AdminCategoriesPage() {
                 </div>
                 
                 <div className="flex flex-col items-center justify-center gap-6">
-                  <div className="relative h-48 w-full max-w-sm rounded-[3rem] overflow-hidden bg-accent dark:bg-zinc-800 border-2 border-dashed border-primary/10 dark:border-zinc-700 flex items-center justify-center shadow-inner group">
+                  <div className="relative h-48 w-full max-w-sm rounded-[3rem] overflow-hidden bg-accent dark:bg-zinc-800 border-2 border-dashed border-primary/10 dark:border-zinc-700 flex items-center justify-center shadow-inner group transition-colors">
                     {formData.image ? (
                       <Image src={formData.image} alt="Preview" fill className="object-cover transition-transform group-hover:scale-105" />
                     ) : (
@@ -227,8 +228,7 @@ export default function AdminCategoriesPage() {
           <div className="grid grid-cols-1 gap-12">
             {MAIN_CATEGORIES.map(main => (
               <div key={main.id} className="space-y-6">
-                <div className="flex items-center gap-4 pr-2">
-                  <div className="h-10 w-1 bg-secondary rounded-full" />
+                <div className="flex items-center gap-4 pr-2 border-r-4 border-secondary">
                   <h3 className="text-xl font-black text-primary dark:text-zinc-100 flex items-center gap-3">
                     <LayoutGrid className="h-5 w-5 text-secondary" />
                     {main.name}
@@ -239,7 +239,7 @@ export default function AdminCategoriesPage() {
                   {categories.filter(c => c.mainCategory === main.id).map((cat: any) => (
                     <div key={cat.id} className="nova-card p-6 bg-white dark:bg-zinc-900 border border-border/50 dark:border-zinc-800 shadow-sm hover:border-primary/20 transition-all group">
                       <div className="flex items-center gap-5">
-                        <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-accent dark:bg-zinc-800 flex-shrink-0 border border-border/20 dark:border-zinc-700">
+                        <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-accent dark:bg-zinc-800 flex-shrink-0 border border-border/20 dark:border-zinc-700 transition-colors">
                           <Image src={cat.image || 'https://picsum.photos/seed/placeholder/200/200'} alt={cat.name} fill className="object-cover" />
                         </div>
                         <div className="flex-1 min-w-0">
