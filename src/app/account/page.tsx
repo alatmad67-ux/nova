@@ -23,7 +23,8 @@ import {
   Clock,
   Truck,
   CheckCircle2,
-  ShieldAlert
+  ShieldAlert,
+  Sparkles
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
@@ -87,6 +88,7 @@ export default function AccountPage() {
   const SECONDARY_MENU = [
     { label: "الإشعارات", icon: Bell, href: "/account/notifications" },
     { label: "إعدادات الحساب", icon: Settings, href: "/account/details" },
+    { label: "عن NOVA", icon: Sparkles, href: "/about" },
     { label: "المساعدة والدعم", icon: MessageSquare, href: "/support" },
   ];
 
