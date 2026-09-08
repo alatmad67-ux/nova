@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -29,7 +28,7 @@ export default function MyOrdersPage() {
   const db = useFirestore();
   const { user, loading: userLoading } = useUser();
 
-  // الاستعلام المحدث يعتمد حصرياً على customerId (Auth UID) لضمان الدقة
+  // هذا الاستعلام يحتاج إلى فهرس مركب (storeId + customerId + createdAt)
   const ordersQuery = useMemo(() => {
     if (!db || !user) return null;
     return query(
@@ -52,7 +51,7 @@ export default function MyOrdersPage() {
     }
   };
 
-  if (userLoading || ordersLoading) return (
+  if (userLoading || (ordersLoading && !error)) return (
     <div className="min-h-screen bg-background dark:bg-[#050505] flex items-center justify-center text-primary dark:text-zinc-100 font-black animate-pulse">
       جاري تحميل حقيبة طلباتكِ...
     </div>
@@ -70,12 +69,14 @@ export default function MyOrdersPage() {
 
       <main className="container mx-auto px-5 py-6 space-y-4 max-w-lg">
         {error && (
-          <div className="p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-[2rem] text-red-600 dark:text-red-400 flex items-center gap-4">
-             <AlertCircle className="h-6 w-6" />
-             <div>
-               <p className="font-black text-sm">عذراً، حدث خطأ في النظام</p>
-               <p className="text-[10px] font-bold opacity-80">الفهرس قيد البناء، يرجى الانتظار ثوانٍ...</p>
+          <div className="p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-[2rem] text-red-600 dark:text-red-400">
+             <div className="flex items-center gap-4 mb-4">
+                <AlertCircle className="h-6 w-6" />
+                <p className="font-black text-sm">يجب تفعيل الفهرس في Firebase</p>
              </div>
+             <p className="text-[10px] font-bold opacity-80 leading-relaxed mb-4">
+               Firestore يتطلب بناء فهرس لهذا البحث المتقدم. يرجى الضغط على الرابط الذي يظهر في "Inspect -> Console" في متصفحكِ لتفعيله بنقرة واحدة.
+             </p>
           </div>
         )}
 
@@ -125,7 +126,7 @@ export default function MyOrdersPage() {
               </Link>
             );
           })
-        ) : (
+        ) : !ordersLoading && (
           <div className="text-center py-20 bg-white dark:bg-zinc-900 rounded-[3rem] border-2 border-dashed border-primary/10 dark:border-zinc-800">
             <ShoppingBag className="h-20 w-20 mx-auto mb-6 text-primary/10 dark:text-zinc-800" />
             <h3 className="text-2xl font-black text-primary dark:text-zinc-100 mb-2">لا توجد طلبات بعد</h3>
