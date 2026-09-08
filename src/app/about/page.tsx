@@ -4,8 +4,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { ChevronRight, Sparkles, Heart, Award, Globe } from 'lucide-react';
-import Image from 'next/image';
+import { ChevronRight, Sparkles, Heart, Award, Globe, Quote } from 'lucide-react';
 
 export default function AboutPage() {
   const router = useRouter();
@@ -24,7 +23,7 @@ export default function AboutPage() {
         <div className="w-10" />
       </header>
 
-      <main className="container mx-auto px-6 py-12 max-w-lg space-y-20">
+      <main className="container mx-auto px-6 py-12 max-w-lg space-y-16">
         {/* Brand Identity Section */}
         <div className="text-center space-y-8 animate-in fade-in zoom-in-95 duration-700">
           <div className="flex flex-col items-center">
@@ -34,40 +33,33 @@ export default function AboutPage() {
             <p className="text-secondary font-black text-xs uppercase tracking-[0.4em]">A world of fashion & beauty</p>
           </div>
           
-          <div className="relative w-full aspect-video rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-zinc-800 bg-accent/30 dark:bg-zinc-900">
-            <Image 
-              src="https://picsum.photos/seed/nova-philosophy/800/450" 
-              alt="NOVA Philosophy" 
-              fill 
-              className="object-cover dark:brightness-75"
-              data-ai-hint="luxury interior store"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent" />
+          <div className="relative py-12 px-8 bg-primary/5 dark:bg-zinc-900 rounded-[3rem] border border-primary/10 dark:border-zinc-800 overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-secondary/10 transition-all" />
+            <Sparkles className="h-10 w-10 text-secondary mx-auto mb-6 opacity-40" />
+            <p className="text-xl font-bold text-primary dark:text-zinc-300 leading-relaxed relative z-10">
+              تأسست <span className="text-primary dark:text-zinc-100 font-black">NOVA</span> بشغف لصنع مساحة تجمع الأناقة والجمال والعناية بالمرأة في مكان واحد. نؤمن أن كل قطعة نختارها هي جزء من قصة ثقتكِ وتألقكِ.
+            </p>
           </div>
-
-          <p className="text-lg font-bold text-primary/80 dark:text-zinc-400 leading-relaxed px-2">
-            تأسست <span className="text-primary dark:text-zinc-100 font-black">NOVA</span> بشغف لصنع مساحة تجمع الأناقة والجمال والعناية بالمرأة في مكان واحد. نؤمن أن كل قطعة نختارها هي جزء من قصة ثقتكِ وتألقكِ.
-          </p>
         </div>
 
-        {/* Founder Section */}
-        <div className="bg-primary dark:bg-zinc-900 text-white rounded-[3.5rem] p-10 relative overflow-hidden shadow-xl shadow-primary/20 dark:shadow-none border border-transparent dark:border-zinc-800">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/10 rounded-full -mr-10 -mt-10 blur-3xl" />
-          <div className="relative z-10 space-y-6 text-center">
-            <div className="h-28 w-28 rounded-full border-2 border-secondary mx-auto overflow-hidden bg-white/10 p-1 relative">
-               <Image 
-                src="https://picsum.photos/seed/founder/300/300" 
-                alt="Helen Rustam" 
-                fill 
-                className="rounded-full object-cover" 
-              />
+        {/* Founder Section - Specially Highlighted */}
+        <div className="bg-primary dark:bg-zinc-900 text-white rounded-[3.5rem] p-12 relative overflow-hidden shadow-2xl shadow-primary/20 dark:shadow-none border border-transparent dark:border-zinc-800">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-secondary/10 rounded-full -mr-20 -mt-20 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12 blur-2xl" />
+          
+          <div className="relative z-10 space-y-8 text-center">
+            <div className="inline-flex p-3 bg-white/10 rounded-2xl mb-2">
+              <Quote className="h-6 w-6 text-secondary fill-secondary" />
             </div>
+            
             <div>
-              <h3 className="text-2xl font-black text-secondary">هيلين رستم</h3>
-              <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-60 mt-1 text-white">Founder & Creative Director</p>
+              <h3 className="text-4xl font-black text-secondary tracking-tight mb-2">هيلين رستم</h3>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/50">Founder & Creative Director</p>
             </div>
-            <div className="h-px bg-white/10 w-16 mx-auto" />
-            <p className="text-sm font-medium leading-relaxed opacity-80 italic">
+            
+            <div className="h-px bg-white/10 w-20 mx-auto" />
+            
+            <p className="text-md font-medium leading-relaxed opacity-90 italic px-4">
               "رسالتنا في NOVA هي أن نكون الوجهة الأولى لكل امرأة تبحث عن التميز، الجودة، واللمسة الفنية التي تناسب ذوقها الرفيع."
             </p>
           </div>
