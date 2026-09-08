@@ -8,15 +8,24 @@ import { CartProvider } from '@/providers/cart-provider';
 import { InstallPrompt } from '@/components/layout/InstallPrompt';
 import Script from 'next/script';
 
-const LOGO_URL = 'https://l.top4top.io/p_39004lv5j0.png';
+// الرابط الرسمي للشعار المفرغ المعتمد في NOVA
+const LOGO_URL = 'https://c.top4top.io/p_39007qwdb0.png';
 
 export const metadata: Metadata = {
   title: 'NOVA | أزياء نسائية فاخرة',
   description: 'نوفا للأزياء النسائية الفاخرة - تصاميم حصرية تناسب ذوقكِ الرفيع في العراق',
-  manifest: '/manifest.json',
+  manifest: '/manifest.webmanifest',
   icons: {
-    icon: LOGO_URL,
-    apple: LOGO_URL,
+    icon: [
+      { url: LOGO_URL },
+      { url: LOGO_URL, sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: LOGO_URL },
+      { url: LOGO_URL, sizes: '152x152', type: 'image/png' },
+      { url: LOGO_URL, sizes: '167x167', type: 'image/png' },
+      { url: LOGO_URL, sizes: '180x180', type: 'image/png' },
+    ],
   },
   appleWebApp: {
     capable: true,
@@ -55,9 +64,19 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-        <meta name="mobile-web-app-capable" content="yes" />
+        
+        {/* Apple PWA Specific Tags - Explicitly defined for Safari */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="NOVA" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        
+        {/* High-priority apple-touch-icon links */}
+        <link rel="apple-touch-icon" href={LOGO_URL} />
+        <link rel="apple-touch-icon" sizes="152x152" href={LOGO_URL} />
+        <link rel="apple-touch-icon" sizes="180x180" href={LOGO_URL} />
+        <link rel="apple-touch-icon" sizes="167x167" href={LOGO_URL} />
+        
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="font-arabic antialiased selection:bg-primary/30 selection:text-white overflow-x-hidden bg-background text-foreground min-h-screen flex flex-col">
         <FirebaseClientProvider>

@@ -3,10 +3,11 @@ import { MetadataRoute } from 'next';
 
 /**
  * ملف Manifest ديناميكي لمتجر NOVA.
- * يستخدم شعار المتجر الرسمي لضمان تجربة PWA احترافية.
+ * تم تحديثه لضمان ظهور الأيقونة الصحيحة على كافة الأنظمة بما فيها iOS.
  */
 export default function manifest(): MetadataRoute.Manifest {
-  const logoUrl = 'https://l.top4top.io/p_39004lv5j0.png';
+  // استخدام الرابط المباشر المعتمد للشعار
+  const logoUrl = 'https://c.top4top.io/p_39007qwdb0.png';
 
   return {
     name: 'نوفا للأزياء النسائية - NOVA',
@@ -19,6 +20,12 @@ export default function manifest(): MetadataRoute.Manifest {
     dir: 'rtl',
     lang: 'ar',
     icons: [
+      {
+        src: logoUrl,
+        sizes: '180x180',
+        type: 'image/png',
+        purpose: 'any'
+      },
       {
         src: logoUrl,
         sizes: '192x192',
