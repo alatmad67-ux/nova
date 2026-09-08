@@ -44,16 +44,16 @@ export default function ProductPage() {
   const isFav = favorites.includes(id as string);
 
   if (loading) return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center font-black text-primary animate-pulse">
+    <div className="min-h-screen bg-background dark:bg-[#050505] flex flex-col items-center justify-center font-black text-primary dark:text-zinc-100 animate-pulse">
       <Sparkles className="h-10 w-10 mb-4" />
       جاري جلب سحر NOVA...
     </div>
   );
   
   if (!product) return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center font-arabic p-6 text-center">
-      <h2 className="text-2xl font-black text-primary mb-4">المنتج غير موجود</h2>
-      <p className="text-primary/40 font-bold mb-8">عذراً، يبدو أن هذه القطعة لم تعد متوفرة في مجموعتنا الحالية.</p>
+    <div className="min-h-screen bg-background dark:bg-[#050505] flex flex-col items-center justify-center font-arabic p-6 text-center">
+      <h2 className="text-2xl font-black text-primary dark:text-zinc-100 mb-4">المنتج غير موجود</h2>
+      <p className="text-primary/40 dark:text-zinc-500 font-bold mb-8">عذراً، يبدو أن هذه القطعة لم تعد متوفرة في مجموعتنا الحالية.</p>
       <Button onClick={() => router.push('/shop')} className="rounded-full bg-primary text-white px-10 h-14 font-black">العودة للمتجر</Button>
     </div>
   );
@@ -98,8 +98,8 @@ export default function ProductPage() {
     if (!content) return null;
     return (
       <div className="space-y-3">
-        <Label className="text-[10px] font-black text-primary/40 uppercase tracking-widest">{title}</Label>
-        <p className="text-xs font-bold text-primary/60 leading-relaxed bg-accent/30 p-4 rounded-2xl border border-border/20">
+        <Label className="text-[10px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">{title}</Label>
+        <p className="text-xs font-bold text-primary/60 dark:text-zinc-400 leading-relaxed bg-accent/30 dark:bg-zinc-900/50 p-4 rounded-2xl border border-border/20 dark:border-zinc-800">
           {content}
         </p>
       </div>
@@ -107,37 +107,37 @@ export default function ProductPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background font-arabic pb-32">
-      <header className="h-16 flex items-center px-6 justify-between sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border/30">
-        <button onClick={() => router.back()} className="h-9 w-9 rounded-full bg-accent flex items-center justify-center text-primary shadow-sm">
+    <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] font-arabic pb-32">
+      <header className="h-16 flex items-center px-6 justify-between sticky top-0 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-border/30 dark:border-zinc-800">
+        <button onClick={() => router.back()} className="h-9 w-9 rounded-full bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-300 shadow-sm">
           <ChevronRight className="h-5 w-5" />
         </button>
-        <span className="text-xs font-black text-primary truncate max-w-[180px]">{product.name}</span>
-        <button onClick={() => toggleFavorite(product.id)} className={cn("h-9 w-9 rounded-full bg-accent flex items-center justify-center shadow-sm", isFav ? "text-primary" : "text-primary/20")}>
+        <span className="text-xs font-black text-primary dark:text-zinc-100 truncate max-w-[180px]">{product.name}</span>
+        <button onClick={() => toggleFavorite(product.id)} className={cn("h-9 w-9 rounded-full bg-accent dark:bg-zinc-800 flex items-center justify-center shadow-sm", isFav ? "text-primary" : "text-primary/20 dark:text-zinc-600")}>
           <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
         </button>
       </header>
       
       <main className="flex-grow">
-        {/* Main Image Container with Fixed Ratio and object-contain */}
-        <div className="relative aspect-square md:aspect-[4/3] w-full overflow-hidden bg-white border-b border-border/10">
+        {/* Main Image Container */}
+        <div className="relative aspect-square md:aspect-[4/3] w-full overflow-hidden bg-white dark:bg-zinc-900 border-b border-border/10 dark:border-zinc-800">
           <Image
             src={images[activeImage]}
             alt={product.name || 'Product'}
             fill
-            className="object-contain p-4"
+            className="object-contain p-4 transition-all duration-500"
             priority
           />
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
             {images.map((_: any, i: number) => (
-              <div key={i} className={cn("h-1 rounded-full transition-all", activeImage === i ? "w-6 bg-primary" : "w-1.5 bg-primary/20")} />
+              <div key={i} className={cn("h-1 rounded-full transition-all", activeImage === i ? "w-6 bg-primary" : "w-1.5 bg-primary/20 dark:bg-zinc-700")} />
             ))}
           </div>
         </div>
 
-        <div className="flex gap-2.5 px-5 py-3 overflow-x-auto no-scrollbar bg-white">
+        <div className="flex gap-2.5 px-5 py-3 overflow-x-auto no-scrollbar bg-white dark:bg-[#050505]">
            {images.map((img: string, i: number) => (
-             <button key={i} onClick={() => setActiveImage(i)} className={cn("h-16 w-16 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all bg-[#FAF8F5] relative", activeImage === i ? "border-primary" : "border-transparent")}>
+             <button key={i} onClick={() => setActiveImage(i)} className={cn("h-16 w-16 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all bg-[#FAF8F5] dark:bg-zinc-800 relative", activeImage === i ? "border-primary" : "border-transparent")}>
                <Image src={img} alt="thumb" fill className="object-contain p-1" />
              </button>
            ))}
@@ -148,14 +148,14 @@ export default function ProductPage() {
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
               <Sparkles className="h-3 w-3 text-secondary" />
-              <span className="text-[9px] font-black text-primary/40 uppercase tracking-widest">{product.categoryName}</span>
+              <span className="text-[9px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">{product.categoryName}</span>
             </div>
-            <h1 className="text-xl font-black text-primary leading-tight">{product.name}</h1>
+            <h1 className="text-xl font-black text-primary dark:text-zinc-100 leading-tight">{product.name}</h1>
             
             <div className="mt-3 flex items-center justify-between">
                <div className="flex items-baseline gap-1.5">
-                 <span className="text-2xl font-black text-primary">{price.toLocaleString()}</span>
-                 <span className="text-[10px] font-bold text-primary/40">د.ع</span>
+                 <span className="text-2xl font-black text-primary dark:text-zinc-100">{price.toLocaleString()}</span>
+                 <span className="text-[10px] font-bold text-primary/40 dark:text-zinc-500">د.ع</span>
                </div>
                {originalPrice > price && (
                  <Badge className="bg-secondary text-white font-black text-[9px] h-6 px-2">خصم {Math.round(((originalPrice - price) / originalPrice) * 100)}%</Badge>
@@ -163,12 +163,12 @@ export default function ProductPage() {
             </div>
           </div>
 
-          <div className="h-px bg-border/50" />
+          <div className="h-px bg-border/50 dark:bg-zinc-800" />
 
           {/* Variants */}
           {availableColors.length > 0 && (
             <div className="space-y-3">
-              <Label className="text-[10px] font-black text-primary/40 uppercase tracking-widest">الألوان</Label>
+              <Label className="text-[10px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">الألوان</Label>
               <div className="flex flex-wrap gap-2">
                 {availableColors.map(c => (
                   <button 
@@ -176,7 +176,9 @@ export default function ProductPage() {
                    onClick={() => { setSelectedColor(c); setSelectedSize(null); }}
                    className={cn(
                      "px-4 py-2 rounded-xl border-2 font-black text-[10px] transition-all", 
-                     selectedColor === c ? "border-primary bg-primary text-white" : "border-border text-primary/40 bg-white"
+                     selectedColor === c 
+                      ? "border-primary bg-primary text-white" 
+                      : "border-border dark:border-zinc-800 text-primary/40 dark:text-zinc-500 bg-white dark:bg-zinc-900"
                    )}
                   >
                     {c}
@@ -188,7 +190,7 @@ export default function ProductPage() {
 
           {availableSizes.length > 0 && (
             <div className="space-y-3">
-              <Label className="text-[10px] font-black text-primary/40 uppercase tracking-widest">القياس</Label>
+              <Label className="text-[10px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">القياس</Label>
               <div className="flex flex-wrap gap-2">
                 {availableSizes.map((s: any) => (
                   <button 
@@ -196,7 +198,9 @@ export default function ProductPage() {
                    onClick={() => setSelectedSize(s)}
                    className={cn(
                      "h-10 w-10 rounded-xl border-2 flex items-center justify-center font-black text-[10px] transition-all", 
-                     selectedSize === s ? "border-primary bg-primary text-white" : "border-border text-primary/40 bg-white"
+                     selectedSize === s 
+                      ? "border-primary bg-primary text-white" 
+                      : "border-border dark:border-zinc-800 text-primary/40 dark:text-zinc-500 bg-white dark:bg-zinc-900"
                    )}
                   >
                     {s}
@@ -209,10 +213,10 @@ export default function ProductPage() {
           {/* Dynamic Details Sections */}
           <div className="space-y-5">
             <div className="space-y-2">
-               <Label className="text-[10px] font-black text-primary/40 uppercase tracking-widest">الوصف</Label>
+               <Label className="text-[10px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">الوصف</Label>
                <div className="relative">
                   <p className={cn(
-                    "text-xs font-bold text-primary/60 leading-relaxed whitespace-pre-line",
+                    "text-xs font-bold text-primary/60 dark:text-zinc-400 leading-relaxed whitespace-pre-line",
                     !isDescExpanded && "line-clamp-3"
                   )}>
                     {product.description || 'لا يوجد وصف متاح لهذا المنتج حالياً.'}
@@ -245,9 +249,9 @@ export default function ProductPage() {
                { icon: ShieldCheck, label: 'جودة ملكية' },
                { icon: RotateCcw, label: 'إرجاع سهل' },
              ].map((f, i) => (
-               <div key={i} className="bg-white rounded-xl p-3 flex flex-col items-center gap-1.5 border border-border/20 shadow-sm">
+               <div key={i} className="bg-white dark:bg-zinc-900 rounded-xl p-3 flex flex-col items-center gap-1.5 border border-border/20 dark:border-zinc-800 shadow-sm">
                  <f.icon className="h-4 w-4 text-secondary" />
-                 <span className="text-[8px] font-black text-primary/40 text-center">{f.label}</span>
+                 <span className="text-[8px] font-black text-primary/40 dark:text-zinc-500 text-center">{f.label}</span>
                </div>
              ))}
           </div>
@@ -255,19 +259,19 @@ export default function ProductPage() {
       </main>
 
       {/* Fixed Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-border/30 z-50 pb-safe shadow-2xl">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-border/30 dark:border-zinc-800 z-50 pb-safe shadow-2xl">
          <div className="container mx-auto max-w-lg flex items-center gap-3">
-            <div className="flex items-center bg-accent/50 rounded-2xl p-1 border border-border/20 h-14">
+            <div className="flex items-center bg-accent/50 dark:bg-zinc-800 rounded-2xl p-1 border border-border/20 dark:border-zinc-700 h-14">
               <button 
                 onClick={() => setQuantity(Math.max(1, qty - 1))}
-                className="h-12 w-10 flex items-center justify-center text-primary/40 hover:text-primary transition-colors"
+                className="h-12 w-10 flex items-center justify-center text-primary/40 dark:text-zinc-500 hover:text-primary dark:hover:text-zinc-100 transition-colors"
               >
                 <Minus className="h-4 w-4" />
               </button>
-              <span className="w-8 text-center font-black text-primary text-sm">{qty}</span>
+              <span className="w-8 text-center font-black text-primary dark:text-zinc-100 text-sm">{qty}</span>
               <button 
                 onClick={() => setQuantity(qty + 1)}
-                className="h-12 w-10 flex items-center justify-center text-primary/40 hover:text-primary transition-colors"
+                className="h-12 w-10 flex items-center justify-center text-primary/40 dark:text-zinc-500 hover:text-primary dark:hover:text-zinc-100 transition-colors"
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -283,7 +287,7 @@ export default function ProductPage() {
             
             <button 
               onClick={() => window.open(`https://wa.me/9647858833838?text=أود الاستفسار عن ${product.name}`, '_blank')}
-              className="h-14 w-14 rounded-2xl bg-green-50 border border-green-100 flex items-center justify-center text-green-500 shadow-sm active:scale-95 transition-all"
+              className="h-14 w-14 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 flex items-center justify-center text-green-500 shadow-sm active:scale-95 transition-all"
             >
                <MessageCircle className="h-7 w-7" />
             </button>
