@@ -74,13 +74,19 @@ export default function CheckoutPage() {
       const orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
       const newOrderRef = doc(collection(db, 'orders'));
       
+      // تأكيد ربط المعرف الحقيقي للزبون
       const orderData = {
         orderNumber,
-        customerId: user.uid, // استخدام الـ UID الحقيقي للزبون
+        customerId: user.uid, 
         customerName: user.displayName || 'جميلة نوفا',
         customerPhone: user.phoneNumber || selectedAddress.phone || '',
         customerEmail: user.email || '',
-        shippingAddress: selectedAddress,
+        shippingAddress: {
+          ...selectedAddress,
+          // التأكد من حفظ تفاصيل العنوان كاملة داخل الطلب للتوثيق
+          fullAddress: `${selectedAddress.governorate}, ${selectedAddress.area}, ${selectedAddress.street}`,
+          landmark: selectedAddress.nearestLandmark || ''
+        },
         governorate: selectedAddress.governorate,
         items: cart.map(item => ({
           productId: item.id,
@@ -148,7 +154,7 @@ export default function CheckoutPage() {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
-  if (userLoading) return <div className="min-h-screen bg-background flex items-center justify-center font-black animate-pulse">جاري التحقق...</div>;
+  if (userLoading) return <div className="min-h-screen bg-background flex items-center justify-center font-black animate-pulse">جاري التحقق من الحساب...</div>;
   
   if (!user) {
     router.push('/login?redirect=/checkout');
@@ -188,7 +194,7 @@ export default function CheckoutPage() {
     <div className="min-h-screen flex flex-col bg-background font-arabic pb-32">
       <header className="h-20 flex items-center px-6 justify-between bg-white border-b border-border/30">
         <button onClick={() => router.back()} className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-primary">
-          <ChevronLeft className="h-6 w-6" />
+          <ChevronLeft className="h-6 w-6 rotate-180" />
         </button>
         <h1 className="text-xl font-black text-primary">إتمام الطلبية</h1>
         <div className="w-10" />
@@ -217,6 +223,7 @@ export default function CheckoutPage() {
                 <p className="font-black text-primary text-lg mb-1">{selectedAddress?.label}</p>
                 <p className="text-xs font-bold text-primary/60">{selectedAddress?.governorate} - {selectedAddress?.area}</p>
                 <p className="text-[10px] text-primary/30 mt-1">{selectedAddress?.street}</p>
+                <p className="text-[10px] text-secondary font-black mt-2 dir-ltr text-right">{selectedAddress?.phone}</p>
               </div>
             )}
           </div>
