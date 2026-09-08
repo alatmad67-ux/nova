@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useEffect } from 'react';
@@ -123,12 +122,12 @@ export default function AdminDashboard() {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-background text-foreground font-arabic" dir="rtl">
+      <div className="min-h-screen bg-background dark:bg-[#050505] text-foreground font-arabic transition-colors" dir="rtl">
         <AdminHeader />
         
         <main className="flex-grow container mx-auto px-4 py-12">
           {ordersError && (
-            <div className="mb-10 p-6 bg-red-50 border border-red-100 rounded-[2.5rem] text-red-600 flex items-center gap-4">
+            <div className="mb-10 p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-[2.5rem] text-red-600 dark:text-red-400 flex items-center gap-4">
                <AlertCircle className="h-6 w-6" />
                <div>
                  <p className="font-black italic">نظام مراقبة الفهارس (Index Alert)</p>
@@ -141,9 +140,9 @@ export default function AdminDashboard() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-5 w-5 text-secondary" />
-                <span className="text-xs font-black tracking-widest uppercase text-primary">نظام إدارة NOVA</span>
+                <span className="text-xs font-black tracking-widest uppercase text-primary dark:text-zinc-500">نظام إدارة NOVA</span>
               </div>
-              <h1 className="text-4xl font-black text-primary">لوحة التحكم</h1>
+              <h1 className="text-4xl font-black text-primary dark:text-zinc-100">لوحة التحكم</h1>
             </div>
           </div>
 
@@ -154,18 +153,18 @@ export default function AdminDashboard() {
               { label: 'العملاء', val: stats.totalCustomers, icon: Users },
               { label: 'المنتجات', val: stats.totalProducts, icon: Package },
             ].map((s, i) => (
-              <div key={i} className="bg-white p-6 rounded-[2rem] border border-border shadow-premium flex flex-col gap-2">
-                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-primary"><s.icon className="h-5 w-5" /></div>
-                <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">{s.label}</p>
-                <p className="text-xl md:text-2xl font-black text-primary">{s.val}</p>
+              <div key={i} className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-border dark:border-zinc-800 shadow-premium flex flex-col gap-2 transition-all">
+                <div className="h-10 w-10 rounded-xl bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-100"><s.icon className="h-5 w-5" /></div>
+                <p className="text-[10px] font-bold text-primary/40 dark:text-zinc-500 uppercase tracking-widest">{s.label}</p>
+                <p className="text-xl md:text-2xl font-black text-primary dark:text-zinc-100">{s.val}</p>
               </div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              <div className="bg-white p-6 md:p-10 rounded-[2.5rem] border border-border shadow-premium">
-                <h3 className="text-xl font-black text-primary mb-10">المبيعات (آخر 7 أيام)</h3>
+              <div className="bg-white dark:bg-zinc-900 p-6 md:p-10 rounded-[2.5rem] border border-border dark:border-zinc-800 shadow-premium transition-all">
+                <h3 className="text-xl font-black text-primary dark:text-zinc-100 mb-10">المبيعات (آخر 7 أيام)</h3>
                 <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData}>
@@ -175,20 +174,20 @@ export default function AdminDashboard() {
                           <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" className="dark:opacity-10" vertical={false} />
                       <XAxis dataKey="name" stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
                       <YAxis stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #eee', borderRadius: '1rem' }} />
+                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '1rem' }} />
                       <Area type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
-              <div className="bg-white p-8 rounded-[2.5rem] border border-border shadow-premium">
+              <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-border dark:border-zinc-800 shadow-premium transition-all">
                 <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-xl font-black text-primary">أحدث الطلبات</h3>
-                  <Link href="/admin/orders" className="text-xs font-black text-primary/40 flex items-center gap-1 hover:text-primary transition-colors">
+                  <h3 className="text-xl font-black text-primary dark:text-zinc-100">أحدث الطلبات</h3>
+                  <Link href="/admin/orders" className="text-xs font-black text-primary/40 dark:text-zinc-500 flex items-center gap-1 hover:text-primary dark:hover:text-zinc-300 transition-colors">
                     عرض الكل
                     <ChevronLeft className="h-3 w-3" />
                   </Link>
@@ -196,50 +195,50 @@ export default function AdminDashboard() {
 
                 <div className="space-y-4">
                   {ordersLoading ? (
-                    <div className="py-10 text-center animate-pulse text-primary/20 font-black">جاري مزامنة الطلبات...</div>
+                    <div className="py-10 text-center animate-pulse text-primary/20 dark:text-zinc-800 font-black">جاري مزامنة الطلبات...</div>
                   ) : recentOrders.length > 0 ? (
                     recentOrders.map((order: any) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 bg-accent/30 rounded-2xl border border-border/50 group hover:border-primary/20 transition-all">
+                      <div key={order.id} className="flex items-center justify-between p-4 bg-accent/30 dark:bg-zinc-800/50 rounded-2xl border border-border/50 dark:border-zinc-800 group hover:border-primary/20 transition-all">
                         <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm">
-                            <Clock className={cn("h-5 w-5", order.status === 'جديد' ? "animate-pulse text-blue-500" : "text-primary/20")} />
+                          <div className="h-12 w-12 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-100 shadow-sm">
+                            <Clock className={cn("h-5 w-5", order.status === 'جديد' ? "animate-pulse text-blue-500" : "text-primary/20 dark:text-zinc-600")} />
                           </div>
                           <div>
-                            <h4 className="font-black text-sm text-primary">#{order.orderNumber}</h4>
-                            <p className="text-[10px] text-primary/40 font-bold">{order.customerName}</p>
+                            <h4 className="font-black text-sm text-primary dark:text-zinc-100">#{order.orderNumber}</h4>
+                            <p className="text-[10px] text-primary/40 dark:text-zinc-500 font-bold">{order.customerName}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-6">
                            <div className="text-left">
-                              <p className="font-black text-sm text-secondary">{order.totals?.total?.toLocaleString()} د.ع</p>
-                              <Badge variant="outline" className="text-[9px] h-5 border-primary/10 text-primary/60">{order.status}</Badge>
+                              <p className="font-black text-sm text-secondary">{(order.totals?.total || 0).toLocaleString()} د.ع</p>
+                              <Badge variant="outline" className="text-[9px] h-5 border-primary/10 dark:border-zinc-700 text-primary/60 dark:text-zinc-400">{order.status}</Badge>
                            </div>
-                           <Link href={`/admin/orders/${order.id}`} className="p-2 bg-white rounded-lg text-primary/20 group-hover:text-primary transition-all">
+                           <Link href={`/admin/orders/${order.id}`} className="p-2 bg-white dark:bg-zinc-800 rounded-lg text-primary/20 dark:text-zinc-700 group-hover:text-primary dark:group-hover:text-zinc-400 transition-all">
                               <Eye className="h-5 w-5" />
                            </Link>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="py-10 text-center text-primary/20 font-black italic">لا توجد طلبات بعد</div>
+                    <div className="py-10 text-center text-primary/20 dark:text-zinc-800 font-black italic">لا توجد طلبات بعد</div>
                   )}
                 </div>
               </div>
             </div>
 
             <div className="space-y-8">
-              <h3 className="text-lg font-black text-primary px-2">إجراءات سريعة</h3>
+              <h3 className="text-lg font-black text-primary dark:text-zinc-400 px-2">إجراءات سريعة</h3>
               <div className="grid grid-cols-2 gap-4">
                 {QUICK_ACTIONS.map((action, i) => (
                   <button 
                     key={i} 
                     onClick={() => router.push(action.href)}
-                    className="bg-white p-6 rounded-3xl border border-border hover:border-primary/30 transition-all flex flex-col items-center gap-3 group shadow-sm"
+                    className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-border dark:border-zinc-800 hover:border-primary/30 transition-all flex flex-col items-center gap-3 group shadow-sm"
                   >
                     <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center text-white shadow-lg", action.color)}>
                       <action.icon className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60 group-hover:text-primary text-center">{action.label}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60 dark:text-zinc-500 group-hover:text-primary dark:group-hover:text-zinc-300 text-center">{action.label}</span>
                   </button>
                 ))}
               </div>

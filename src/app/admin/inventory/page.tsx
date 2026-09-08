@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState } from 'react';
@@ -111,11 +110,11 @@ export default function InventoryPage() {
       .finally(() => setUpdatingId(null));
   };
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-primary font-black animate-pulse">جاري جرد المخزن الملكي...</div>;
+  if (loading) return <div className="min-h-screen bg-background dark:bg-[#050505] flex items-center justify-center text-primary dark:text-zinc-100 font-black animate-pulse">جاري جرد المخزن الملكي...</div>;
 
   return (
     <AdminGuard>
-      <div className="min-h-screen flex flex-col bg-background text-foreground font-arabic">
+      <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] text-foreground font-arabic transition-colors">
         <AdminHeader />
         
         <main className="flex-grow container mx-auto px-4 py-12">
@@ -123,9 +122,9 @@ export default function InventoryPage() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Package className="h-5 w-5 text-primary" />
-                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary">المستودع</span>
+                <span className="text-xs font-black tracking-[0.3em] uppercase text-primary dark:text-zinc-500">المستودع</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-black text-primary">إدارة المخزون</h1>
+              <h1 className="text-4xl md:text-5xl font-black text-primary dark:text-zinc-100">إدارة المخزون</h1>
             </div>
             
             <div className="flex items-center gap-4">
@@ -133,18 +132,18 @@ export default function InventoryPage() {
                 variant="outline" 
                 onClick={() => setFilterLowStock(!filterLowStock)}
                 className={cn(
-                  "h-12 rounded-2xl border-border font-black gap-2 transition-all shadow-sm",
-                  filterLowStock ? "bg-primary text-white" : "bg-white text-primary/40"
+                  "h-12 rounded-2xl border-border dark:border-zinc-800 font-black gap-2 transition-all shadow-sm",
+                  filterLowStock ? "bg-primary text-white" : "bg-white dark:bg-zinc-900 text-primary/40 dark:text-zinc-500"
                 )}
               >
                 <Filter className="h-4 w-4" />
                 منخفض المخزون
               </Button>
               <div className="relative w-full md:w-80 group">
-                <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
+                <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 dark:text-zinc-600 group-focus-within:text-primary transition-colors" />
                 <Input 
                   placeholder="ابحثي بالمنتج أو SKU..." 
-                  className="h-12 pr-12 bg-accent/30 border-border rounded-2xl text-primary font-bold"
+                  className="h-12 pr-12 bg-accent/30 dark:bg-zinc-800 border-border dark:border-zinc-700 rounded-2xl text-primary dark:text-zinc-100 font-bold focus:border-primary/50"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -152,16 +151,16 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          <div className="nova-card overflow-hidden border-border bg-white shadow-premium">
+          <div className="nova-card overflow-hidden border-border dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-premium transition-colors">
             <Table>
-              <TableHeader className="bg-accent/50">
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-primary/60 font-black text-right">المنتج</TableHead>
-                  <TableHead className="text-primary/60 font-black text-right">SKU</TableHead>
-                  <TableHead className="text-primary/60 font-black text-right">الخيار</TableHead>
-                  <TableHead className="text-primary/60 font-black text-right">الحالة</TableHead>
-                  <TableHead className="text-primary/60 font-black text-right">الكمية</TableHead>
-                  <TableHead className="text-primary/60 font-black text-right">إجراء</TableHead>
+              <TableHeader className="bg-accent/50 dark:bg-zinc-800/50">
+                <TableRow className="border-border dark:border-zinc-800 hover:bg-transparent">
+                  <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-right">المنتج</TableHead>
+                  <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-right">SKU</TableHead>
+                  <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-right">الخيار</TableHead>
+                  <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-right">الحالة</TableHead>
+                  <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-right">الكمية</TableHead>
+                  <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-right">إجراء</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -170,37 +169,37 @@ export default function InventoryPage() {
                   const isUpdating = updatingId === uniqueId;
 
                   return (
-                    <TableRow key={idx} className="border-border hover:bg-accent/20 transition-colors">
+                    <TableRow key={idx} className="border-border dark:border-zinc-800 hover:bg-accent/20 dark:hover:bg-zinc-800/40 transition-colors">
                       <TableCell className="py-6">
                         <div className="flex flex-col">
-                          <span className="font-bold text-primary">{item.productName}</span>
-                          <span className="text-[10px] text-primary/30 uppercase font-black">{item.category}</span>
+                          <span className="font-bold text-primary dark:text-zinc-100">{item.productName}</span>
+                          <span className="text-[10px] text-primary/30 dark:text-zinc-500 uppercase font-black">{item.category}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-primary/40 text-xs font-mono font-bold">{item.sku}</TableCell>
+                      <TableCell className="text-primary/40 dark:text-zinc-500 text-xs font-mono font-bold">{item.sku}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Badge variant="outline" className="border-border text-primary font-bold bg-accent/50">{item.color}</Badge>
-                          <Badge variant="outline" className="border-border text-primary font-black bg-accent/50">{item.size}</Badge>
+                          <Badge variant="outline" className="border-border dark:border-zinc-700 text-primary dark:text-zinc-300 font-bold bg-accent/50 dark:bg-zinc-800">{item.color}</Badge>
+                          <Badge variant="outline" className="border-border dark:border-zinc-700 text-primary dark:text-zinc-300 font-black bg-accent/50 dark:bg-zinc-800">{item.size}</Badge>
                         </div>
                       </TableCell>
                       <TableCell>
                         {item.stock === 0 ? (
-                          <Badge className="bg-red-50 text-red-500 border-none font-black text-[10px] animate-pulse">نفد المخزون</Badge>
+                          <Badge className="bg-red-50 dark:bg-red-900/10 text-red-500 dark:text-red-400 border-none font-black text-[10px] animate-pulse">نفد المخزون</Badge>
                         ) : item.stock <= 5 ? (
-                          <Badge className="bg-yellow-50 text-yellow-600 border-none font-black text-[10px] flex items-center gap-1">
+                          <Badge className="bg-yellow-50 dark:bg-yellow-900/10 text-yellow-600 dark:text-yellow-400 border-none font-black text-[10px] flex items-center gap-1">
                             <AlertCircle className="h-3 w-3" />
                             منخفض
                           </Badge>
                         ) : (
-                          <Badge className="bg-green-50 text-green-600 border-none font-black text-[10px]">متوفر</Badge>
+                          <Badge className="bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 border-none font-black text-[10px]">متوفر</Badge>
                         )}
                       </TableCell>
                       <TableCell>
                         <Input 
                           type="number"
                           defaultValue={item.stock}
-                          className="w-24 h-10 bg-accent/30 border-border text-center font-black text-primary"
+                          className="w-24 h-10 bg-accent/30 dark:bg-zinc-800 border-border dark:border-zinc-700 text-center font-black text-primary dark:text-zinc-100"
                           id={`stock-${item.productId}-${item.variantIndex}`}
                         />
                       </TableCell>
@@ -209,7 +208,7 @@ export default function InventoryPage() {
                           size="sm"
                           variant="ghost"
                           disabled={isUpdating}
-                          className="text-primary hover:bg-primary hover:text-white h-10 rounded-xl gap-2 font-black transition-all min-w-[80px]"
+                          className="text-primary dark:text-zinc-400 hover:bg-primary hover:text-white h-10 rounded-xl gap-2 font-black transition-all min-w-[80px]"
                           onClick={() => {
                             const input = document.getElementById(`stock-${item.productId}-${item.variantIndex}`) as HTMLInputElement;
                             handleUpdateStock(item.productId, item.variantIndex, parseInt(input.value), item.allVariants);

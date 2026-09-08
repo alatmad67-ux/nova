@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -124,7 +123,7 @@ export default function AdminCategoriesPage() {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen flex flex-col bg-background text-foreground font-arabic">
+      <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] text-foreground font-arabic transition-colors">
         <AdminHeader />
         
         <main className="flex-grow container mx-auto px-4 py-12">
@@ -132,9 +131,9 @@ export default function AdminCategoriesPage() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-5 w-5 text-secondary" />
-                <span className="text-xs font-black tracking-widest uppercase text-primary">تنظيم المجموعات</span>
+                <span className="text-xs font-black tracking-widest uppercase text-primary dark:text-zinc-500">تنظيم المجموعات</span>
               </div>
-              <h1 className="text-4xl font-black text-primary">إدارة الأقسام والأسماء</h1>
+              <h1 className="text-4xl font-black text-primary dark:text-zinc-100">إدارة الأقسام والأسماء</h1>
             </div>
             {!isAdding && (
               <Button onClick={() => setIsAdding(true)} className="h-12 px-8 rounded-2xl bg-primary text-white font-black hover:scale-105 transition-all shadow-lg shadow-primary/20">
@@ -144,55 +143,55 @@ export default function AdminCategoriesPage() {
           </div>
 
           {isAdding && (
-            <div className="nova-card p-10 mb-12 border-primary/10 bg-white shadow-premium animate-in zoom-in-95">
+            <div className="nova-card p-10 mb-12 border-primary/10 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-premium animate-in zoom-in-95 transition-all">
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-black text-primary">{editingId ? 'تعديل بيانات القسم' : 'إضافة قسم جديد'}</h3>
-                <button onClick={resetState} disabled={isSaving} className="p-2 hover:bg-accent rounded-full transition-colors">
-                  <X className="h-6 w-6 text-primary/20 hover:text-primary" />
+                <h3 className="text-xl font-black text-primary dark:text-zinc-100">{editingId ? 'تعديل بيانات القسم' : 'إضافة قسم جديد'}</h3>
+                <button onClick={resetState} disabled={isSaving} className="p-2 hover:bg-accent dark:hover:bg-zinc-800 rounded-full transition-colors">
+                  <X className="h-6 w-6 text-primary/20 dark:text-zinc-700 hover:text-primary dark:hover:text-zinc-300" />
                 </button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">اسم القسم (الذي يظهر للزبونة)</Label>
+                    <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">اسم القسم (الذي يظهر للزبونة)</Label>
                     <Input 
                       value={formData.name} 
                       onChange={(e) => setFormData({...formData, name: e.target.value})} 
                       placeholder="مثلاً: فساتين صيفية"
-                      className="h-14 bg-accent/30 rounded-2xl font-bold border-none focus:ring-2 focus:ring-primary/20" 
+                      className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none focus:ring-2 focus:ring-primary/20 text-primary dark:text-zinc-100" 
                       disabled={isSaving}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">يتبع لأي قسم رئيسي؟</Label>
+                    <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">يتبع لأي قسم رئيسي؟</Label>
                     <select 
-                      className="w-full h-14 px-4 bg-accent/30 rounded-2xl font-bold outline-none border-none focus:ring-2 focus:ring-primary/20"
+                      className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none focus:ring-2 focus:ring-primary/20 dark:text-zinc-100"
                       value={formData.mainCategory}
                       onChange={(e) => setFormData({...formData, mainCategory: e.target.value})}
                     >
-                      {MAIN_CATEGORIES.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      {MAIN_CATEGORIES.map(m => <option key={m.id} value={m.id} className="dark:text-black">{m.name}</option>)}
                     </select>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                       <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">الرابط (Slug)</Label>
+                       <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">الرابط (Slug)</Label>
                        <Input 
                         value={formData.slug} 
                         onChange={(e) => setFormData({...formData, slug: e.target.value})} 
                         placeholder="dresses-2026"
-                        className="h-12 bg-accent/30 rounded-xl font-mono text-sm" 
+                        className="h-12 bg-accent/30 dark:bg-zinc-800 rounded-xl font-mono text-sm dark:text-zinc-300" 
                        />
                     </div>
                     <div className="space-y-2">
-                       <Label className="text-xs font-black text-primary/40 uppercase tracking-widest">الترتيب</Label>
+                       <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">الترتيب</Label>
                        <Input 
                         type="number"
                         value={formData.order} 
                         onChange={(e) => setFormData({...formData, order: parseInt(e.target.value) || 0})} 
-                        className="h-12 bg-accent/30 rounded-xl font-black" 
+                        className="h-12 bg-accent/30 dark:bg-zinc-800 rounded-xl font-black dark:text-zinc-100" 
                        />
                     </div>
                   </div>
@@ -208,11 +207,11 @@ export default function AdminCategoriesPage() {
                 </div>
                 
                 <div className="flex flex-col items-center justify-center gap-6">
-                  <div className="relative h-48 w-full max-w-sm rounded-[3rem] overflow-hidden bg-accent border-2 border-dashed border-primary/10 flex items-center justify-center shadow-inner group">
+                  <div className="relative h-48 w-full max-w-sm rounded-[3rem] overflow-hidden bg-accent dark:bg-zinc-800 border-2 border-dashed border-primary/10 dark:border-zinc-700 flex items-center justify-center shadow-inner group">
                     {formData.image ? (
                       <Image src={formData.image} alt="Preview" fill className="object-cover transition-transform group-hover:scale-105" />
                     ) : (
-                      <ImageIcon className="h-16 w-16 text-primary/10" />
+                      <ImageIcon className="h-16 w-16 text-primary/10 dark:text-zinc-700" />
                     )}
                   </div>
                   <ImageUploadButton 
@@ -230,7 +229,7 @@ export default function AdminCategoriesPage() {
               <div key={main.id} className="space-y-6">
                 <div className="flex items-center gap-4 pr-2">
                   <div className="h-10 w-1 bg-secondary rounded-full" />
-                  <h3 className="text-xl font-black text-primary flex items-center gap-3">
+                  <h3 className="text-xl font-black text-primary dark:text-zinc-100 flex items-center gap-3">
                     <LayoutGrid className="h-5 w-5 text-secondary" />
                     {main.name}
                   </h3>
@@ -238,24 +237,24 @@ export default function AdminCategoriesPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {categories.filter(c => c.mainCategory === main.id).map((cat: any) => (
-                    <div key={cat.id} className="nova-card p-6 bg-white border border-border/50 shadow-sm hover:border-primary/20 transition-all group">
+                    <div key={cat.id} className="nova-card p-6 bg-white dark:bg-zinc-900 border border-border/50 dark:border-zinc-800 shadow-sm hover:border-primary/20 transition-all group">
                       <div className="flex items-center gap-5">
-                        <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-accent flex-shrink-0 border border-border/20">
+                        <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-accent dark:bg-zinc-800 flex-shrink-0 border border-border/20 dark:border-zinc-700">
                           <Image src={cat.image || 'https://picsum.photos/seed/placeholder/200/200'} alt={cat.name} fill className="object-cover" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-black text-primary text-sm truncate">{cat.name}</h4>
-                          <p className="text-[10px] text-primary/30 font-mono mt-0.5">/{cat.slug}</p>
+                          <h4 className="font-black text-primary dark:text-zinc-100 text-sm truncate">{cat.name}</h4>
+                          <p className="text-[10px] text-primary/30 dark:text-zinc-500 font-mono mt-0.5">/{cat.slug}</p>
                           <div className="mt-3 flex gap-2">
                             <button 
                               onClick={() => startEdit(cat)} 
-                              className="p-2 bg-accent rounded-lg text-primary/40 hover:text-primary hover:bg-white transition-all shadow-sm"
+                              className="p-2 bg-accent dark:bg-zinc-800 rounded-lg text-primary/40 dark:text-zinc-600 hover:text-primary dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 transition-all shadow-sm"
                             >
                               <Edit className="h-4 w-4" />
                             </button>
                             <button 
                               onClick={() => handleDelete(cat.id, cat.name)} 
-                              className="p-2 bg-red-50 rounded-lg text-red-400 hover:text-red-600 hover:bg-white transition-all shadow-sm"
+                              className="p-2 bg-red-50 dark:bg-red-900/10 rounded-lg text-red-400 dark:text-red-500 hover:text-red-600 hover:bg-white dark:hover:bg-zinc-700 transition-all shadow-sm"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -265,7 +264,7 @@ export default function AdminCategoriesPage() {
                     </div>
                   ))}
                   {categories.filter(c => c.mainCategory === main.id).length === 0 && (
-                    <div className="col-span-full py-10 text-center border-2 border-dashed border-accent rounded-3xl opacity-30 text-primary font-bold text-xs italic">
+                    <div className="col-span-full py-10 text-center border-2 border-dashed border-accent dark:border-zinc-800 rounded-3xl opacity-30 text-primary dark:text-zinc-700 font-bold text-xs italic">
                       لا توجد أقسام فرعية في هذا القسم حالياً
                     </div>
                   )}
