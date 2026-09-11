@@ -22,7 +22,6 @@ import {
   Package
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { intelligentProductSearch } from '@/ai/flows/intelligent-product-search';
 import { STORE_ID } from '@/lib/constants';
 
@@ -37,6 +36,14 @@ export default function Home() {
   const profileRef = useMemo(() => (db && user) ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: profile } = useDoc(profileRef);
 
+  // جلب المجموعات الكبرى
+  const mainCatQuery = useMemo(() => {
+    if (!db) return null;
+    return query(collection(db, 'main-categories'), where('storeId', '==', STORE_ID), orderBy('order', 'asc'));
+  }, [db]);
+  const { data: mainCategories } = useCollection(mainCatQuery);
+
+  // جلب المنتجات
   const productsQuery = useMemo(() => {
     if (!db) return null;
     return query(
@@ -46,7 +53,6 @@ export default function Home() {
       orderBy('createdAt', 'desc')
     );
   }, [db]);
-
   const { data: allProducts, loading: productsLoading } = useCollection(productsQuery);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -83,18 +89,6 @@ export default function Home() {
     });
   }, [allProducts, searchTerm, aiKeywords]);
 
-  const fashionProducts = useMemo(() => 
-    allProducts?.filter(p => p.mainCategory === 'fashion').slice(0, 6) || [], 
-  [allProducts]);
-
-  const skincareProducts = useMemo(() => 
-    allProducts?.filter(p => p.mainCategory === 'skincare').slice(0, 6) || [], 
-  [allProducts]);
-
-  const accessoriesProducts = useMemo(() => 
-    allProducts?.filter(p => p.mainCategory === 'accessories').slice(0, 6) || [], 
-  [allProducts]);
-
   const isViewSearchResults = searchTerm.length > 0 || aiKeywords.length > 0;
 
   return (
@@ -102,7 +96,6 @@ export default function Home() {
       <Header />
       
       <main className="flex-grow space-y-4 pt-24">
-        {/* Top Greeting */}
         {!isViewSearchResults && (
           <section className="container mx-auto px-6 flex justify-start">
             <p className="text-primary/40 dark:text-zinc-500 text-sm font-medium">
@@ -111,31 +104,20 @@ export default function Home() {
           </section>
         )}
 
-        {/* Integrated Sticky Search Bar Section */}
         <section className="sticky top-0 z-50 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl py-4 border-b border-primary/5 dark:border-zinc-800/50 transition-all">
           <div className="container mx-auto px-6">
             <form onSubmit={handleSearch} className="relative group">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/30 dark:text-zinc-600 group-focus-within:text-primary dark:group-focus-within:text-zinc-300 transition-colors" />
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/30 dark:text-zinc-600 group-focus-within:text-primary transition-colors" />
               <Input 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="عن ماذا تبحثين اليوم؟"
-                className="h-14 w-full bg-accent/30 dark:bg-zinc-900/50 border-none rounded-2xl flex items-center pr-12 pl-12 text-sm text-primary dark:text-zinc-100 font-bold shadow-sm focus-visible:ring-primary/20 dark:focus-visible:ring-zinc-800"
+                className="h-14 w-full bg-accent/30 dark:bg-zinc-900/50 border-none rounded-2xl flex items-center pr-12 pl-12 text-sm text-primary dark:text-zinc-100 font-bold shadow-sm focus-visible:ring-primary/20"
               />
               {searchTerm && (
-                <button 
-                  type="button"
-                  onClick={clearSearch}
-                  className="absolute left-14 top-1/2 -translate-y-1/2 p-1 text-primary/20 dark:text-zinc-700 hover:text-primary dark:hover:text-zinc-400 transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <button type="button" onClick={clearSearch} className="absolute left-14 top-1/2 -translate-y-1/2 p-1 text-primary/20 hover:text-primary"><X className="h-4 w-4" /></button>
               )}
-              <button 
-                type="submit"
-                disabled={isSearching}
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-primary/5 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-primary dark:text-zinc-300 hover:bg-primary hover:text-white transition-all active:scale-95"
-              >
+              <button type="submit" disabled={isSearching} className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-primary/5 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-primary dark:text-zinc-300">
                 {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               </button>
             </form>
@@ -143,11 +125,10 @@ export default function Home() {
         </section>
 
         {isViewSearchResults ? (
-          /* Search Results View */
           <section className="container mx-auto px-6 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between mb-8">
                <h3 className="text-xl font-black text-primary dark:text-zinc-100">نتائج البحث ({filteredProducts.length})</h3>
-               <button onClick={clearSearch} className="text-xs font-black text-secondary underline underline-offset-4">عرض المتجر كاملاً</button>
+               <button onClick={clearSearch} className="text-xs font-black text-secondary underline underline-offset-4">إلغاء البحث</button>
             </div>
             
             {filteredProducts.length > 0 ? (
@@ -162,21 +143,19 @@ export default function Home() {
                       price: product.price,
                       originalPrice: product.originalPrice,
                       image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/600',
-                      rating: 5.0,
                       badge: product.isNew ? 'جديد' : undefined
                     }} 
                   />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-24 bg-accent/30 dark:bg-zinc-900/30 rounded-[3rem] border border-dashed border-primary/10 dark:border-zinc-800">
-                <Package className="h-16 w-16 mx-auto mb-6 text-primary dark:text-zinc-700 opacity-20" />
-                <p className="text-primary/40 dark:text-zinc-500 font-black">لم نجد نتائج مطابقة لبحثكِ، جربي كلمات أخرى</p>
+              <div className="text-center py-24 bg-accent/30 dark:bg-zinc-900/30 rounded-[3rem] border border-dashed border-primary/10">
+                <Package className="h-16 w-16 mx-auto mb-6 text-primary opacity-20" />
+                <p className="text-primary/40 dark:text-zinc-500 font-black">لم نجد نتائج مطابقة</p>
               </div>
             )}
           </section>
         ) : (
-          /* Normal Home View */
           <div className="space-y-8">
             <HeroSlider />
             <Categories />
@@ -198,29 +177,25 @@ export default function Home() {
             </section>
 
             <div className="space-y-12">
-              <ProductCarousel 
-                title="الأزياء والملابس" 
-                products={fashionProducts} 
-                viewAllHref="/category/fashion" 
-              />
-              
-              <ProductCarousel 
-                title="العناية بالبشرة" 
-                products={skincareProducts} 
-                viewAllHref="/category/skincare" 
-              />
-
-              <ProductCarousel 
-                title="الأكسسوارات" 
-                products={accessoriesProducts} 
-                viewAllHref="/category/accessories" 
-              />
+              {/* عرض الأقسام ديناميكياً بناءً على المجموعات الكبرى */}
+              {mainCategories?.map((main: any) => {
+                const products = allProducts?.filter(p => p.mainCategory === main.id).slice(0, 6) || [];
+                if (products.length === 0) return null;
+                return (
+                  <ProductCarousel 
+                    key={main.id}
+                    title={main.name} 
+                    products={products} 
+                    viewAllHref={`/categories`} 
+                  />
+                );
+              })}
             </div>
           </div>
         )}
 
-        <div className="text-center pt-8 opacity-20 dark:opacity-10 pb-4">
-           <p className="text-[10px] font-black uppercase tracking-[0.3em] dark:text-zinc-400">بشرتكِ الزجاجية تبدأ من هنا © 2026</p>
+        <div className="text-center pt-8 opacity-20 pb-4">
+           <p className="text-[10px] font-black uppercase tracking-[0.3em]">بشرتكِ الزجاجية تبدأ من هنا © 2026</p>
         </div>
       </main>
 

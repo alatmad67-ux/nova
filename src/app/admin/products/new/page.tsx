@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { AdminGuard } from '@/components/layout/AdminGuard';
@@ -26,12 +26,6 @@ import Image from 'next/image';
 import { ImageUploadButton } from '@/components/ui/image-upload-button';
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
-const MAIN_CATEGORIES = [
-  { id: 'fashion', name: 'الأزياء' },
-  { id: 'accessories', name: 'الأكسسوارات' },
-  { id: 'skincare', name: 'العناية بالبشرة' },
-  { id: 'beauty-devices', name: 'أجهزة العناية' },
-];
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -39,12 +33,19 @@ export default function NewProductPage() {
   const { storeId } = useStore();
   const [loading, setLoading] = useState(false);
   
-  const categoriesQuery = useMemo(() => {
-    if (!db) return null;
-    return collection(db, 'categories');
-  }, [db]);
+  // جلب المجموعات الكبرى الديناميكية
+  const mainCatQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(collection(db, 'main-categories'), where('storeId', '==', storeId));
+  }, [db, storeId]);
+  const { data: mainCategories } = useCollection(mainCatQuery);
 
-  const { data: categories } = useCollection(categoriesQuery);
+  // جلب كافة الأقسام الفرعية
+  const subCatQuery = useMemo(() => {
+    if (!db || !storeId) return null;
+    return query(collection(db, 'categories'), where('storeId', '==', storeId));
+  }, [db, storeId]);
+  const { data: subCategories } = useCollection(subCatQuery);
 
   const [productData, setProductData] = useState({
     name: '',
@@ -57,7 +58,7 @@ export default function NewProductPage() {
     specifications: '',
     price: 0,
     originalPrice: 0,
-    mainCategory: 'fashion',
+    mainCategory: '',
     categoryId: '',
     categoryName: '',
     images: [] as string[],
@@ -67,9 +68,9 @@ export default function NewProductPage() {
     isNew: true
   });
 
-  const filteredCategories = useMemo(() => {
-    return categories?.filter(c => c.mainCategory === productData.mainCategory) || [];
-  }, [categories, productData.mainCategory]);
+  const filteredSubCategories = useMemo(() => {
+    return subCategories?.filter((c: any) => c.mainCategory === productData.mainCategory) || [];
+  }, [subCategories, productData.mainCategory]);
 
   const handleSave = () => {
     if (!db) return;
@@ -79,10 +80,13 @@ export default function NewProductPage() {
     }
 
     setLoading(true);
-    const selectedCat = categories?.find(c => c.id === productData.categoryId);
+    const selectedSub = subCategories?.find((c: any) => c.id === productData.categoryId);
     
     const generatedVariants = [];
-    if (productData.mainCategory === 'fashion') {
+    // توليد خيارات تلقائية إذا كانت مجموعة أزياء
+    const isFashion = mainCategories?.find(m => m.id === productData.mainCategory)?.slug?.includes('fashion') || productData.mainCategory.includes('fashion');
+    
+    if (isFashion) {
       for (const color of productData.colors) {
         if (!color.name) continue;
         for (const size of productData.selectedSizes) {
@@ -100,7 +104,7 @@ export default function NewProductPage() {
     const finalProduct = {
       ...productData,
       variants: generatedVariants,
-      categoryName: selectedCat?.name || '',
+      categoryName: selectedSub?.name || '',
       storeId,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -125,7 +129,7 @@ export default function NewProductPage() {
         <main className="flex-grow container mx-auto px-4 py-12 max-w-5xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div className="flex items-center gap-6">
-              <button onClick={() => router.back()} className="h-12 w-12 rounded-xl bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary/40 dark:text-zinc-500 hover:text-primary dark:hover:text-zinc-100 transition-all">
+              <button onClick={() => router.back()} className="h-12 w-12 rounded-xl bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary/40 hover:text-primary transition-all">
                 <ChevronRight className="h-6 w-6" />
               </button>
               <div>
@@ -143,28 +147,29 @@ export default function NewProductPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-10">
-            {/* Type & Main Info */}
-            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-10 border border-border dark:border-zinc-800 transition-colors">
+            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-10 border border-border dark:border-zinc-800">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                  <div className="space-y-3">
-                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">القسم الرئيسي</Label>
+                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">المجموعة الكبرى</Label>
                    <select 
-                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none focus:ring-2 focus:ring-primary/20 dark:text-zinc-100 transition-all"
+                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none dark:text-zinc-100"
                     value={productData.mainCategory}
                     onChange={(e) => setProductData({...productData, mainCategory: e.target.value, categoryId: ''})}
                    >
-                     {MAIN_CATEGORIES.map(m => <option key={m.id} value={m.id} className="dark:text-black">{m.name}</option>)}
+                     <option value="">اختر المجموعة الكبرى</option>
+                     {mainCategories?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
                    </select>
                  </div>
                  <div className="space-y-3 md:col-span-2">
                    <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">القسم الفرعي</Label>
                    <select 
-                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none focus:ring-2 focus:ring-primary/20 dark:text-zinc-100 transition-all"
+                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none dark:text-zinc-100"
                     value={productData.categoryId}
                     onChange={(e) => setProductData({...productData, categoryId: e.target.value})}
+                    disabled={!productData.mainCategory}
                    >
-                     <option value="" className="dark:text-black">اختر القسم الفرعي</option>
-                     {filteredCategories.map(c => <option key={c.id} value={c.id} className="dark:text-black">{c.name}</option>)}
+                     <option value="">اختر القسم الفرعي</option>
+                     {filteredSubCategories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                    </select>
                  </div>
               </div>
@@ -192,89 +197,66 @@ export default function NewProductPage() {
               </div>
             </div>
 
-            {/* Dynamic Details based on Category */}
-            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-8 border border-border dark:border-zinc-800 transition-colors">
+            {/* تفاصيل ديناميكية */}
+            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-8 border border-border dark:border-zinc-800">
                <h3 className="text-lg font-black text-primary dark:text-zinc-100 flex items-center gap-2">
                  <Info className="h-5 w-5 text-secondary" />
                  تفاصيل إضافية
                </h3>
 
-               {productData.mainCategory === 'fashion' && (
-                 <div className="grid grid-cols-1 gap-8">
-                   <div className="space-y-2">
-                     <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">خامة القماش</Label>
-                     <Input value={productData.material} onChange={(e) => setProductData({...productData, material: e.target.value})} className="h-12 bg-accent/30 dark:bg-zinc-800 rounded-xl border-none dark:text-zinc-100" />
-                   </div>
-                   <div className="space-y-4">
-                     <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">الألوان المتوفرة</Label>
-                     <div className="flex flex-wrap gap-4">
-                       {productData.colors.map((c, idx) => (
-                         <div key={idx} className="flex items-center gap-2 bg-accent dark:bg-zinc-800 p-2 rounded-xl border border-transparent dark:border-zinc-700 transition-colors">
-                           <input type="color" value={c.code} onChange={(e) => {
-                             const colors = [...productData.colors];
-                             colors[idx].code = e.target.value;
-                             setProductData({...productData, colors});
-                           }} className="h-8 w-8 rounded-lg overflow-hidden border-none cursor-pointer" />
-                           <input placeholder="اسم اللون" value={c.name} onChange={(e) => {
-                             const colors = [...productData.colors];
-                             colors[idx].name = e.target.value;
-                             setProductData({...productData, colors});
-                           }} className="bg-transparent border-none w-24 text-xs font-bold dark:text-zinc-100 outline-none" />
-                           <button onClick={() => setProductData({...productData, colors: productData.colors.filter((_, i) => i !== idx)})} className="text-red-400 hover:text-red-500 transition-colors"><Trash2 className="h-4 w-4" /></button>
-                         </div>
-                       ))}
-                       <Button variant="outline" onClick={() => setProductData({...productData, colors: [...productData.colors, {name:'', code: '#000000'}]})} className="h-12 w-12 border-dashed border-primary/20 dark:border-zinc-700 rounded-xl text-primary/40 dark:text-zinc-600 hover:text-primary transition-all">+</Button>
-                     </div>
-                   </div>
-                   <div className="space-y-4">
-                     <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">القياسات</Label>
-                     <div className="flex flex-wrap gap-2">
-                       {SIZES.map(s => (
-                         <button key={s} onClick={() => {
-                           const sizes = productData.selectedSizes.includes(s) ? productData.selectedSizes.filter(sz => sz !== s) : [...productData.selectedSizes, s];
-                           setProductData({...productData, selectedSizes: sizes});
-                         }} className={cn("h-10 w-12 rounded-lg font-black text-xs border-2 transition-all", productData.selectedSizes.includes(s) ? "border-primary bg-primary text-white" : "border-accent dark:border-zinc-800 bg-white dark:bg-zinc-900 text-primary/40 dark:text-zinc-500")}>{s}</button>
-                       ))}
-                     </div>
-                   </div>
-                 </div>
-               )}
-
-               {productData.mainCategory === 'skincare' && (
-                 <div className="grid grid-cols-1 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">المكونات الرئيسية</Label>
-                      <Textarea value={productData.ingredients} onChange={(e) => setProductData({...productData, ingredients: e.target.value})} className="bg-accent/30 dark:bg-zinc-800 rounded-xl border-none dark:text-zinc-100 transition-colors" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">طريقة الاستخدام</Label>
-                      <Textarea value={productData.howToUse} onChange={(e) => setProductData({...productData, howToUse: e.target.value})} className="bg-accent/30 dark:bg-zinc-800 rounded-xl border-none dark:text-zinc-100 transition-colors" />
-                    </div>
-                 </div>
-               )}
-
-               {productData.mainCategory === 'beauty-devices' && (
+               <div className="grid grid-cols-1 gap-8">
                  <div className="space-y-2">
-                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">المواصفات التقنية</Label>
-                   <Textarea value={productData.specifications} onChange={(e) => setProductData({...productData, specifications: e.target.value})} className="bg-accent/30 dark:bg-zinc-800 rounded-xl border-none dark:text-zinc-100 transition-colors" placeholder="مثلاً: قوة البطارية، بلد المنشأ، الضمان..." />
+                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">خامة القماش / المواد</Label>
+                   <Input value={productData.material} onChange={(e) => setProductData({...productData, material: e.target.value})} className="h-12 bg-accent/30 dark:bg-zinc-800 rounded-xl border-none dark:text-zinc-100" />
                  </div>
-               )}
+                 <div className="space-y-4">
+                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">الألوان المتوفرة</Label>
+                   <div className="flex flex-wrap gap-4">
+                     {productData.colors.map((c, idx) => (
+                       <div key={idx} className="flex items-center gap-2 bg-accent dark:bg-zinc-800 p-2 rounded-xl border border-transparent dark:border-zinc-700 transition-colors">
+                         <input type="color" value={c.code} onChange={(e) => {
+                           const colors = [...productData.colors];
+                           colors[idx].code = e.target.value;
+                           setProductData({...productData, colors});
+                         }} className="h-8 w-8 rounded-lg overflow-hidden border-none cursor-pointer" />
+                         <input placeholder="اللون" value={c.name} onChange={(e) => {
+                           const colors = [...productData.colors];
+                           colors[idx].name = e.target.value;
+                           setProductData({...productData, colors});
+                         }} className="bg-transparent border-none w-24 text-xs font-bold dark:text-zinc-100 outline-none" />
+                         <button onClick={() => setProductData({...productData, colors: productData.colors.filter((_, i) => i !== idx)})} className="text-red-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
+                       </div>
+                     ))}
+                     <Button variant="outline" onClick={() => setProductData({...productData, colors: [...productData.colors, {name:'', code: '#000000'}]})} className="h-12 w-12 border-dashed border-primary/20 dark:border-zinc-700 rounded-xl">+</Button>
+                   </div>
+                 </div>
+                 <div className="space-y-4">
+                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">القياسات</Label>
+                   <div className="flex flex-wrap gap-2">
+                     {SIZES.map(s => (
+                       <button key={s} onClick={() => {
+                         const sizes = productData.selectedSizes.includes(s) ? productData.selectedSizes.filter(sz => sz !== s) : [...productData.selectedSizes, s];
+                         setProductData({...productData, selectedSizes: sizes});
+                       }} className={cn("h-10 w-12 rounded-lg font-black text-xs border-2 transition-all", productData.selectedSizes.includes(s) ? "border-primary bg-primary text-white" : "border-accent dark:border-zinc-800 bg-white dark:bg-zinc-900 text-primary/40 dark:text-zinc-500")}>{s}</button>
+                     ))}
+                   </div>
+                 </div>
+               </div>
 
                <div className="space-y-2 pt-4">
                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">وصف المنتج العام</Label>
-                 <Textarea value={productData.description} onChange={(e) => setProductData({...productData, description: e.target.value})} className="min-h-[150px] bg-accent/30 dark:bg-zinc-800 rounded-2xl p-6 border-none dark:text-zinc-300 transition-colors" />
+                 <Textarea value={productData.description} onChange={(e) => setProductData({...productData, description: e.target.value})} className="min-h-[150px] bg-accent/30 dark:bg-zinc-800 rounded-2xl p-6 border-none dark:text-zinc-300" />
                </div>
             </div>
 
-            {/* Images */}
-            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-8 border border-border dark:border-zinc-800 transition-colors">
+            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-8 border border-border dark:border-zinc-800">
               <div className="flex items-center gap-3 mb-4">
                 <ImageIcon className="text-primary dark:text-zinc-100 h-5 w-5" />
                 <h3 className="text-xl font-black text-primary dark:text-zinc-100">صور المنتج</h3>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                 {productData.images.map((img, idx) => (
-                  <div key={idx} className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-accent dark:border-zinc-800 bg-accent dark:bg-zinc-800 group shadow-sm">
+                  <div key={idx} className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-accent dark:border-zinc-800 group">
                     <Image src={img} alt="Product" fill className="object-cover" />
                     <button 
                       onClick={() => setProductData({...productData, images: productData.images.filter((_, i) => i !== idx)})} 
@@ -291,7 +273,6 @@ export default function NewProductPage() {
                 />
               </div>
             </div>
-
           </div>
         </main>
       </div>
