@@ -30,6 +30,7 @@ import { useStore } from '@/providers/store-provider';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import Link from 'next/link';
+import { cn } from "@/lib/utils";
 
 export default function AdminCustomersPage() {
   const db = useFirestore();
@@ -105,7 +106,7 @@ export default function AdminCustomersPage() {
     }
 
     // الترتيب
-    if (sortBy === 'latest') result.sort((a, b) => b.lastOrder?.seconds - a.lastOrder?.seconds);
+    if (sortBy === 'latest') result.sort((a, b) => (b.lastOrder?.seconds || 0) - (a.lastOrder?.seconds || 0));
     if (sortBy === 'spent') result.sort((a, b) => b.totalSpent - a.totalSpent);
     if (sortBy === 'orders') result.sort((a, b) => b.orderCount - a.orderCount);
     if (sortBy === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'ar'));

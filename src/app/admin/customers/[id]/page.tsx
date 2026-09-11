@@ -40,12 +40,13 @@ export default function CustomerDetailPage() {
     if (!db || !id || !storeId) return null;
     
     // إذا كان الـ ID عبارة عن UID (طويل) أو رقم هاتف
-    const field = id.length > 20 ? 'customerId' : 'customerPhone';
+    const idStr = id as string;
+    const field = idStr.length > 20 ? 'customerId' : 'customerPhone';
     
     return query(
       collection(db, 'orders'),
       where('storeId', '==', storeId),
-      where(field, '==', id),
+      where(field, '==', idStr),
       orderBy('createdAt', 'desc')
     );
   }, [db, id, storeId]);
