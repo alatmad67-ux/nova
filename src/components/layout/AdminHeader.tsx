@@ -1,8 +1,20 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { LogOut, LayoutGrid, ShoppingBag, Package, Settings, Image as ImageIcon, Users, BarChart3 } from 'lucide-react';
+import { 
+  LogOut, 
+  LayoutGrid, 
+  ShoppingBag, 
+  Package, 
+  Settings, 
+  Image as ImageIcon, 
+  Users, 
+  BarChart3,
+  Archive,
+  Truck
+} from 'lucide-react';
 import { useAuth, useDoc, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -25,10 +37,12 @@ export function AdminHeader() {
   };
 
   const NAV_ITEMS = [
-    { label: 'لوحة التحكم', href: '/admin/dashboard', icon: LayoutGrid },
+    { label: 'الرئيسية', href: '/admin/dashboard', icon: LayoutGrid },
     { label: 'المنتجات', href: '/admin/products', icon: ShoppingBag },
+    { label: 'المخزن', href: '/admin/inventory', icon: Archive },
     { label: 'الطلبات', href: '/admin/orders', icon: Package },
     { label: 'العملاء', href: '/admin/customers', icon: Users },
+    { label: 'الشحن', href: '/admin/shipping-rates', icon: Truck },
     { label: 'التقارير', href: '/admin/reports', icon: BarChart3 },
     { label: 'السلايدر', href: '/admin/slider', icon: ImageIcon },
     { label: 'الإعدادات', href: '/admin/settings', icon: Settings },
@@ -44,19 +58,19 @@ export function AdminHeader() {
         ) : (
           <div className="flex flex-col items-end">
             <span className="text-xl font-black text-primary dark:text-zinc-100 tracking-widest uppercase">NOVA</span>
-            <span className="text-[8px] block text-secondary font-bold uppercase tracking-[0.2em] -mt-1">Control Panel</span>
+            <span className="text-[8px] block text-secondary font-bold uppercase tracking-[0.2em] -mt-1">Admin Panel</span>
           </div>
         )}
       </Link>
 
-      <nav className="hidden xl:flex items-center gap-6">
+      <nav className="hidden xl:flex items-center gap-5">
         {NAV_ITEMS.map((item) => (
           <Link 
             key={item.href}
             href={item.href} 
-            className="flex items-center gap-2 text-[11px] font-black text-primary/60 dark:text-zinc-400 hover:text-primary dark:hover:text-zinc-100 transition-colors uppercase tracking-wider"
+            className="flex items-center gap-2 text-[10px] font-black text-primary/60 dark:text-zinc-400 hover:text-primary dark:hover:text-zinc-100 transition-colors uppercase tracking-wider"
           >
-            <item.icon className="h-4 w-4" /> {item.label}
+            <item.icon className="h-3.5 w-3.5" /> {item.label}
           </Link>
         ))}
       </nav>

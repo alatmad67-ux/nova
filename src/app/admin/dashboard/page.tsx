@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useEffect } from 'react';
@@ -15,7 +16,9 @@ import {
   Clock,
   Eye,
   AlertCircle,
-  BarChart3
+  BarChart3,
+  Archive,
+  MapPin
 } from 'lucide-react';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { useCollection, useFirestore, useUser } from '@/firebase';
@@ -60,7 +63,7 @@ export default function AdminDashboard() {
     );
   }, [db, storeId]);
   
-  const { data: rawOrders, loading: ordersLoading, error: ordersError } = useCollection(ordersQuery);
+  const { data: rawOrders, loading: ordersLoading } = useCollection(ordersQuery);
   
   const productsQuery = useMemo(() => {
     if (!db || !storeId) return null;
@@ -75,7 +78,6 @@ export default function AdminDashboard() {
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
     const weekStart = startOfWeek(new Date());
-    const monthStart = startOfMonth(new Date());
     const orders = rawOrders || [];
     
     const filterByDate = (date: Date) => orders.filter(o => {
@@ -85,16 +87,13 @@ export default function AdminDashboard() {
 
     const todayOrders = filterByDate(today);
     const weekOrders = filterByDate(weekStart);
-    const monthOrders = filterByDate(monthStart);
 
     const todaySales = todayOrders.reduce((acc, o) => acc + (o.totals?.total || 0), 0);
     const weekSales = weekOrders.reduce((acc, o) => acc + (o.totals?.total || 0), 0);
-    const monthSales = monthOrders.reduce((acc, o) => acc + (o.totals?.total || 0), 0);
 
     return {
       todaySales,
       weekSales,
-      monthSales,
       totalOrders: orders.length,
       newOrders: orders.filter(o => o.status === 'جديد').length,
       totalCustomers: new Set(orders.map(o => o.customerId || o.customerPhone).filter(Boolean)).size,
@@ -124,11 +123,13 @@ export default function AdminDashboard() {
   }, [rawOrders]);
 
   const QUICK_ACTIONS = [
-    { label: 'إدارة الطلبات', icon: Package, href: '/admin/orders', color: 'bg-primary' },
+    { label: 'إدارة المنتجات', icon: ShoppingBag, href: '/admin/products', color: 'bg-primary' },
+    { label: 'جرد المخزن', icon: Archive, href: '/admin/inventory', color: 'bg-orange-500' },
+    { label: 'طلبات التوصيل', icon: Package, href: '/admin/orders', color: 'bg-indigo-600' },
+    { label: 'أسعار الشحن', icon: MapPin, href: '/admin/shipping-rates', color: 'bg-teal-600' },
     { label: 'قائمة العملاء', icon: Users, href: '/admin/customers', color: 'bg-blue-500' },
+    { label: 'الأقسام الرئيسية', icon: LayoutGrid, href: '/admin/categories', color: 'bg-secondary' },
     { label: 'تقارير المبيعات', icon: BarChart3, href: '/admin/reports', color: 'bg-green-500' },
-    { label: 'إضافة منتج', icon: ShoppingBag, href: '/admin/products/new', color: 'bg-secondary' },
-    { label: 'إدارة الأقسام', icon: LayoutGrid, href: '/admin/categories', color: 'bg-indigo-600' },
     { label: 'إعدادات المتجر', icon: SettingsIcon, href: '/admin/settings', color: 'bg-gray-600' },
   ];
 
@@ -144,20 +145,20 @@ export default function AdminDashboard() {
                 <Sparkles className="h-5 w-5 text-secondary" />
                 <span className="text-xs font-black tracking-widest uppercase text-primary dark:text-zinc-500">نظام إدارة NOVA</span>
               </div>
-              <h1 className="text-4xl font-black text-primary dark:text-zinc-100">نظرة عامة</h1>
+              <h1 className="text-4xl font-black text-primary dark:text-zinc-100">لوحة التحكم</h1>
             </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-12">
             {[
               { label: 'مبيعات اليوم', val: stats.todaySales, icon: ShoppingBag, color: 'text-primary' },
-              { label: 'مبيعات الأسبوع', val: stats.weekSales, icon: TrendingUp, color: 'text-green-500' },
               { label: 'طلبات جديدة', val: stats.newOrders, icon: Clock, color: 'text-blue-500' },
               { label: 'إجمالي العملاء', val: stats.totalCustomers, icon: Users, color: 'text-secondary' },
               { label: 'إجمالي الطلبات', val: stats.totalOrders, icon: Package, color: 'text-purple-500' },
-              { label: 'المنتجات', val: stats.totalProducts, icon: LayoutGrid, color: 'text-orange-500' },
+              { label: 'عدد المنتجات', val: stats.totalProducts, icon: LayoutGrid, color: 'text-orange-500' },
+              { label: 'مبيعات الأسبوع', val: stats.weekSales, icon: TrendingUp, color: 'text-green-500' },
             ].map((s, i) => (
-              <div key={i} className="bg-white dark:bg-zinc-900 p-5 rounded-[2rem] border border-border dark:border-zinc-800 shadow-sm flex flex-col gap-2">
+              <div key={i} className="bg-white dark:bg-zinc-900 p-5 rounded-[2rem] border border-border dark:border-zinc-800 shadow-sm flex flex-col gap-2 group hover:scale-[1.02] transition-all">
                 <div className={cn("h-8 w-8 rounded-lg bg-accent dark:bg-zinc-800 flex items-center justify-center", s.color)}>
                   <s.icon className="h-4 w-4" />
                 </div>
@@ -172,7 +173,7 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
               <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-border dark:border-zinc-800 shadow-sm transition-all">
-                <h3 className="text-xl font-black text-primary dark:text-zinc-100 mb-10">المبيعات (آخر 7 أيام)</h3>
+                <h3 className="text-xl font-black text-primary dark:text-zinc-100 mb-10">نشاط المبيعات (أسبوعي)</h3>
                 <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData}>
@@ -203,14 +204,14 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between mb-8">
                   <h3 className="text-xl font-black text-primary dark:text-zinc-100">أحدث الطلبيات</h3>
                   <Link href="/admin/orders" className="text-xs font-black text-primary/40 dark:text-zinc-500 flex items-center gap-1 hover:text-primary transition-colors">
-                    عرض الكل
+                    عرض كافة القوائم
                     <ChevronLeft className="h-3 w-3" />
                   </Link>
                 </div>
 
                 <div className="space-y-4">
                   {ordersLoading ? (
-                    <div className="py-10 text-center animate-pulse text-primary/20 dark:text-zinc-800 font-black">جاري المزامنة...</div>
+                    <div className="py-10 text-center animate-pulse text-primary/20 dark:text-zinc-800 font-black">جاري مزامنة البيانات...</div>
                   ) : recentOrders.length > 0 ? (
                     recentOrders.map((order: any) => (
                       <div key={order.id} className="flex items-center justify-between p-4 bg-accent/30 dark:bg-zinc-800/50 rounded-2xl border border-border/50 dark:border-zinc-800 group hover:border-primary/20 transition-all">
@@ -235,14 +236,14 @@ export default function AdminDashboard() {
                       </div>
                     ))
                   ) : (
-                    <div className="py-10 text-center text-primary/20 font-black italic">لا توجد طلبات</div>
+                    <div className="py-10 text-center text-primary/20 font-black italic">لا توجد سجلات حالياً</div>
                   )}
                 </div>
               </div>
             </div>
 
             <div className="space-y-8">
-              <h3 className="text-lg font-black text-primary dark:text-zinc-400 px-2">إجراءات سريعة</h3>
+              <h3 className="text-lg font-black text-primary dark:text-zinc-400 px-2">الوصول السريع للقوائم</h3>
               <div className="grid grid-cols-2 gap-4">
                 {QUICK_ACTIONS.map((action, i) => (
                   <button 
@@ -259,9 +260,9 @@ export default function AdminDashboard() {
               </div>
               
               <div className="bg-primary/5 dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-primary/10 dark:border-zinc-800">
-                <h4 className="text-xs font-black text-primary dark:text-zinc-100 uppercase tracking-widest mb-4">نصيحة NOVA</h4>
+                <h4 className="text-xs font-black text-primary dark:text-zinc-100 uppercase tracking-widest mb-4">نصيحة الإدارة</h4>
                 <p className="text-xs font-bold text-primary/60 dark:text-zinc-400 leading-relaxed">
-                  الطلبات الملغاة لا تحتسب في تقارير المبيعات الفعلية. تأكدي من تحديث حالة الطلب إلى "تم التسليم" لضمان دقة الأرقام المالية في قسم التقارير.
+                  استخدمي ميزة "جرد المخزن" لتعديل كميات القطع التي أوشكت على النفاد مباشرة دون الحاجة للدخول لصفحة تعديل المنتج.
                 </p>
               </div>
             </div>
