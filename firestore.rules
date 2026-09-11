@@ -3,20 +3,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // وظيفة للتحقق مما إذا كان المستخدم هو مدير النظام (نوفا أدمن)
     function isAdmin() {
       return request.auth != null && 
         (request.auth.token.email == "07858833838@novafashion.iq" || 
          request.auth.token.email == "+9647858833838@nova-auth.local");
     }
 
-    // إعدادات المتجر العامة واللوغو
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // المنتجات والأقسام والسلايدر (قراءة للجميع، كتابة للأدمن)
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -34,7 +31,6 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // شركات التوصيل وأسعار الشحن (الأدمن فقط لديه كامل الصلاحية)
     match /delivery-companies/{companyId} {
       allow read, write: if isAdmin();
     }
@@ -43,7 +39,6 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // بيانات المستخدمين والعناوين والمفضلات (الزبون يتحكم ببياناته فقط)
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
       allow write: if request.auth != null && request.auth.uid == userId;
@@ -56,14 +51,14 @@ service cloud.firestore {
       }
     }
 
-    // الطلبات (الزبون ينشئ ويقرأ طلبه الخاص فقط بناءً على customerId، الأدمن يتحكم بكل شيء)
     match /orders/{orderId} {
-      allow create: if request.auth != null;
-      allow read: if request.auth != null && (request.auth.uid == resource.data.customerId || isAdmin());
+      // السماح للزوار بإنشاء طلبات
+      allow create: if true; 
+      // الزبون يقرأ طلبه فقط بناءً على customerId، والأدمن يرى الكل
+      allow read: if isAdmin() || (request.auth != null && resource.data.customerId == request.auth.uid);
       allow update, delete: if isAdmin();
     }
 
-    // الإشعارات
     match /notifications/{notificationId} {
       allow read, update: if request.auth != null && request.auth.uid == resource.data.userId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;

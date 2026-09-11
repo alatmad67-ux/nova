@@ -17,7 +17,10 @@ import {
   Image as ImageIcon, 
   Loader2,
   Info,
-  ChevronRight
+  ChevronRight,
+  Copy,
+  Check,
+  Link as LinkIcon
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useStore } from '@/providers/store-provider';
@@ -26,12 +29,6 @@ import Image from 'next/image';
 import { ImageUploadButton } from '@/components/ui/image-upload-button';
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
-const MAIN_CATEGORIES = [
-  { id: 'fashion', name: 'الأزياء' },
-  { id: 'accessories', name: 'الأكسسوارات' },
-  { id: 'skincare', name: 'العناية بالبشرة' },
-  { id: 'beauty-devices', name: 'أجهزة العناية' },
-];
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -39,6 +36,7 @@ export default function EditProductPage() {
   const db = useFirestore();
   const { storeId } = useStore();
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   const productRef = useMemo(() => (db && id) ? doc(db, 'products', id as string) : null, [db, id]);
   const { data: product, loading: productLoading } = useDoc(productRef);
@@ -85,6 +83,14 @@ export default function EditProductPage() {
     return categories?.filter(c => c.mainCategory === productData.mainCategory) || [];
   }, [categories, productData.mainCategory]);
 
+  const handleCopyLink = () => {
+    const link = `${window.location.origin}/product/${id}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    toast({ title: "تم نسخ الرابط", description: "الرابط جاهز للمشاركة الآن ✨" });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const handleUpdate = () => {
     if (!db || !productRef) return;
     if (!productData.name || !productData.price || !productData.categoryId) {
@@ -95,41 +101,24 @@ export default function EditProductPage() {
     setLoading(true);
     const selectedCat = categories?.find(c => c.id === productData.categoryId);
     
-    const generatedVariants = productData.mainCategory === 'fashion' ? [] : (product.variants || []);
-    if (productData.mainCategory === 'fashion') {
-      for (const color of productData.colors) {
-        if (!color.name) continue;
-        for (const size of productData.selectedSizes) {
-          generatedVariants.push({
-            color: color.name,
-            colorCode: color.code,
-            size: size,
-            stock: 10,
-            sku: `${productData.sku || 'P'}-${color.name}-${size}`
-          });
-        }
-      }
-    }
-
     const finalProduct = {
       ...productData,
-      variants: generatedVariants.length > 0 ? generatedVariants : (product.variants || []),
       categoryName: selectedCat?.name || productData.categoryName,
       updatedAt: serverTimestamp(),
     };
 
     updateDoc(productRef, finalProduct)
       .then(() => {
-        toast({ title: "تم التحديث ✨", description: `تم حفظ تعديلات المنتج بنجاح` });
+        toast({ title: "تم التحديث ✨" });
         router.push('/admin/products');
       })
-      .catch((error) => {
+      .catch(() => {
         setLoading(false);
-        toast({ variant: "destructive", title: "خطأ", description: "فشل تحديث المنتج في الفاير ستور" });
+        toast({ variant: "destructive", title: "خطأ", description: "فشل تحديث المنتج" });
       });
   };
 
-  if (productLoading) return <div className="min-h-screen bg-background dark:bg-[#050505] flex items-center justify-center font-black animate-pulse text-primary dark:text-zinc-100">جاري تحميل بيانات المنتج...</div>;
+  if (productLoading) return <div className="min-h-screen bg-background flex items-center justify-center font-black animate-pulse">جاري التحميل...</div>;
 
   return (
     <AdminGuard>
@@ -139,46 +128,46 @@ export default function EditProductPage() {
         <main className="flex-grow container mx-auto px-4 py-12 max-w-5xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div className="flex items-center gap-6">
-              <button onClick={() => router.back()} className="h-12 w-12 rounded-xl bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary/40 dark:text-zinc-500 hover:text-primary dark:hover:text-zinc-100 transition-all">
-                <ChevronRight className="h-6 w-6" />
-              </button>
+              <button onClick={() => router.back()} className="h-12 w-12 rounded-xl bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary/40"><ChevronRight className="h-6 w-6" /></button>
               <div>
-                <h1 className="text-4xl font-black text-primary dark:text-zinc-100">تعديل المنتج</h1>
-                <p className="text-primary/40 dark:text-zinc-500 text-sm mt-1">تحديث بيانات قطعة NOVA الحالية</p>
+                <h1 className="text-3xl font-black text-primary dark:text-zinc-100">تعديل المنتج</h1>
+                <p className="text-primary/40 dark:text-zinc-500 text-sm">تحديث بيانات قطعة NOVA</p>
               </div>
             </div>
-            <Button 
-              onClick={handleUpdate} 
-              disabled={loading}
-              className="h-14 px-12 rounded-2xl bg-primary text-white font-black hover:scale-105 transition-all shadow-xl shadow-primary/20"
-            >
-              {loading ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : "حفظ التعديلات الملكية"}
-            </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={handleCopyLink} className="h-14 px-6 rounded-2xl border-primary/20 text-primary font-black gap-2">
+                {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />} نسخ الرابط
+              </Button>
+              <Button onClick={handleUpdate} disabled={loading} className="h-14 px-12 rounded-2xl bg-primary text-white font-black shadow-xl">{loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "حفظ التعديلات"}</Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-10">
-            {/* Main Info */}
+            {/* Product Link Info */}
+            <div className="nova-card p-8 bg-primary/5 dark:bg-zinc-900 border border-primary/10 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6">
+               <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center text-primary shadow-sm"><LinkIcon className="h-6 w-6" /></div>
+                  <div>
+                    <h4 className="text-[10px] font-black text-primary/40 uppercase tracking-widest">رابط المنتج المباشر</h4>
+                    <p className="text-sm font-mono font-bold text-primary dark:text-zinc-300 truncate max-w-xs">{typeof window !== 'undefined' ? `${window.location.origin}/product/${id}` : ''}</p>
+                  </div>
+               </div>
+               <p className="text-[10px] font-bold text-primary/30 max-w-xs text-center md:text-right">استخدمي هذا الرابط في Instagram Bio أو TikTok Shop لتوجيه الزبائن مباشرة لهذه القطعة.</p>
+            </div>
+
             <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-10 border border-border dark:border-zinc-800 transition-colors">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                  <div className="space-y-3">
                    <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">القسم الرئيسي</Label>
-                   <select 
-                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none focus:ring-2 focus:ring-primary/20 dark:text-zinc-100 transition-all"
-                    value={productData.mainCategory}
-                    onChange={(e) => setProductData({...productData, mainCategory: e.target.value, categoryId: ''})}
-                   >
-                     {MAIN_CATEGORIES.map(m => <option key={m.id} value={m.id} className="dark:text-black">{m.name}</option>)}
+                   <select className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" value={productData.mainCategory} onChange={(e) => setProductData({...productData, mainCategory: e.target.value, categoryId: ''})}>
+                     {['fashion', 'accessories', 'skincare', 'beauty-devices'].map(m => <option key={m} value={m}>{m}</option>)}
                    </select>
                  </div>
                  <div className="space-y-3 md:col-span-2">
                    <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">القسم الفرعي</Label>
-                   <select 
-                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none focus:ring-2 focus:ring-primary/20 dark:text-zinc-100 transition-all"
-                    value={productData.categoryId}
-                    onChange={(e) => setProductData({...productData, categoryId: e.target.value})}
-                   >
-                     <option value="" className="dark:text-black">اختر القسم الفرعي</option>
-                     {filteredCategories.map(c => <option key={c.id} value={c.id} className="dark:text-black">{c.name}</option>)}
+                   <select className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" value={productData.categoryId} onChange={(e) => setProductData({...productData, categoryId: e.target.value})}>
+                     <option value="">اختر القسم</option>
+                     {filteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                    </select>
                  </div>
               </div>
@@ -186,101 +175,20 @@ export default function EditProductPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">اسم المنتج</Label>
-                  <Input value={productData.name} onChange={(e) => setProductData({...productData, name: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" />
+                  <Input value={productData.name} onChange={(e) => setProductData({...productData, name: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none" />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">الماركة / البراند</Label>
-                  <Input value={productData.brand} onChange={(e) => setProductData({...productData, brand: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-2">
                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">السعر الحالي (د.ع)</Label>
-                  <Input type="number" value={productData.price} onChange={(e) => setProductData({...productData, price: parseFloat(e.target.value) || 0})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-black text-xl border-none dark:text-zinc-100" />
+                  <Input type="number" value={productData.price} onChange={(e) => setProductData({...productData, price: parseFloat(e.target.value) || 0})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-black text-xl border-none" />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">السعر السابق</Label>
-                  <Input type="number" value={productData.originalPrice} onChange={(e) => setProductData({...productData, originalPrice: parseFloat(e.target.value) || 0})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl text-primary/40 dark:text-zinc-500 font-bold border-none" />
-                </div>
+              </div>
+
+              <div className="space-y-2 pt-4">
+                <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">وصف المنتج العام</Label>
+                <Textarea value={productData.description} onChange={(e) => setProductData({...productData, description: e.target.value})} className="min-h-[150px] bg-accent/30 dark:bg-zinc-800 rounded-2xl p-6 border-none" />
               </div>
             </div>
 
-            {/* Dynamic Details */}
-            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-8 border border-border dark:border-zinc-800 transition-colors">
-               <h3 className="text-lg font-black text-primary dark:text-zinc-100 flex items-center gap-2">
-                 <Info className="h-5 w-5 text-secondary" />
-                 تفاصيل إضافية
-               </h3>
-
-               {productData.mainCategory === 'fashion' && (
-                 <div className="grid grid-cols-1 gap-8">
-                   <div className="space-y-2">
-                     <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">خامة القماش</Label>
-                     <Input value={productData.material} onChange={(e) => setProductData({...productData, material: e.target.value})} className="h-12 bg-accent/30 dark:bg-zinc-800 rounded-xl border-none dark:text-zinc-100" />
-                   </div>
-                   <div className="space-y-4">
-                     <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">الألوان المتوفرة</Label>
-                     <div className="flex flex-wrap gap-4">
-                       {productData.colors?.map((c: any, idx: number) => (
-                         <div key={idx} className="flex items-center gap-2 bg-accent dark:bg-zinc-800 p-2 rounded-xl border border-transparent dark:border-zinc-700 transition-colors">
-                           <input type="color" value={c.code} onChange={(e) => {
-                             const colors = [...productData.colors];
-                             colors[idx].code = e.target.value;
-                             setProductData({...productData, colors});
-                           }} className="h-8 w-8 rounded-lg overflow-hidden border-none cursor-pointer" />
-                           <input placeholder="اسم اللون" value={c.name} onChange={(e) => {
-                             const colors = [...productData.colors];
-                             colors[idx].name = e.target.value;
-                             setProductData({...productData, colors});
-                           }} className="bg-transparent border-none w-24 text-xs font-bold dark:text-zinc-100 outline-none" />
-                           <button onClick={() => setProductData({...productData, colors: productData.colors.filter((_: any, i: number) => i !== idx)})} className="text-red-400 hover:text-red-500 transition-colors"><Trash2 className="h-4 w-4" /></button>
-                         </div>
-                       ))}
-                       <Button variant="outline" onClick={() => setProductData({...productData, colors: [...productData.colors, {name:'', code: '#000000'}]})} className="h-12 w-12 border-dashed border-primary/20 dark:border-zinc-700 rounded-xl text-primary/40 dark:text-zinc-600 hover:text-primary transition-all">+</Button>
-                     </div>
-                   </div>
-                   <div className="space-y-4">
-                     <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">القياسات المختارة</Label>
-                     <div className="flex flex-wrap gap-2">
-                       {SIZES.map(s => (
-                         <button key={s} onClick={() => {
-                           const sizes = productData.selectedSizes.includes(s) ? productData.selectedSizes.filter((sz: any) => sz !== s) : [...productData.selectedSizes, s];
-                           setProductData({...productData, selectedSizes: sizes});
-                         }} className={cn("h-10 w-12 rounded-lg font-black text-xs border-2 transition-all", productData.selectedSizes?.includes(s) ? "border-primary bg-primary text-white" : "border-accent dark:border-zinc-800 bg-white dark:bg-zinc-900 text-primary/40 dark:text-zinc-500")}>{s}</button>
-                       ))}
-                     </div>
-                   </div>
-                 </div>
-               )}
-
-               {productData.mainCategory === 'skincare' && (
-                 <div className="grid grid-cols-1 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">المكونات الرئيسية</Label>
-                      <Textarea value={productData.ingredients} onChange={(e) => setProductData({...productData, ingredients: e.target.value})} className="bg-accent/30 dark:bg-zinc-800 rounded-xl border-none dark:text-zinc-100 transition-colors" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">طريقة الاستخدام</Label>
-                      <Textarea value={productData.howToUse} onChange={(e) => setProductData({...productData, howToUse: e.target.value})} className="bg-accent/30 dark:bg-zinc-800 rounded-xl border-none dark:text-zinc-100 transition-colors" />
-                    </div>
-                 </div>
-               )}
-
-               {productData.mainCategory === 'beauty-devices' && (
-                 <div className="space-y-2">
-                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">المواصفات التقنية</Label>
-                   <Textarea value={productData.specifications} onChange={(e) => setProductData({...productData, specifications: e.target.value})} className="bg-accent/30 dark:bg-zinc-800 rounded-xl border-none dark:text-zinc-100 transition-colors" />
-                 </div>
-               )}
-
-               <div className="space-y-2 pt-4">
-                 <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">وصف المنتج العام</Label>
-                 <Textarea value={productData.description} onChange={(e) => setProductData({...productData, description: e.target.value})} className="min-h-[150px] bg-accent/30 dark:bg-zinc-800 rounded-2xl p-6 border-none dark:text-zinc-300 transition-colors" />
-               </div>
-            </div>
-
-            {/* Images */}
             <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-8 border border-border dark:border-zinc-800 transition-colors">
               <div className="flex items-center gap-3 mb-4">
                 <ImageIcon className="text-primary dark:text-zinc-100 h-5 w-5" />
@@ -288,24 +196,14 @@ export default function EditProductPage() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                 {productData.images?.map((img: string, idx: number) => (
-                  <div key={idx} className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-accent dark:border-zinc-800 bg-accent dark:bg-zinc-800 group shadow-sm">
+                  <div key={idx} className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-accent bg-accent group shadow-sm">
                     <Image src={img} alt="Product" fill className="object-cover" />
-                    <button 
-                      onClick={() => setProductData({...productData, images: productData.images.filter((_: any, i: number) => i !== idx)})} 
-                      className="absolute top-2 left-2 p-2 bg-red-500 rounded-full text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
+                    <button onClick={() => setProductData({...productData, images: productData.images.filter((_: any, i: number) => i !== idx)})} className="absolute top-2 left-2 p-2 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="h-3 w-3" /></button>
                   </div>
                 ))}
-                <ImageUploadButton 
-                  onUploadComplete={(url) => setProductData({...productData, images: [...productData.images, url]})} 
-                  className="aspect-[3/4]" 
-                  label="إضافة صورة" 
-                />
+                <ImageUploadButton onUploadComplete={(url) => setProductData({...productData, images: [...productData.images, url]})} className="aspect-[3/4]" label="إضافة صورة" />
               </div>
             </div>
-
           </div>
         </main>
       </div>
