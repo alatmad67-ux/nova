@@ -91,6 +91,34 @@ export default function Home() {
 
   const isViewSearchResults = searchTerm.length > 0 || aiKeywords.length > 0;
 
+  // منطق تجميع المنتجات للعرض
+  const groupedSections = useMemo(() => {
+    if (!allProducts) return [];
+    
+    // إذا كانت هناك مجموعات كبرى معرفة، نستخدمها
+    if (mainCategories && mainCategories.length > 0) {
+      return mainCategories.map(main => ({
+        id: main.id,
+        title: main.name,
+        products: allProducts.filter(p => p.mainCategory === main.id).slice(0, 6)
+      })).filter(section => section.products.length > 0);
+    }
+
+    // fallback: تجميع حسب اسم القسم الفرعي إذا لم توجد مجموعات كبرى
+    const groups: Record<string, any[]> = {};
+    allProducts.forEach(p => {
+      const cat = p.categoryName || 'أخرى';
+      if (!groups[cat]) groups[cat] = [];
+      if (groups[cat].length < 6) groups[cat].push(p);
+    });
+
+    return Object.entries(groups).map(([title, prods]) => ({
+      id: title,
+      title: title,
+      products: prods
+    }));
+  }, [allProducts, mainCategories]);
+
   return (
     <div className="min-h-screen flex flex-col relative bg-background dark:bg-[#050505] font-arabic pb-32" dir="rtl">
       <Header />
@@ -177,19 +205,23 @@ export default function Home() {
             </section>
 
             <div className="space-y-12">
-              {/* عرض الأقسام ديناميكياً بناءً على المجموعات الكبرى */}
-              {mainCategories?.map((main: any) => {
-                const products = allProducts?.filter(p => p.mainCategory === main.id).slice(0, 6) || [];
-                if (products.length === 0) return null;
-                return (
+              {productsLoading ? (
+                <div className="container mx-auto px-5 py-10 text-center animate-pulse text-primary/20 font-black">جاري تحميل المجموعات...</div>
+              ) : groupedSections.length > 0 ? (
+                groupedSections.map((section) => (
                   <ProductCarousel 
-                    key={main.id}
-                    title={main.name} 
-                    products={products} 
-                    viewAllHref={`/categories`} 
+                    key={section.id}
+                    title={section.title} 
+                    products={section.products} 
+                    viewAllHref={`/shop`} 
                   />
-                );
-              })}
+                ))
+              ) : (
+                <div className="text-center py-20 opacity-20">
+                  <Package className="h-16 w-16 mx-auto mb-4" />
+                  <p className="font-black">لا توجد منتجات للعرض حالياً</p>
+                </div>
+              )}
             </div>
           </div>
         )}
