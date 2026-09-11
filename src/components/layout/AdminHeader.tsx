@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { LogOut, LayoutGrid, ShoppingBag, Package, Settings, Image as ImageIcon } from 'lucide-react';
+import { LogOut, LayoutGrid, ShoppingBag, Package, Settings, Image as ImageIcon, Users, BarChart3 } from 'lucide-react';
 import { useAuth, useDoc, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -24,6 +24,16 @@ export function AdminHeader() {
     }
   };
 
+  const NAV_ITEMS = [
+    { label: 'لوحة التحكم', href: '/admin/dashboard', icon: LayoutGrid },
+    { label: 'المنتجات', href: '/admin/products', icon: ShoppingBag },
+    { label: 'الطلبات', href: '/admin/orders', icon: Package },
+    { label: 'العملاء', href: '/admin/customers', icon: Users },
+    { label: 'التقارير', href: '/admin/reports', icon: BarChart3 },
+    { label: 'السلايدر', href: '/admin/slider', icon: ImageIcon },
+    { label: 'الإعدادات', href: '/admin/settings', icon: Settings },
+  ];
+
   return (
     <header className="h-20 bg-white dark:bg-zinc-900 border-b border-border dark:border-zinc-800 flex items-center px-8 justify-between sticky top-0 z-50 transition-colors">
       <Link href="/admin/dashboard" className="flex items-center gap-4 group">
@@ -39,18 +49,12 @@ export function AdminHeader() {
         )}
       </Link>
 
-      <nav className="hidden lg:flex items-center gap-8">
-        {[
-          { label: 'لوحة التحكم', href: '/admin/dashboard', icon: LayoutGrid },
-          { label: 'المنتجات', href: '/admin/products', icon: ShoppingBag },
-          { label: 'الطلبات', href: '/admin/orders', icon: Package },
-          { label: 'السلايدر', href: '/admin/slider', icon: ImageIcon },
-          { label: 'الإعدادات', href: '/admin/settings', icon: Settings },
-        ].map((item) => (
+      <nav className="hidden xl:flex items-center gap-6">
+        {NAV_ITEMS.map((item) => (
           <Link 
             key={item.href}
             href={item.href} 
-            className="flex items-center gap-2 text-xs font-bold text-primary/60 dark:text-zinc-400 hover:text-primary dark:hover:text-zinc-100 transition-colors"
+            className="flex items-center gap-2 text-[11px] font-black text-primary/60 dark:text-zinc-400 hover:text-primary dark:hover:text-zinc-100 transition-colors uppercase tracking-wider"
           >
             <item.icon className="h-4 w-4" /> {item.label}
           </Link>

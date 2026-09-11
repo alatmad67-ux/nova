@@ -14,11 +14,12 @@ import {
   ChevronLeft,
   Clock,
   Eye,
-  AlertCircle
+  AlertCircle,
+  BarChart3
 } from 'lucide-react';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { 
   ResponsiveContainer,
@@ -29,7 +30,7 @@ import {
   CartesianGrid,
   Tooltip
 } from 'recharts';
-import { format, startOfDay, subDays, isValid } from 'date-fns';
+import { format, startOfDay, subDays, isValid, startOfWeek, startOfMonth } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useRouter } from 'next/navigation';
@@ -73,19 +74,30 @@ export default function AdminDashboard() {
 
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
+    const weekStart = startOfWeek(new Date());
+    const monthStart = startOfMonth(new Date());
     const orders = rawOrders || [];
     
-    const todaySales = orders
-      .filter(o => {
-        const oDate = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : null;
-        return oDate && isValid(oDate) && oDate >= today && o.status !== 'ملغي';
-      })
-      .reduce((acc, o) => acc + (o.totals?.total || 0), 0);
+    const filterByDate = (date: Date) => orders.filter(o => {
+      const oDate = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000) : null;
+      return oDate && isValid(oDate) && oDate >= date && o.status !== 'ملغي';
+    });
+
+    const todayOrders = filterByDate(today);
+    const weekOrders = filterByDate(weekStart);
+    const monthOrders = filterByDate(monthStart);
+
+    const todaySales = todayOrders.reduce((acc, o) => acc + (o.totals?.total || 0), 0);
+    const weekSales = weekOrders.reduce((acc, o) => acc + (o.totals?.total || 0), 0);
+    const monthSales = monthOrders.reduce((acc, o) => acc + (o.totals?.total || 0), 0);
 
     return {
       todaySales,
+      weekSales,
+      monthSales,
       totalOrders: orders.length,
-      totalCustomers: new Set(orders.map(o => o.customerPhone).filter(Boolean)).size,
+      newOrders: orders.filter(o => o.status === 'جديد').length,
+      totalCustomers: new Set(orders.map(o => o.customerId || o.customerPhone).filter(Boolean)).size,
       totalProducts: products?.length || 0
     };
   }, [rawOrders, products]);
@@ -113,11 +125,11 @@ export default function AdminDashboard() {
 
   const QUICK_ACTIONS = [
     { label: 'إدارة الطلبات', icon: Package, href: '/admin/orders', color: 'bg-primary' },
+    { label: 'قائمة العملاء', icon: Users, href: '/admin/customers', color: 'bg-blue-500' },
+    { label: 'تقارير المبيعات', icon: BarChart3, href: '/admin/reports', color: 'bg-green-500' },
     { label: 'إضافة منتج', icon: ShoppingBag, href: '/admin/products/new', color: 'bg-secondary' },
-    { label: 'إدارة الأقسام', icon: LayoutGrid, href: '/admin/categories', color: 'bg-blue-600' },
-    { label: 'السلايدر', icon: ImageIcon, href: '/admin/slider', color: 'bg-indigo-600' },
+    { label: 'إدارة الأقسام', icon: LayoutGrid, href: '/admin/categories', color: 'bg-indigo-600' },
     { label: 'إعدادات المتجر', icon: SettingsIcon, href: '/admin/settings', color: 'bg-gray-600' },
-    { label: 'أسعار التوصيل', icon: Truck, href: '/admin/shipping-rates', color: 'bg-green-600' },
   ];
 
   return (
@@ -126,44 +138,40 @@ export default function AdminDashboard() {
         <AdminHeader />
         
         <main className="flex-grow container mx-auto px-4 py-12">
-          {ordersError && (
-            <div className="mb-10 p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-[2.5rem] text-red-600 dark:text-red-400 flex items-center gap-4">
-               <AlertCircle className="h-6 w-6" />
-               <div>
-                 <p className="font-black italic">نظام مراقبة الفهارس (Index Alert)</p>
-                 <p className="text-xs font-bold opacity-80">الطلبات موجودة في قاعدة البيانات ولكن الفايربيس يحتاج لثوانٍ لبناء الفهرس. يرجى الانتظار.</p>
-               </div>
-            </div>
-          )}
-
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-5 w-5 text-secondary" />
                 <span className="text-xs font-black tracking-widest uppercase text-primary dark:text-zinc-500">نظام إدارة NOVA</span>
               </div>
-              <h1 className="text-4xl font-black text-primary dark:text-zinc-100">لوحة التحكم</h1>
+              <h1 className="text-4xl font-black text-primary dark:text-zinc-100">نظرة عامة</h1>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-12">
             {[
-              { label: 'مبيعات اليوم', val: `${stats.todaySales.toLocaleString()} د.ع`, icon: ShoppingBag },
-              { label: 'إجمالي الطلبات', val: stats.totalOrders, icon: TrendingUp },
-              { label: 'العملاء', val: stats.totalCustomers, icon: Users },
-              { label: 'المنتجات', val: stats.totalProducts, icon: Package },
+              { label: 'مبيعات اليوم', val: stats.todaySales, icon: ShoppingBag, color: 'text-primary' },
+              { label: 'مبيعات الأسبوع', val: stats.weekSales, icon: TrendingUp, color: 'text-green-500' },
+              { label: 'طلبات جديدة', val: stats.newOrders, icon: Clock, color: 'text-blue-500' },
+              { label: 'إجمالي العملاء', val: stats.totalCustomers, icon: Users, color: 'text-secondary' },
+              { label: 'إجمالي الطلبات', val: stats.totalOrders, icon: Package, color: 'text-purple-500' },
+              { label: 'المنتجات', val: stats.totalProducts, icon: LayoutGrid, color: 'text-orange-500' },
             ].map((s, i) => (
-              <div key={i} className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-border dark:border-zinc-800 shadow-premium flex flex-col gap-2 transition-all">
-                <div className="h-10 w-10 rounded-xl bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-100"><s.icon className="h-5 w-5" /></div>
-                <p className="text-[10px] font-bold text-primary/40 dark:text-zinc-500 uppercase tracking-widest">{s.label}</p>
-                <p className="text-xl md:text-2xl font-black text-primary dark:text-zinc-100">{s.val}</p>
+              <div key={i} className="bg-white dark:bg-zinc-900 p-5 rounded-[2rem] border border-border dark:border-zinc-800 shadow-sm flex flex-col gap-2">
+                <div className={cn("h-8 w-8 rounded-lg bg-accent dark:bg-zinc-800 flex items-center justify-center", s.color)}>
+                  <s.icon className="h-4 w-4" />
+                </div>
+                <p className="text-[9px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">{s.label}</p>
+                <p className="text-lg font-black text-primary dark:text-zinc-100">
+                  {typeof s.val === 'number' && s.label.includes('مبيعات') ? `${s.val.toLocaleString()} د.ع` : s.val}
+                </p>
               </div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              <div className="bg-white dark:bg-zinc-900 p-6 md:p-10 rounded-[2.5rem] border border-border dark:border-zinc-800 shadow-premium transition-all">
+              <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-border dark:border-zinc-800 shadow-sm transition-all">
                 <h3 className="text-xl font-black text-primary dark:text-zinc-100 mb-10">المبيعات (آخر 7 أيام)</h3>
                 <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -177,17 +185,24 @@ export default function AdminDashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" className="dark:opacity-10" vertical={false} />
                       <XAxis dataKey="name" stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
                       <YAxis stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '1rem' }} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))', 
+                          border: '1px solid hsl(var(--border))', 
+                          borderRadius: '1rem',
+                          fontFamily: 'inherit'
+                        }} 
+                      />
                       <Area type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-border dark:border-zinc-800 shadow-premium transition-all">
+              <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-border dark:border-zinc-800 shadow-sm">
                 <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-xl font-black text-primary dark:text-zinc-100">أحدث الطلبات</h3>
-                  <Link href="/admin/orders" className="text-xs font-black text-primary/40 dark:text-zinc-500 flex items-center gap-1 hover:text-primary dark:hover:text-zinc-300 transition-colors">
+                  <h3 className="text-xl font-black text-primary dark:text-zinc-100">أحدث الطلبيات</h3>
+                  <Link href="/admin/orders" className="text-xs font-black text-primary/40 dark:text-zinc-500 flex items-center gap-1 hover:text-primary transition-colors">
                     عرض الكل
                     <ChevronLeft className="h-3 w-3" />
                   </Link>
@@ -195,12 +210,12 @@ export default function AdminDashboard() {
 
                 <div className="space-y-4">
                   {ordersLoading ? (
-                    <div className="py-10 text-center animate-pulse text-primary/20 dark:text-zinc-800 font-black">جاري مزامنة الطلبات...</div>
+                    <div className="py-10 text-center animate-pulse text-primary/20 dark:text-zinc-800 font-black">جاري المزامنة...</div>
                   ) : recentOrders.length > 0 ? (
                     recentOrders.map((order: any) => (
                       <div key={order.id} className="flex items-center justify-between p-4 bg-accent/30 dark:bg-zinc-800/50 rounded-2xl border border-border/50 dark:border-zinc-800 group hover:border-primary/20 transition-all">
                         <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-100 shadow-sm">
+                          <div className="h-12 w-12 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center text-primary dark:text-zinc-100 shadow-sm">
                             <Clock className={cn("h-5 w-5", order.status === 'جديد' ? "animate-pulse text-blue-500" : "text-primary/20 dark:text-zinc-600")} />
                           </div>
                           <div>
@@ -211,16 +226,16 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-6">
                            <div className="text-left">
                               <p className="font-black text-sm text-secondary">{(order.totals?.total || 0).toLocaleString()} د.ع</p>
-                              <Badge variant="outline" className="text-[9px] h-5 border-primary/10 dark:border-zinc-700 text-primary/60 dark:text-zinc-400">{order.status}</Badge>
+                              <Badge variant="outline" className="text-[9px] h-5 border-primary/10 text-primary/60 dark:text-zinc-400">{order.status}</Badge>
                            </div>
-                           <Link href={`/admin/orders/${order.id}`} className="p-2 bg-white dark:bg-zinc-800 rounded-lg text-primary/20 dark:text-zinc-700 group-hover:text-primary dark:group-hover:text-zinc-400 transition-all">
+                           <Link href={`/admin/orders/${order.id}`} className="p-2 bg-white dark:bg-zinc-800 rounded-lg text-primary/20 dark:text-zinc-700 group-hover:text-primary transition-all">
                               <Eye className="h-5 w-5" />
                            </Link>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="py-10 text-center text-primary/20 dark:text-zinc-800 font-black italic">لا توجد طلبات بعد</div>
+                    <div className="py-10 text-center text-primary/20 font-black italic">لا توجد طلبات</div>
                   )}
                 </div>
               </div>
@@ -238,9 +253,16 @@ export default function AdminDashboard() {
                     <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center text-white shadow-lg", action.color)}>
                       <action.icon className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60 dark:text-zinc-500 group-hover:text-primary dark:group-hover:text-zinc-300 text-center">{action.label}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60 dark:text-zinc-500 group-hover:text-primary text-center leading-tight">{action.label}</span>
                   </button>
                 ))}
+              </div>
+              
+              <div className="bg-primary/5 dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-primary/10 dark:border-zinc-800">
+                <h4 className="text-xs font-black text-primary dark:text-zinc-100 uppercase tracking-widest mb-4">نصيحة NOVA</h4>
+                <p className="text-xs font-bold text-primary/60 dark:text-zinc-400 leading-relaxed">
+                  الطلبات الملغاة لا تحتسب في تقارير المبيعات الفعلية. تأكدي من تحديث حالة الطلب إلى "تم التسليم" لضمان دقة الأرقام المالية في قسم التقارير.
+                </p>
               </div>
             </div>
           </div>

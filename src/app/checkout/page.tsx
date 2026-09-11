@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -74,7 +73,7 @@ export default function CheckoutPage() {
       
       const orderData = {
         orderNumber,
-        customerId: user.uid, 
+        customerId: user.uid, // المعرف الأساسي للربط (مهم جداً)
         customerName: user.displayName || 'جميلة نوفا',
         customerPhone: user.phoneNumber || selectedAddress.phone || '',
         customerEmail: user.email || '',
@@ -107,6 +106,7 @@ export default function CheckoutPage() {
 
       await setDoc(newOrderRef, orderData);
       
+      // إشعار فوري
       await setDoc(doc(collection(db, 'notifications')), {
         userId: user.uid,
         title: 'تم استلام طلبكِ بنجاح ✨',
