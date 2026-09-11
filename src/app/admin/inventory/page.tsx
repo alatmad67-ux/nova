@@ -18,14 +18,26 @@ import { AdminHeader } from '@/components/layout/AdminHeader';
 import { AdminGuard } from '@/components/layout/AdminGuard';
 import { Badge } from "@/components/ui/badge";
 import { toast } from '@/hooks/use-toast';
-import { Package, Search, Save, AlertCircle, Filter, Loader2 } from 'lucide-react';
+import { 
+  Package, 
+  Search, 
+  Save, 
+  AlertCircle, 
+  Filter, 
+  Loader2, 
+  Pencil, 
+  Link as LinkIcon, 
+  Check 
+} from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useStore } from '@/providers/store-provider';
+import Link from 'next/link';
 
 export default function InventoryPage() {
   const db = useFirestore();
   const { storeId } = useStore();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const productsQuery = useMemo(() => {
     if (!db || !storeId) return null;
@@ -111,6 +123,14 @@ export default function InventoryPage() {
       .finally(() => setUpdatingId(null));
   };
 
+  const copyProductLink = (id: string) => {
+    const link = `${window.location.origin}/product/${id}`;
+    navigator.clipboard.writeText(link);
+    setCopiedId(id);
+    toast({ title: "تم نسخ الرابط" });
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   if (loading) return <div className="min-h-screen bg-background dark:bg-[#050505] flex items-center justify-center text-primary dark:text-zinc-100 font-black animate-pulse">جاري جرد المخزن الملكي...</div>;
 
   return (
@@ -161,13 +181,14 @@ export default function InventoryPage() {
                   <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-right">الخيار</TableHead>
                   <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-right">الحالة</TableHead>
                   <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-right">الكمية</TableHead>
-                  <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-right">إجراء</TableHead>
+                  <TableHead className="text-primary/60 dark:text-zinc-500 font-black text-center">إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {flattenedInventory.map((item, idx) => {
                   const uniqueId = `${item.productId}-${item.variantIndex}`;
                   const isUpdating = updatingId === uniqueId;
+                  const isCopied = copiedId === item.productId;
 
                   return (
                     <TableRow key={idx} className="border-border dark:border-zinc-800 hover:bg-accent/20 dark:hover:bg-zinc-800/40 transition-colors">
@@ -205,19 +226,43 @@ export default function InventoryPage() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Button 
-                          size="sm"
-                          variant="ghost"
-                          disabled={isUpdating}
-                          className="text-primary dark:text-zinc-400 hover:bg-primary hover:text-white h-10 rounded-xl gap-2 font-black transition-all min-w-[80px]"
-                          onClick={() => {
-                            const input = document.getElementById(`stock-${item.productId}-${item.variantIndex}`) as HTMLInputElement;
-                            handleUpdateStock(item.productId, item.variantIndex, parseInt(input.value), item.allVariants);
-                          }}
-                        >
-                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                          {isUpdating ? "" : "حفظ"}
-                        </Button>
+                        <div className="flex items-center justify-center gap-2">
+                          {/* زر نسخ الرابط */}
+                          <button 
+                            onClick={() => copyProductLink(item.productId)} 
+                            className={cn(
+                              "p-2 rounded-lg transition-all shadow-sm",
+                              isCopied ? "bg-green-500 text-white" : "bg-accent dark:bg-zinc-800 text-primary/20 hover:text-primary"
+                            )}
+                            title="نسخ رابط المنتج"
+                          >
+                            {isCopied ? <Check className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
+                          </button>
+
+                          {/* زر التعديل */}
+                          <Link 
+                            href={`/admin/products/${item.productId}`}
+                            className="p-2 bg-accent dark:bg-zinc-800 rounded-lg text-primary/20 dark:text-zinc-600 hover:text-primary transition-all shadow-sm"
+                            title="تعديل المنتج"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+
+                          {/* زر حفظ الكمية */}
+                          <Button 
+                            size="sm"
+                            variant="ghost"
+                            disabled={isUpdating}
+                            className="text-primary dark:text-zinc-400 hover:bg-primary hover:text-white h-10 rounded-xl gap-2 font-black transition-all min-w-[70px]"
+                            onClick={() => {
+                              const input = document.getElementById(`stock-${item.productId}-${item.variantIndex}`) as HTMLInputElement;
+                              handleUpdateStock(item.productId, item.variantIndex, parseInt(input.value), item.allVariants);
+                            }}
+                          >
+                            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            {isUpdating ? "" : "حفظ"}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
