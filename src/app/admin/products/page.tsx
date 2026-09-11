@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState } from 'react';
@@ -27,7 +26,8 @@ import {
   LayoutGrid,
   Sparkles,
   Link as LinkIcon,
-  Check
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { toast } from '@/hooks/use-toast';
@@ -67,7 +67,7 @@ export default function AdminProductsPage() {
     );
   }, [db, storeId]);
     
-  const { data: products, loading } = useCollection(productsQuery);
+  const { data: products, loading, error: fetchError } = useCollection(productsQuery);
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -122,7 +122,7 @@ export default function AdminProductsPage() {
                 <Sparkles className="h-5 w-5 text-secondary" />
                 <span className="text-xs font-black tracking-widest uppercase text-primary dark:text-zinc-500">إدارة القوائم</span>
               </div>
-              <h1 className="text-4xl font-black text-primary dark:text-zinc-100">مجموعات المنتجات</h1>
+              <h1 className="text-4xl font-black text-primary dark:text-zinc-100">جرد المنتجات الملكي</h1>
             </div>
             
             <div className="flex items-center gap-4">
@@ -131,6 +131,16 @@ export default function AdminProductsPage() {
               </Button>
             </div>
           </div>
+
+          {fetchError && (
+             <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 p-6 rounded-[2.5rem] mb-8 flex items-center gap-4 text-red-600">
+                <AlertCircle className="h-6 w-6" />
+                <div>
+                   <h4 className="font-black">خطأ في الاتصال بقاعدة البيانات</h4>
+                   <p className="text-xs font-bold opacity-80">يرجى التحقق من استقرار الإنترنت وتحديث الصفحة.</p>
+                </div>
+             </div>
+          )}
 
           {/* ترويسة الفلاتر - القوائم الذكية */}
           <div className="nova-card p-6 bg-white dark:bg-zinc-900 border border-border dark:border-zinc-800 shadow-sm mb-8 flex flex-wrap gap-4 items-center transition-all">
@@ -147,7 +157,7 @@ export default function AdminProductsPage() {
              <div className="flex items-center gap-3 bg-accent/30 dark:bg-zinc-800 rounded-xl px-4">
                 <LayoutGrid className="h-4 w-4 text-primary/20" />
                 <select 
-                  className="h-11 bg-transparent text-xs font-black outline-none cursor-pointer min-w-[120px]"
+                  className="h-11 bg-transparent text-xs font-black outline-none cursor-pointer min-w-[120px] dark:text-zinc-100"
                   value={mainCategoryFilter}
                   onChange={(e) => { setMainCategoryFilter(e.target.value); setCategoryFilter('all'); }}
                 >
@@ -159,7 +169,7 @@ export default function AdminProductsPage() {
              <div className="flex items-center gap-3 bg-accent/30 dark:bg-zinc-800 rounded-xl px-4">
                 <Filter className="h-4 w-4 text-primary/20" />
                 <select 
-                  className="h-11 bg-transparent text-xs font-black outline-none cursor-pointer min-w-[120px]"
+                  className="h-11 bg-transparent text-xs font-black outline-none cursor-pointer min-w-[120px] dark:text-zinc-100"
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
                 >
@@ -190,48 +200,52 @@ export default function AdminProductsPage() {
               <TableBody>
                 {loading ? (
                    <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold animate-pulse text-primary/20 dark:text-zinc-800">جاري جلب قائمة NOVA...</TableCell></TableRow>
-                ) : filteredProducts.map((product: any, idx: number) => (
-                  <TableRow key={`${product.id}-${idx}`} className="border-border dark:border-zinc-800 hover:bg-accent/20 dark:hover:bg-zinc-800/40 transition-colors">
-                    <TableCell className="py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="relative h-16 w-12 rounded-lg overflow-hidden border border-border dark:border-zinc-700 flex-shrink-0 bg-accent dark:bg-zinc-800">
-                          <Image src={product.images?.[0] || 'https://picsum.photos/seed/placeholder/200/300'} alt={product.name} fill className="object-cover" />
+                ) : filteredProducts.length > 0 ? (
+                  filteredProducts.map((product: any, idx: number) => (
+                    <TableRow key={`${product.id}-${idx}`} className="border-border dark:border-zinc-800 hover:bg-accent/20 dark:hover:bg-zinc-800/40 transition-colors">
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-4">
+                          <div className="relative h-16 w-12 rounded-lg overflow-hidden border border-border dark:border-zinc-700 flex-shrink-0 bg-accent dark:bg-zinc-800">
+                            <Image src={product.images?.[0] || 'https://picsum.photos/seed/placeholder/200/300'} alt={product.name} fill className="object-cover" />
+                          </div>
+                          <div className="flex flex-col">
+                             <span className="font-bold text-primary dark:text-zinc-100">{product.name}</span>
+                             <span className="text-[10px] text-primary/30 dark:text-zinc-600 font-mono">SKU: {product.sku || '---'}</span>
+                          </div>
                         </div>
-                        <div className="flex flex-col">
-                           <span className="font-bold text-primary dark:text-zinc-100">{product.name}</span>
-                           <span className="text-[10px] text-primary/30 dark:text-zinc-600 font-mono">SKU: {product.sku || '---'}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="outline" className="border-secondary/20 text-secondary text-[8px] font-black w-fit">{product.mainCategoryName || 'مجموعة عامة'}</Badge>
+                          <Badge variant="outline" className="border-primary/10 dark:border-zinc-700 text-primary/60 dark:text-zinc-400 text-[9px] font-bold w-fit">{product.categoryName}</Badge>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        <Badge variant="outline" className="border-secondary/20 text-secondary text-[8px] font-black w-fit">{product.mainCategoryName || 'مجموعة عامة'}</Badge>
-                        <Badge variant="outline" className="border-primary/10 dark:border-zinc-700 text-primary/60 dark:text-zinc-400 text-[9px] font-bold w-fit">{product.categoryName}</Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-black text-primary dark:text-zinc-100">{product.price?.toLocaleString()} د.ع</TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <button 
-                          onClick={() => copyProductLink(product.id)} 
-                          className={cn(
-                            "p-2 rounded-lg transition-all shadow-sm",
-                            copiedId === product.id ? "bg-green-500 text-white" : "bg-accent dark:bg-zinc-800 text-primary/20 hover:text-primary"
-                          )}
-                        >
-                          {copiedId === product.id ? <Check className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
-                        </button>
-                        <Link href={`/admin/products/${product.id}`} className="p-2 bg-accent dark:bg-zinc-800 rounded-lg text-primary/20 dark:text-zinc-600 hover:text-primary transition-all">
-                          <Pencil className="h-4 w-4" />
-                        </Link>
-                        <button onClick={() => toggleStatus(product.id, product.status)} className="p-2 bg-accent dark:bg-zinc-800 rounded-lg text-primary/20 dark:text-zinc-600 hover:text-primary transition-all">
-                          {product.status === 'active' ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                        </button>
-                        <button onClick={() => handleDelete(product.id)} className="p-2 bg-red-50 dark:bg-red-900/10 rounded-lg text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm"><Trash2 className="h-4 w-4" /></button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell className="font-black text-primary dark:text-zinc-100">{product.price?.toLocaleString()} د.ع</TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => copyProductLink(product.id)} 
+                            className={cn(
+                              "p-2 rounded-lg transition-all shadow-sm",
+                              copiedId === product.id ? "bg-green-500 text-white" : "bg-accent dark:bg-zinc-800 text-primary/20 hover:text-primary"
+                            )}
+                          >
+                            {copiedId === product.id ? <Check className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
+                          </button>
+                          <Link href={`/admin/products/${product.id}`} className="p-2 bg-accent dark:bg-zinc-800 rounded-lg text-primary/20 dark:text-zinc-600 hover:text-primary transition-all">
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                          <button onClick={() => toggleStatus(product.id, product.status)} className="p-2 bg-accent dark:bg-zinc-800 rounded-lg text-primary/20 dark:text-zinc-600 hover:text-primary transition-all">
+                            {product.status === 'active' ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          </button>
+                          <button onClick={() => handleDelete(product.id)} className="p-2 bg-red-50 dark:bg-red-900/10 rounded-lg text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow><TableCell colSpan={4} className="text-center py-20 font-black opacity-20 italic">لا توجد منتجات مطابقة للبحث</TableCell></TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

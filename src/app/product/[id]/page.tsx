@@ -1,4 +1,3 @@
-
 import { Metadata, ResolvingMetadata } from 'next';
 import { doc, getDoc } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
@@ -11,16 +10,22 @@ type Props = {
 
 /**
  * دالة جلب بيانات المنتج للسيرفر لغرض الـ SEO والـ Metadata
+ * تم تحسينها لتعمل بدفاعية عالية ضد أخطاء الاتصال.
  */
 async function getProductData(id: string) {
-  const { db } = initializeFirebase();
-  if (!db) return null;
-  
-  const productRef = doc(db, 'products', id);
-  const snap = await getDoc(productRef);
-  
-  if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() };
+  try {
+    const { db } = initializeFirebase();
+    if (!db) return null;
+    
+    const productRef = doc(db, 'products', id);
+    const snap = await getDoc(productRef);
+    
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() };
+  } catch (error) {
+    console.error("Firestore SSR Fetch Error:", error);
+    return null;
+  }
 }
 
 export async function generateMetadata(
@@ -63,9 +68,9 @@ export default async function ProductPage({ params }: Props) {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-background font-arabic">
-        <h2 className="text-2xl font-black text-primary mb-4">المنتج غير موجود</h2>
-        <p className="text-primary/40 font-bold mb-8">عذراً، الرابط قديم أو القطعة نفدت من المخزن.</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-background dark:bg-black font-arabic">
+        <h2 className="text-2xl font-black text-primary dark:text-zinc-100 mb-4">المنتج غير متوفر حالياً</h2>
+        <p className="text-primary/40 dark:text-zinc-500 font-bold mb-8">عذراً، الرابط قديم أو القطعة نفدت من المخزن، أو هناك مشكلة مؤقتة في الاتصال.</p>
         <BottomNav />
       </div>
     );

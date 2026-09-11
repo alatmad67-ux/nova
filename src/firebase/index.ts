@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * NOVA FIREBASE - ABSOLUTE SINGLETON ARCHITECTURE (v87)
- * Strictly prevents "INTERNAL ASSERTION FAILED (ID: ca9)"
+ * NOVA FIREBASE - ABSOLUTE SINGLETON ARCHITECTURE (v88)
+ * Optimized for both SSR and Client-side stability in proxy environments.
  */
 
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
@@ -19,38 +19,40 @@ interface FirebaseServices {
 // Persistent global storage to survive HMR and navigation
 const g = globalThis as any;
 
-export function initializeFirebase(): FirebaseServices | { app: null; db: null; auth: null } {
-  if (typeof window === 'undefined') {
-    return { app: null, db: null, auth: null };
-  }
-
-  // 1. Return cached services if already initialized
+export function initializeFirebase(): FirebaseServices {
+  // Check cached services first
   if (g.__NOVA_SERVICES__) {
     return g.__NOVA_SERVICES__;
   }
 
-  // 2. Initialize App exactly once
+  // 1. Initialize App exactly once
   const existingApps = getApps();
   const app = existingApps.length > 0 ? existingApps[0] : initializeApp(firebaseConfig);
 
-  // 3. Initialize Firestore exactly once with locked settings
-  // Using initializeFirestore ONLY if not already implicitly initialized
+  // 2. Initialize Firestore with locked settings for proxy compatibility
   let db: Firestore;
   try {
+    // We only use experimentalForceLongPolling on the client (browser)
+    const isBrowser = typeof window !== 'undefined';
+    
     db = initializeFirestore(app, {
-      experimentalForceLongPolling: true, // Required for proxy environments like Firebase Studio
+      experimentalForceLongPolling: isBrowser, 
+      ignoreUndefinedProperties: true
     });
   } catch (e) {
-    // If already initialized, get the existing instance
+    // If already initialized (e.g. implicitly), get existing instance
     db = getFirestore(app);
   }
 
-  // 4. Initialize Auth
+  // 3. Initialize Auth
   const auth = getAuth(app);
 
-  // 5. Cache everything in global memory
   const services: FirebaseServices = { app, db, auth };
-  g.__NOVA_SERVICES__ = services;
+  
+  // Cache everything in global memory if in browser
+  if (typeof window !== 'undefined') {
+    g.__NOVA_SERVICES__ = services;
+  }
 
   return services;
 }

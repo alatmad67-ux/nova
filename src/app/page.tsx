@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState } from 'react';
@@ -19,7 +18,8 @@ import {
   Star,
   Loader2,
   X,
-  Package
+  Package,
+  AlertCircle
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { intelligentProductSearch } from '@/ai/flows/intelligent-product-search';
@@ -53,7 +53,7 @@ export default function Home() {
       orderBy('createdAt', 'desc')
     );
   }, [db]);
-  const { data: allProducts, loading: productsLoading } = useCollection(productsQuery);
+  const { data: allProducts, loading: productsLoading, error: productsError } = useCollection(productsQuery);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,32 +91,35 @@ export default function Home() {
 
   const isViewSearchResults = searchTerm.length > 0 || aiKeywords.length > 0;
 
-  // منطق تجميع المنتجات للعرض
+  // منطق تجميع المنتجات للعرض - تم تحسينه لمنع الاختفاء
   const groupedSections = useMemo(() => {
-    if (!allProducts) return [];
+    if (!allProducts || allProducts.length === 0) return [];
     
-    // إذا كانت هناك مجموعات كبرى معرفة، نستخدمها
-    if (mainCategories && mainCategories.length > 0) {
-      return mainCategories.map(main => ({
-        id: main.id,
-        title: main.name,
-        products: allProducts.filter(p => p.mainCategory === main.id).slice(0, 6)
-      })).filter(section => section.products.length > 0);
-    }
+    const sections: any[] = [];
 
-    // fallback: تجميع حسب اسم القسم الفرعي إذا لم توجد مجموعات كبرى
-    const groups: Record<string, any[]> = {};
-    allProducts.forEach(p => {
-      const cat = p.categoryName || 'أخرى';
-      if (!groups[cat]) groups[cat] = [];
-      if (groups[cat].length < 6) groups[cat].push(p);
+    // 1. أحدث القطع (دائماً تظهر)
+    sections.push({
+      id: 'new-arrivals',
+      title: 'أحدث القطع الملكية',
+      products: allProducts.slice(0, 6)
     });
 
-    return Object.entries(groups).map(([title, prods]) => ({
-      id: title,
-      title: title,
-      products: prods
-    }));
+    // 2. تجميع حسب المجموعات الكبرى إذا وجدت
+    if (mainCategories && mainCategories.length > 0) {
+      mainCategories.forEach(main => {
+        const prods = allProducts.filter(p => p.mainCategory === main.id).slice(0, 6);
+        if (prods.length > 0) {
+          sections.push({
+            id: main.id,
+            title: main.name,
+            products: prods
+          });
+        }
+      });
+    }
+
+    // إزالة التكرار من الأقسام الأولى
+    return sections;
   }, [allProducts, mainCategories]);
 
   return (
@@ -151,6 +154,15 @@ export default function Home() {
             </form>
           </div>
         </section>
+
+        {productsError && (
+          <section className="container mx-auto px-6 py-4">
+            <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 p-4 rounded-2xl flex items-center gap-3 text-red-600 dark:text-red-400">
+               <AlertCircle className="h-5 w-5" />
+               <p className="text-xs font-bold">عذراً، تعثر الاتصال بخادم NOVA. يرجى التأكد من الإنترنت.</p>
+            </div>
+          </section>
+        )}
 
         {isViewSearchResults ? (
           <section className="container mx-auto px-6 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
