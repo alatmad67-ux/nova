@@ -17,9 +17,11 @@ async function getProductData(id: string) {
   if (!id) return null;
 
   try {
-    const { db } = initializeFirebase();
+    const services = initializeFirebase();
+    const db = services.db;
+    
     if (!db) {
-      console.error("Firestore DB initialization failed on server");
+      console.error("CRITICAL: Firestore DB is undefined after initialization");
       return null;
     }
     
@@ -33,8 +35,9 @@ async function getProductData(id: string) {
 
     // محاولة 2: البحث باستخدام الـ Slug
     // نقوم بالبحث في كافة المنتجات عن حقل slug يطابق المعرف الممرر
+    const productsCol = collection(db, 'products');
     const slugQuery = query(
-      collection(db, 'products'),
+      productsCol,
       where('slug', '==', id),
       limit(1)
     );
@@ -49,7 +52,6 @@ async function getProductData(id: string) {
     return null;
   } catch (error) {
     console.error("CRITICAL: Firestore SSR Fetch Error:", error);
-    // نعيد null فقط في حالة الخطأ الحقيقي لضمان عرض واجهة "غير متوفر"
     return null;
   }
 }

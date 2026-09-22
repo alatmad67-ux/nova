@@ -1,11 +1,11 @@
 /**
- * NOVA FIREBASE - ABSOLUTE SINGLETON ARCHITECTURE (v91)
- * Optimized for both SSR and Client-side stability.
+ * NOVA FIREBASE - ROBUST SINGLETON CONFIGURATION
+ * Optimized for Next.js 15, Turbopack, and SSR stability.
  */
 
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, FirebaseApp, getApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { initializeFirestore, Firestore, getFirestore } from 'firebase/firestore';
+import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
 
 export const firebaseConfig = {
   apiKey: "AIzaSyC9GYAJT1j1JLqP2OXAK0czHJC5NdUqUHk",
@@ -16,55 +16,40 @@ export const firebaseConfig = {
   appId: "1:1041938611868:web:b5cf7cf22b7a0a10937759"
 };
 
-interface FirebaseServices {
-  app: FirebaseApp;
-  db: Firestore;
-  auth: Auth;
-}
-
-// Persistent global storage to survive HMR and navigation
-const g = globalThis as any;
+// Global services cache
+let firebaseApp: FirebaseApp;
+let firestoreDb: Firestore;
+let firebaseAuth: Auth;
 
 /**
- * Initializes Firebase services or returns existing ones from cache.
- * Safe for both Server (SSR) and Client environments.
+ * Robust initialization function that ensures single instances 
+ * across HMR and different rendering phases.
  */
-export function initializeFirebase(): FirebaseServices {
-  // 1. Check cached services first (Absolute Singleton)
-  if (g.__NOVA_SERVICES__) {
-    return g.__NOVA_SERVICES__;
-  }
-
-  // 2. Initialize App exactly once
+export function initializeFirebase() {
   const existingApps = getApps();
-  const app = existingApps.length > 0 ? existingApps[0] : initializeApp(firebaseConfig);
-
-  // 3. Initialize Firestore with environment-aware settings
-  let db: Firestore;
   
-  if (typeof window !== 'undefined') {
-    // Client-side: Force Long Polling for proxy stability in dev/studio environments
-    try {
-      db = initializeFirestore(app, {
+  if (existingApps.length === 0) {
+    firebaseApp = initializeApp(firebaseConfig);
+    
+    // Environment-specific Firestore initialization
+    if (typeof window !== 'undefined') {
+      firestoreDb = initializeFirestore(firebaseApp, {
         experimentalForceLongPolling: true,
         ignoreUndefinedProperties: true
       });
-    } catch (e) {
-      // If already initialized (common during hydration/HMR), get existing instance
-      db = getFirestore(app);
+    } else {
+      firestoreDb = getFirestore(firebaseApp);
     }
+    firebaseAuth = getAuth(firebaseApp);
   } else {
-    // Server-side: Use standard initialization for SSR performance
-    db = getFirestore(app);
+    firebaseApp = existingApps[0];
+    firestoreDb = getFirestore(firebaseApp);
+    firebaseAuth = getAuth(firebaseApp);
   }
 
-  // 4. Initialize Auth
-  const auth = getAuth(app);
-
-  const services: FirebaseServices = { app, db, auth };
-  
-  // Cache services globally
-  g.__NOVA_SERVICES__ = services;
-
-  return services;
+  return {
+    app: firebaseApp,
+    db: firestoreDb,
+    auth: firebaseAuth
+  };
 }
