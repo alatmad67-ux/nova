@@ -1,5 +1,6 @@
+
 import { Metadata, ResolvingMetadata } from 'next';
-import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, limit, Timestamp } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import ProductClient from './ProductClient';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -7,6 +8,38 @@ import { BottomNav } from '@/components/layout/BottomNav';
 type Props = {
   params: Promise<{ id: string }>;
 };
+
+/**
+ * دالة مساعدة لتحويل بيانات Firestore إلى كائنات بسيطة قابلة للتمرير بين المكونات.
+ */
+function serializeData(data: any) {
+  if (!data) return data;
+  
+  const serialized = { ...data };
+  
+  Object.keys(serialized).forEach(key => {
+    const value = serialized[key];
+    
+    // تحويل الـ Timestamp إلى ISO string
+    if (value instanceof Timestamp) {
+      serialized[key] = value.toDate().toISOString();
+    } 
+    // معالجة الكائنات التي تبدو كـ Timestamp (seconds/nanoseconds)
+    else if (value && typeof value === 'object' && 'seconds' in value && 'nanoseconds' in value) {
+      serialized[key] = new Date(value.seconds * 1000).toISOString();
+    }
+    // معالجة المصفوفات بشكل متكرر
+    else if (Array.isArray(value)) {
+      serialized[key] = value.map(item => (typeof item === 'object' ? serializeData(item) : item));
+    }
+    // معالجة الكائنات المتداخلة
+    else if (value && typeof value === 'object') {
+      serialized[key] = serializeData(value);
+    }
+  });
+  
+  return serialized;
+}
 
 /**
  * جلب بيانات المنتج بشكل ذكي (Smart Fetch):
@@ -30,11 +63,10 @@ async function getProductData(id: string) {
     const snap = await getDoc(productRef);
     
     if (snap.exists()) {
-      return { id: snap.id, ...snap.data() };
+      return serializeData({ id: snap.id, ...snap.data() });
     }
 
     // محاولة 2: البحث باستخدام الـ Slug
-    // نقوم بالبحث في كافة المنتجات عن حقل slug يطابق المعرف الممرر
     const productsCol = collection(db, 'products');
     const slugQuery = query(
       productsCol,
@@ -45,7 +77,7 @@ async function getProductData(id: string) {
     
     if (!querySnap.empty) {
       const foundDoc = querySnap.docs[0];
-      return { id: foundDoc.id, ...foundDoc.data() };
+      return serializeData({ id: foundDoc.id, ...foundDoc.data() });
     }
 
     console.warn(`Product not found for identifier: ${id}`);
