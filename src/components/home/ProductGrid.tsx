@@ -65,7 +65,9 @@ export function ProductGrid() {
                 originalPrice: product.originalPrice,
                 image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/600',
                 rating: 5.0,
-                badge: product.isNew ? 'جديد' : product.isBestSeller ? 'الأكثر مبيعاً' : undefined
+                badge: product.isNew ? 'جديد' : product.isBestSeller ? 'الأكثر مبيعاً' : undefined,
+                stock: product.stock,
+                variants: product.variants
               }} 
             />
           ))}

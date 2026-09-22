@@ -13,11 +13,10 @@ import {
   MessageCircle,
   Sparkles,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   Plus,
   Minus,
-  Zap
+  Zap,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,9 +45,31 @@ export default function ProductClient({ product }: { product: any }) {
     ? variants.filter((v: any) => v.color === selectedColor).map((v: any) => v.size).filter(Boolean)
     : Array.from(new Set(variants.map((v: any) => v.size).filter(Boolean))) as string[];
 
+  // فحص حالة المخزون الكلي (للمنتج أو لجميع الخيارات)
+  const isOverallOutOfStock = useMemo(() => {
+    if (variants.length > 0) {
+      return variants.every((v: any) => (v.stock || 0) <= 0);
+    }
+    return (product.stock || 0) <= 0;
+  }, [variants, product.stock]);
+
+  // فحص حالة الخيار المحدد حالياً
+  const isSelectedVariantOutOfStock = useMemo(() => {
+    if (variants.length > 0) {
+      if (!selectedColor || !selectedSize) return false;
+      const v = variants.find((v: any) => v.color === selectedColor && v.size === selectedSize);
+      return (v?.stock || 0) <= 0;
+    }
+    return (product.stock || 0) <= 0;
+  }, [selectedColor, selectedSize, variants, product.stock]);
+
   const validateSelection = () => {
     if ((availableColors.length > 0 && !selectedColor) || (availableSizes.length > 0 && !selectedSize)) {
       toast({ variant: "destructive", title: "تنبيه", description: "يرجى اختيار اللون والقياس أولاً" });
+      return false;
+    }
+    if (isSelectedVariantOutOfStock) {
+      toast({ variant: "destructive", title: "عذراً", description: "هذا الخيار نافد من المخزون حالياً" });
       return false;
     }
     return true;
@@ -114,7 +135,17 @@ export default function ProductClient({ product }: { product: any }) {
       
       <main className="flex-grow">
         <div className="relative aspect-square md:aspect-[4/3] w-full overflow-hidden bg-white dark:bg-zinc-900 border-b border-border/10 dark:border-zinc-800">
-          <Image src={images[activeImage]} alt={product.name} fill className="object-contain p-4" priority />
+          <Image src={images[activeImage]} alt={product.name} fill className={cn("object-contain p-4", isOverallOutOfStock && "grayscale opacity-50")} priority />
+          
+          {isOverallOutOfStock && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+               <div className="bg-black/60 backdrop-blur-md px-10 py-4 rounded-[2rem] border border-white/20 text-white flex flex-col items-center gap-2 animate-in zoom-in-95 duration-500">
+                  <AlertCircle className="h-8 w-8 text-secondary" />
+                  <span className="font-black text-xl uppercase tracking-widest">نفد من المخزون</span>
+               </div>
+            </div>
+          )}
+
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
             {images.map((_: any, i: number) => (
               <div key={i} className={cn("h-1 rounded-full transition-all", activeImage === i ? "w-6 bg-primary" : "w-1.5 bg-primary/20 dark:bg-zinc-700")} />
@@ -154,9 +185,24 @@ export default function ProductClient({ product }: { product: any }) {
             <div className="space-y-3">
               <Label className="text-[10px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">الألوان</Label>
               <div className="flex flex-wrap gap-2">
-                {availableColors.map(c => (
-                  <button key={c} onClick={() => { setSelectedColor(c); setSelectedSize(null); }} className={cn("px-4 py-2 rounded-xl border-2 font-black text-[10px] transition-all", selectedColor === c ? "border-primary bg-primary text-white" : "border-border dark:border-zinc-800 text-primary/40 dark:text-zinc-500 bg-white dark:bg-zinc-900")}>{c}</button>
-                ))}
+                {availableColors.map(c => {
+                  const isColorOut = variants.filter((v: any) => v.color === c).every((v: any) => (v.stock || 0) <= 0);
+                  return (
+                    <button 
+                      key={c} 
+                      disabled={isColorOut}
+                      onClick={() => { setSelectedColor(c); setSelectedSize(null); }} 
+                      className={cn(
+                        "px-4 py-2 rounded-xl border-2 font-black text-[10px] transition-all relative overflow-hidden",
+                        selectedColor === c ? "border-primary bg-primary text-white" : "border-border dark:border-zinc-800 text-primary/40 dark:text-zinc-500 bg-white dark:bg-zinc-900",
+                        isColorOut && "opacity-30 cursor-not-allowed"
+                      )}
+                    >
+                      {c}
+                      {isColorOut && <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-px bg-current rotate-45" /></div>}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -165,9 +211,27 @@ export default function ProductClient({ product }: { product: any }) {
             <div className="space-y-3">
               <Label className="text-[10px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">القياس</Label>
               <div className="flex flex-wrap gap-2">
-                {availableSizes.map((s: any) => (
-                  <button key={s} onClick={() => setSelectedSize(s)} className={cn("h-10 w-10 rounded-xl border-2 flex items-center justify-center font-black text-[10px] transition-all", selectedSize === s ? "border-primary bg-primary text-white" : "border-border dark:border-zinc-800 text-primary/40 dark:text-zinc-500 bg-white dark:bg-zinc-900")}>{s}</button>
-                ))}
+                {availableSizes.map((s: any) => {
+                  const isSizeOut = selectedColor 
+                    ? (variants.find((v: any) => v.color === selectedColor && v.size === s)?.stock || 0) <= 0
+                    : variants.filter((v: any) => v.size === s).every((v: any) => (v.stock || 0) <= 0);
+
+                  return (
+                    <button 
+                      key={s} 
+                      disabled={isSizeOut}
+                      onClick={() => setSelectedSize(s)} 
+                      className={cn(
+                        "h-10 w-10 rounded-xl border-2 flex items-center justify-center font-black text-[10px] transition-all relative",
+                        selectedSize === s ? "border-primary bg-primary text-white" : "border-border dark:border-zinc-800 text-primary/40 dark:text-zinc-500 bg-white dark:bg-zinc-900",
+                        isSizeOut && "opacity-30 cursor-not-allowed"
+                      )}
+                    >
+                      {s}
+                      {isSizeOut && <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-px bg-current rotate-45" /></div>}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -198,23 +262,40 @@ export default function ProductClient({ product }: { product: any }) {
 
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-border/30 dark:border-zinc-800 z-50 pb-safe shadow-2xl">
          <div className="container mx-auto max-w-lg space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center bg-accent/50 dark:bg-zinc-800 rounded-2xl p-1 h-14">
-                <button onClick={() => setQuantity(Math.max(1, qty - 1))} className="h-12 w-10 flex items-center justify-center text-primary/40"><Minus className="h-4 w-4" /></button>
-                <span className="w-8 text-center font-black text-primary dark:text-zinc-100 text-sm">{qty}</span>
-                <button onClick={() => setQuantity(qty + 1)} className="h-12 w-10 flex items-center justify-center text-primary/40"><Plus className="h-4 w-4" /></button>
-              </div>
-              <Button onClick={handleAddToCart} variant="outline" className="flex-1 h-14 rounded-2xl border-primary/20 text-primary font-black gap-3">
-                  <ShoppingBag className="h-5 w-5" /> أضف للسلة
+            {isOverallOutOfStock ? (
+              <Button disabled className="w-full h-16 rounded-2xl bg-zinc-200 dark:bg-zinc-800 text-zinc-400 font-black cursor-not-allowed gap-3">
+                <AlertCircle className="h-5 w-5" /> نفد من المخزون
               </Button>
-            </div>
-            
-            <div className="flex gap-3">
-              <Button onClick={handleBuyNow} className="flex-1 h-14 rounded-2xl bg-primary text-white text-md font-black shadow-lg shadow-primary/20 gap-3">
-                  <Zap className="h-5 w-5 fill-current text-secondary" /> اشترِ الآن
-              </Button>
-              <button onClick={() => window.open(`https://wa.me/9647858833838?text=أود الاستفسار عن ${product.name}`, '_blank')} className="h-14 w-14 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 flex items-center justify-center text-green-500 shadow-sm"><MessageCircle className="h-7 w-7" /></button>
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-accent/50 dark:bg-zinc-800 rounded-2xl p-1 h-14">
+                    <button onClick={() => setQuantity(Math.max(1, qty - 1))} className="h-12 w-10 flex items-center justify-center text-primary/40"><Minus className="h-4 w-4" /></button>
+                    <span className="w-8 text-center font-black text-primary dark:text-zinc-100 text-sm">{qty}</span>
+                    <button onClick={() => setQuantity(qty + 1)} className="h-12 w-10 flex items-center justify-center text-primary/40"><Plus className="h-4 w-4" /></button>
+                  </div>
+                  <Button 
+                    onClick={handleAddToCart} 
+                    variant="outline" 
+                    disabled={isSelectedVariantOutOfStock}
+                    className="flex-1 h-14 rounded-2xl border-primary/20 text-primary font-black gap-3"
+                  >
+                      <ShoppingBag className="h-5 w-5" /> {isSelectedVariantOutOfStock ? "غير متوفر" : "أضف للسلة"}
+                  </Button>
+                </div>
+                
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={handleBuyNow} 
+                    disabled={isSelectedVariantOutOfStock}
+                    className="flex-1 h-14 rounded-2xl bg-primary text-white text-md font-black shadow-lg shadow-primary/20 gap-3"
+                  >
+                      <Zap className="h-5 w-5 fill-current text-secondary" /> {isSelectedVariantOutOfStock ? "الخيار نافد" : "اشترِ الآن"}
+                  </Button>
+                  <button onClick={() => window.open(`https://wa.me/9647858833838?text=أود الاستفسار عن ${product.name}`, '_blank')} className="h-14 w-14 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 flex items-center justify-center text-green-500 shadow-sm"><MessageCircle className="h-7 w-7" /></button>
+                </div>
+              </>
+            )}
          </div>
       </div>
     </div>

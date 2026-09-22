@@ -1,10 +1,10 @@
 
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, AlertCircle } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { useCart } from '@/providers/cart-provider';
 import { cn } from "@/lib/utils";
@@ -18,6 +18,8 @@ interface ProductProps {
     category: string;
     image: string;
     badge?: string;
+    stock?: number;
+    variants?: any[];
   }
 }
 
@@ -28,6 +30,14 @@ export function ProductCard({ product }: ProductProps) {
   const discount = product.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
     : null;
+
+  // منطق التحقق من نفاد المخزون الكلي
+  const isOutOfStock = useMemo(() => {
+    if (product.variants && product.variants.length > 0) {
+      return product.variants.every((v: any) => (v.stock || 0) <= 0);
+    }
+    return (product.stock || 0) <= 0;
+  }, [product.stock, product.variants]);
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-[2rem] group relative overflow-hidden flex flex-col h-full border border-border/30 dark:border-zinc-800 hover:shadow-lg transition-all duration-500">
@@ -40,7 +50,10 @@ export function ProductCard({ product }: ProductProps) {
           src={product.image}
           alt={product.name}
           fill
-          className="object-contain p-4 transition-transform duration-700 group-hover:scale-110"
+          className={cn(
+            "object-contain p-4 transition-transform duration-700 group-hover:scale-110",
+            isOutOfStock && "grayscale opacity-60"
+          )}
           sizes="(max-width: 768px) 45vw, 20vw"
         />
         
@@ -58,11 +71,16 @@ export function ProductCard({ product }: ProductProps) {
           <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
         </button>
 
-        {discount && (
+        {isOutOfStock ? (
+          <Badge className="absolute top-3 left-3 bg-zinc-800 text-white border-none px-3 py-1 text-[10px] font-black rounded-lg z-10 shadow-lg flex items-center gap-1.5 animate-pulse">
+            <AlertCircle className="h-3 w-3" />
+            نفد من المخزون
+          </Badge>
+        ) : discount ? (
           <Badge className="absolute top-3 left-3 bg-red-500 text-white border-none px-2 py-0.5 text-[10px] font-black rounded-lg z-10 shadow-sm">
             -{discount}%
           </Badge>
-        )}
+        ) : null}
       </Link>
 
       {/* Content Area */}
@@ -88,7 +106,15 @@ export function ProductCard({ product }: ProductProps) {
             )}
           </div>
           
-          <button className="h-9 w-9 rounded-full bg-accent dark:bg-zinc-800 border border-border/50 dark:border-zinc-700 flex items-center justify-center text-primary/60 dark:text-zinc-400 hover:bg-primary hover:text-white dark:hover:bg-primary transition-all shadow-sm active:scale-95">
+          <button 
+            disabled={isOutOfStock}
+            className={cn(
+              "h-9 w-9 rounded-full border border-border/50 dark:border-zinc-700 flex items-center justify-center transition-all shadow-sm active:scale-95",
+              isOutOfStock 
+                ? "bg-accent/50 text-zinc-300 cursor-not-allowed" 
+                : "bg-accent dark:bg-zinc-800 text-primary/60 dark:text-zinc-400 hover:bg-primary hover:text-white dark:hover:bg-primary"
+            )}
+          >
             <ShoppingBag className="h-4 w-4" />
           </button>
         </div>

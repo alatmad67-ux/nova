@@ -36,7 +36,9 @@ export function ProductCarousel({ title, products, viewAllHref }: ProductCarouse
                 price: product.price,
                 originalPrice: product.originalPrice,
                 image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/600',
-                badge: product.isNew ? 'جديد' : undefined
+                badge: product.isNew ? 'جديد' : undefined,
+                stock: product.stock,
+                variants: product.variants
               }} 
             />
           </div>

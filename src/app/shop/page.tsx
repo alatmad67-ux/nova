@@ -95,8 +95,9 @@ export default function ShopPage() {
                   price: product.price,
                   originalPrice: product.originalPrice,
                   image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/600',
-                  rating: 5.0,
-                  badge: product.isNew ? 'جديد' : undefined
+                  badge: product.isNew ? 'جديد' : undefined,
+                  stock: product.stock,
+                  variants: product.variants
                 }} 
               />
             ))}

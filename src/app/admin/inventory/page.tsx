@@ -77,7 +77,7 @@ export default function InventoryPage() {
           sku: p.sku || 'N/A',
           color: 'عام',
           size: 'واحد',
-          stock: 0,
+          stock: p.stock || 0,
           allVariants: [],
           category: p.categoryName
         });
@@ -94,8 +94,8 @@ export default function InventoryPage() {
 
   const handleUpdateStock = (productId: string, variantIndex: number, newStock: number, variants: any[]) => {
     if (!db) return;
-    if (newStock < 0) {
-      toast({ variant: "destructive", title: "خطأ", description: "لا يمكن أن يكون المخزون سالباً" });
+    if (isNaN(newStock) || newStock < 0) {
+      toast({ variant: "destructive", title: "خطأ", description: "يرجى إدخال كمية صحيحة (صفر أو أكثر)" });
       return;
     }
 
@@ -103,18 +103,34 @@ export default function InventoryPage() {
     setUpdatingId(uniqueId);
 
     const productRef = doc(db, 'products', productId);
+    
+    // دعم تحديث المنتج العادي (بدون خيارات)
     if (variantIndex === -1) {
-      toast({ title: "تنبيه", description: "هذا المنتج لا يحتوي على خيارات متطورة" });
-      setUpdatingId(null);
+      updateDoc(productRef, { 
+        stock: newStock,
+        updatedAt: new Date().toISOString() 
+      })
+      .then(() => {
+        toast({ title: "تم التحديث ✨", description: "تم حفظ كمية المخزون الأساسية بنجاح" });
+      })
+      .catch((err) => {
+        console.error(err);
+        toast({ variant: "destructive", title: "فشل التحديث", description: "تأكدي من الاتصال بالإنترنت" });
+      })
+      .finally(() => setUpdatingId(null));
       return;
     }
     
+    // تحديث خيار معين في مصفوفة الخيارات
     const updatedVariants = [...variants];
     updatedVariants[variantIndex].stock = newStock;
     
-    updateDoc(productRef, { variants: updatedVariants })
+    updateDoc(productRef, { 
+      variants: updatedVariants,
+      updatedAt: new Date().toISOString()
+    })
       .then(() => {
-        toast({ title: "تم التحديث", description: "تم تحديث كمية المخزون في الفاير ستور" });
+        toast({ title: "تم التحديث", description: "تم تحديث كمية الخيار المتقدم بنجاح" });
       })
       .catch((err) => {
         console.error(err);

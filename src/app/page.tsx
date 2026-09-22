@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState } from 'react';
@@ -36,14 +37,12 @@ export default function Home() {
   const profileRef = useMemo(() => (db && user) ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: profile } = useDoc(profileRef);
 
-  // جلب المجموعات الكبرى
   const mainCatQuery = useMemo(() => {
     if (!db) return null;
     return query(collection(db, 'main-categories'), where('storeId', '==', STORE_ID), orderBy('order', 'asc'));
   }, [db]);
   const { data: mainCategories } = useCollection(mainCatQuery);
 
-  // جلب المنتجات
   const productsQuery = useMemo(() => {
     if (!db) return null;
     return query(
@@ -91,23 +90,20 @@ export default function Home() {
 
   const isViewSearchResults = searchTerm.length > 0 || aiKeywords.length > 0;
 
-  // منطق تجميع المنتجات للعرض - تم تحسينه لمنع الاختفاء
   const groupedSections = useMemo(() => {
     if (!allProducts || allProducts.length === 0) return [];
     
     const sections: any[] = [];
 
-    // 1. أحدث القطع (دائماً تظهر)
     sections.push({
       id: 'new-arrivals',
       title: 'أحدث القطع الملكية',
-      products: allProducts.slice(0, 6)
+      products: allProducts.slice(0, 10)
     });
 
-    // 2. تجميع حسب المجموعات الكبرى إذا وجدت
     if (mainCategories && mainCategories.length > 0) {
       mainCategories.forEach(main => {
-        const prods = allProducts.filter(p => p.mainCategory === main.id).slice(0, 6);
+        const prods = allProducts.filter(p => p.mainCategory === main.id).slice(0, 10);
         if (prods.length > 0) {
           sections.push({
             id: main.id,
@@ -118,7 +114,6 @@ export default function Home() {
       });
     }
 
-    // إزالة التكرار من الأقسام الأولى
     return sections;
   }, [allProducts, mainCategories]);
 
@@ -183,7 +178,9 @@ export default function Home() {
                       price: product.price,
                       originalPrice: product.originalPrice,
                       image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/600',
-                      badge: product.isNew ? 'جديد' : undefined
+                      badge: product.isNew ? 'جديد' : undefined,
+                      stock: product.stock,
+                      variants: product.variants
                     }} 
                   />
                 ))}

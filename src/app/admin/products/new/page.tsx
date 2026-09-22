@@ -16,17 +16,13 @@ import {
   Trash2, 
   Image as ImageIcon, 
   Loader2,
-  Info,
   ChevronRight,
-  Globe
+  Package
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useStore } from '@/providers/store-provider';
-import { cn } from "@/lib/utils";
-import Image from 'next/image';
 import { ImageUploadButton } from '@/components/ui/image-upload-button';
-
-const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+import Image from 'next/image';
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -51,19 +47,13 @@ export default function NewProductPage() {
     sku: '',
     slug: '',
     description: '',
-    material: '',
-    brand: '',
-    ingredients: '',
-    howToUse: '',
-    specifications: '',
     price: 0,
     originalPrice: 0,
     mainCategory: '',
     categoryId: '',
     categoryName: '',
     images: [] as string[],
-    colors: [{ name: '', code: '#7C3AED' }],
-    selectedSizes: [] as string[],
+    stock: 0,
     status: 'active',
     isNew: true
   });
@@ -82,7 +72,6 @@ export default function NewProductPage() {
     setLoading(true);
     const selectedSub = subCategories?.find((c: any) => c.id === productData.categoryId);
     
-    // توليد slug تلقائي من الاسم
     const generatedSlug = productData.slug || productData.name
       .toLowerCase()
       .trim()
@@ -149,40 +138,51 @@ export default function NewProductPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                 <div className="space-y-3">
-                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">المجموعة الكبرى</Label>
-                   <select 
-                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none dark:text-zinc-100"
-                    value={productData.mainCategory}
-                    onChange={(e) => setProductData({...productData, mainCategory: e.target.value, categoryId: ''})}
-                   >
-                     <option value="">اختر المجموعة الكبرى</option>
-                     {mainCategories?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                   </select>
-                 </div>
-                 <div className="space-y-3 md:col-span-2">
-                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">القسم الفرعي</Label>
-                   <select 
-                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none dark:text-zinc-100"
-                    value={productData.categoryId}
-                    onChange={(e) => setProductData({...productData, categoryId: e.target.value})}
-                    disabled={!productData.mainCategory}
-                   >
-                     <option value="">اختر القسم الفرعي</option>
-                     {filteredSubCategories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                   </select>
-                 </div>
+                <div className="space-y-3">
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">المجموعة الكبرى</Label>
+                  <select 
+                   className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none dark:text-zinc-100"
+                   value={productData.mainCategory}
+                   onChange={(e) => setProductData({...productData, mainCategory: e.target.value, categoryId: ''})}
+                  >
+                    <option value="">اختر المجموعة الكبرى</option>
+                    {mainCategories?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-3 md:col-span-2">
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">القسم الفرعي</Label>
+                  <select 
+                   className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold outline-none border-none dark:text-zinc-100"
+                   value={productData.categoryId}
+                   onChange={(e) => setProductData({...productData, categoryId: e.target.value})}
+                   disabled={!productData.mainCategory}
+                  >
+                    <option value="">اختر القسم الفرعي</option>
+                    {filteredSubCategories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="space-y-2">
                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">السعر الحالي (د.ع)</Label>
                   <Input type="number" value={productData.price || ''} onChange={(e) => setProductData({...productData, price: parseFloat(e.target.value) || 0})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-black text-xl border-none dark:text-zinc-100" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">الماركة / البراند</Label>
-                  <Input value={productData.brand} onChange={(e) => setProductData({...productData, brand: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" />
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase flex items-center gap-2">
+                    <Package className="h-3 w-3" /> المخزون الأساسي
+                  </Label>
+                  <Input type="number" value={productData.stock || 0} onChange={(e) => setProductData({...productData, stock: parseInt(e.target.value) || 0})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-black text-xl border-none dark:text-zinc-100" />
                 </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">SKU المنتج</Label>
+                  <Input value={productData.sku} onChange={(e) => setProductData({...productData, sku: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" />
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-4">
+                <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">وصف المنتج</Label>
+                <Textarea value={productData.description} onChange={(e) => setProductData({...productData, description: e.target.value})} className="min-h-[150px] bg-accent/30 dark:bg-zinc-800 rounded-2xl p-6 border-none dark:text-zinc-100" />
               </div>
             </div>
 
