@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDoc, useCollection, useFirestore } from '@/firebase';
-import { doc, updateDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, collection, serverTimestamp, query, where } from 'firebase/firestore';
 import { useRouter, useParams } from 'next/navigation';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { AdminGuard } from '@/components/layout/AdminGuard';
@@ -20,7 +20,8 @@ import {
   ChevronRight,
   Copy,
   Check,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Globe
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useStore } from '@/providers/store-provider';
@@ -42,14 +43,15 @@ export default function EditProductPage() {
   const { data: product, loading: productLoading } = useDoc(productRef);
 
   const categoriesQuery = useMemo(() => {
-    if (!db) return null;
-    return collection(db, 'categories');
-  }, [db]);
+    if (!db || !storeId) return null;
+    return query(collection(db, 'categories'), where('storeId', '==', storeId));
+  }, [db, storeId]);
   const { data: categories } = useCollection(categoriesQuery);
 
   const [productData, setProductData] = useState<any>({
     name: '',
     sku: '',
+    slug: '',
     description: '',
     material: '',
     brand: '',
@@ -58,7 +60,7 @@ export default function EditProductPage() {
     specifications: '',
     price: 0,
     originalPrice: 0,
-    mainCategory: 'fashion',
+    mainCategory: '',
     categoryId: '',
     categoryName: '',
     images: [] as string[],
@@ -83,9 +85,14 @@ export default function EditProductPage() {
     return categories?.filter(c => c.mainCategory === productData.mainCategory) || [];
   }, [categories, productData.mainCategory]);
 
+  const productUrl = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    const identifier = productData.slug || id;
+    return `${window.location.origin}/product/${identifier}`;
+  }, [productData.slug, id]);
+
   const handleCopyLink = () => {
-    const link = `${window.location.origin}/product/${id}`;
-    navigator.clipboard.writeText(link);
+    navigator.clipboard.writeText(productUrl);
     setCopied(true);
     toast({ title: "تم نسخ الرابط", description: "الرابط جاهز للمشاركة الآن ✨" });
     setTimeout(() => setCopied(false), 2000);
@@ -101,8 +108,17 @@ export default function EditProductPage() {
     setLoading(true);
     const selectedCat = categories?.find(c => c.id === productData.categoryId);
     
+    // إنشاء slug إذا لم يكن موجوداً
+    const generatedSlug = productData.slug || productData.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
     const finalProduct = {
       ...productData,
+      slug: generatedSlug,
       categoryName: selectedCat?.name || productData.categoryName,
       updatedAt: serverTimestamp(),
     };
@@ -118,7 +134,7 @@ export default function EditProductPage() {
       });
   };
 
-  if (productLoading) return <div className="min-h-screen bg-background flex items-center justify-center font-black animate-pulse">جاري التحميل...</div>;
+  if (productLoading) return <div className="min-h-screen bg-background flex items-center justify-center font-black animate-pulse">جاري تحميل بيانات المنتج...</div>;
 
   return (
     <AdminGuard>
@@ -131,41 +147,61 @@ export default function EditProductPage() {
               <button onClick={() => router.back()} className="h-12 w-12 rounded-xl bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary/40"><ChevronRight className="h-6 w-6" /></button>
               <div>
                 <h1 className="text-3xl font-black text-primary dark:text-zinc-100">تعديل المنتج</h1>
-                <p className="text-primary/40 dark:text-zinc-500 text-sm">تحديث بيانات قطعة NOVA</p>
+                <p className="text-primary/40 dark:text-zinc-500 text-sm">تحديث بيانات قطعة NOVA الملكية</p>
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={handleCopyLink} className="h-14 px-6 rounded-2xl border-primary/20 text-primary font-black gap-2">
-                {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />} نسخ الرابط
-              </Button>
               <Button onClick={handleUpdate} disabled={loading} className="h-14 px-12 rounded-2xl bg-primary text-white font-black shadow-xl">{loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "حفظ التعديلات"}</Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-10">
-            {/* Product Link Info */}
+          <div className="grid grid-cols-1 gap-8">
+            {/* قسم الرابط المباشر */}
             <div className="nova-card p-8 bg-primary/5 dark:bg-zinc-900 border border-primary/10 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6">
-               <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center text-primary shadow-sm"><LinkIcon className="h-6 w-6" /></div>
-                  <div>
-                    <h4 className="text-[10px] font-black text-primary/40 uppercase tracking-widest">رابط المنتج المباشر</h4>
-                    <p className="text-sm font-mono font-bold text-primary dark:text-zinc-300 truncate max-w-xs">{typeof window !== 'undefined' ? `${window.location.origin}/product/${id}` : ''}</p>
+               <div className="flex items-center gap-5">
+                  <div className="h-14 w-14 bg-white dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-primary shadow-sm border border-primary/5"><LinkIcon className="h-7 w-7" /></div>
+                  <div className="text-right">
+                    <h4 className="text-[10px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest mb-1">رابط المنتج المباشر</h4>
+                    <p className="text-sm font-mono font-bold text-primary dark:text-zinc-300 break-all max-w-md">{productUrl}</p>
                   </div>
                </div>
-               <p className="text-[10px] font-bold text-primary/30 max-w-xs text-center md:text-right">استخدمي هذا الرابط في Instagram Bio أو TikTok Shop لتوجيه الزبائن مباشرة لهذه القطعة.</p>
+               <Button variant="outline" onClick={handleCopyLink} className="h-14 px-8 rounded-2xl border-primary/20 text-primary dark:text-zinc-200 font-black gap-2 hover:bg-primary hover:text-white transition-all">
+                  {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                  {copied ? "تم النسخ" : "نسخ الرابط للمشاركة"}
+               </Button>
             </div>
 
-            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-10 border border-border dark:border-zinc-800 transition-colors">
+            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-10 border border-border dark:border-zinc-800">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">اسم المنتج</Label>
+                  <Input value={productData.name} onChange={(e) => setProductData({...productData, name: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">رابط مختصر (Slug)</Label>
+                  <Input value={productData.slug} placeholder="تلقائي: elegant-dress" onChange={(e) => setProductData({...productData, slug: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-mono text-sm border-none" />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                  <div className="space-y-3">
-                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">القسم الرئيسي</Label>
-                   <select className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" value={productData.mainCategory} onChange={(e) => setProductData({...productData, mainCategory: e.target.value, categoryId: ''})}>
+                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">المجموعة الكبرى</Label>
+                   <select 
+                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100 outline-none" 
+                    value={productData.mainCategory} 
+                    onChange={(e) => setProductData({...productData, mainCategory: e.target.value, categoryId: ''})}
+                   >
+                     <option value="">اختر المجموعة</option>
                      {['fashion', 'accessories', 'skincare', 'beauty-devices'].map(m => <option key={m} value={m}>{m}</option>)}
                    </select>
                  </div>
                  <div className="space-y-3 md:col-span-2">
                    <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">القسم الفرعي</Label>
-                   <select className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" value={productData.categoryId} onChange={(e) => setProductData({...productData, categoryId: e.target.value})}>
+                   <select 
+                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100 outline-none" 
+                    value={productData.categoryId} 
+                    onChange={(e) => setProductData({...productData, categoryId: e.target.value})}
+                   >
                      <option value="">اختر القسم</option>
                      {filteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                    </select>
@@ -174,12 +210,19 @@ export default function EditProductPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">اسم المنتج</Label>
-                  <Input value={productData.name} onChange={(e) => setProductData({...productData, name: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none" />
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">السعر (د.ع)</Label>
+                  <Input type="number" value={productData.price} onChange={(e) => setProductData({...productData, price: parseFloat(e.target.value) || 0})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-black text-xl border-none" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">السعر الحالي (د.ع)</Label>
-                  <Input type="number" value={productData.price} onChange={(e) => setProductData({...productData, price: parseFloat(e.target.value) || 0})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-black text-xl border-none" />
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">الحالة</Label>
+                  <select 
+                    className="w-full h-14 px-4 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100 outline-none"
+                    value={productData.status}
+                    onChange={(e) => setProductData({...productData, status: e.target.value})}
+                  >
+                    <option value="active">نشط (يظهر للزبائن)</option>
+                    <option value="draft">مسودة (مخفي)</option>
+                  </select>
                 </div>
               </div>
 
@@ -189,7 +232,7 @@ export default function EditProductPage() {
               </div>
             </div>
 
-            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-8 border border-border dark:border-zinc-800 transition-colors">
+            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-8 border border-border dark:border-zinc-800">
               <div className="flex items-center gap-3 mb-4">
                 <ImageIcon className="text-primary dark:text-zinc-100 h-5 w-5" />
                 <h3 className="text-xl font-black text-primary dark:text-zinc-100">صور المنتج</h3>
@@ -198,7 +241,7 @@ export default function EditProductPage() {
                 {productData.images?.map((img: string, idx: number) => (
                   <div key={idx} className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-accent bg-accent group shadow-sm">
                     <Image src={img} alt="Product" fill className="object-cover" />
-                    <button onClick={() => setProductData({...productData, images: productData.images.filter((_: any, i: number) => i !== idx)})} className="absolute top-2 left-2 p-2 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="h-3 w-3" /></button>
+                    <button onClick={() => setProductData({...productData, images: productData.images.filter((_: any, i: number) => i !== idx)})} className="absolute top-2 left-2 p-2 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 ))}
                 <ImageUploadButton onUploadComplete={(url) => setProductData({...productData, images: [...productData.images, url]})} className="aspect-[3/4]" label="إضافة صورة" />

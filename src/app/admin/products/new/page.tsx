@@ -17,7 +17,8 @@ import {
   Image as ImageIcon, 
   Loader2,
   Info,
-  ChevronRight
+  ChevronRight,
+  Globe
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useStore } from '@/providers/store-provider';
@@ -33,14 +34,12 @@ export default function NewProductPage() {
   const { storeId } = useStore();
   const [loading, setLoading] = useState(false);
   
-  // جلب المجموعات الكبرى الديناميكية
   const mainCatQuery = useMemo(() => {
     if (!db || !storeId) return null;
     return query(collection(db, 'main-categories'), where('storeId', '==', storeId));
   }, [db, storeId]);
   const { data: mainCategories } = useCollection(mainCatQuery);
 
-  // جلب كافة الأقسام الفرعية
   const subCatQuery = useMemo(() => {
     if (!db || !storeId) return null;
     return query(collection(db, 'categories'), where('storeId', '==', storeId));
@@ -50,6 +49,7 @@ export default function NewProductPage() {
   const [productData, setProductData] = useState({
     name: '',
     sku: '',
+    slug: '',
     description: '',
     material: '',
     brand: '',
@@ -82,28 +82,17 @@ export default function NewProductPage() {
     setLoading(true);
     const selectedSub = subCategories?.find((c: any) => c.id === productData.categoryId);
     
-    const generatedVariants = [];
-    // توليد خيارات تلقائية إذا كانت مجموعة أزياء
-    const isFashion = mainCategories?.find(m => m.id === productData.mainCategory)?.slug?.includes('fashion') || productData.mainCategory.includes('fashion');
-    
-    if (isFashion) {
-      for (const color of productData.colors) {
-        if (!color.name) continue;
-        for (const size of productData.selectedSizes) {
-          generatedVariants.push({
-            color: color.name,
-            colorCode: color.code,
-            size: size,
-            stock: 10,
-            sku: `${productData.sku || 'P'}-${color.name}-${size}`
-          });
-        }
-      }
-    }
+    // توليد slug تلقائي من الاسم
+    const generatedSlug = productData.slug || productData.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
 
     const finalProduct = {
       ...productData,
-      variants: generatedVariants,
+      slug: generatedSlug,
       categoryName: selectedSub?.name || '',
       storeId,
       createdAt: serverTimestamp(),
@@ -148,6 +137,17 @@ export default function NewProductPage() {
 
           <div className="grid grid-cols-1 gap-10">
             <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-10 border border-border dark:border-zinc-800">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">اسم المنتج</Label>
+                  <Input value={productData.name} onChange={(e) => setProductData({...productData, name: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">رابط مختصر (Slug)</Label>
+                  <Input value={productData.slug} placeholder="تلقائي: fancy-dress-2026" onChange={(e) => setProductData({...productData, slug: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-mono text-sm border-none dark:text-zinc-100" />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                  <div className="space-y-3">
                    <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase tracking-widest">المجموعة الكبرى</Label>
@@ -174,79 +174,16 @@ export default function NewProductPage() {
                  </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">اسم المنتج</Label>
-                  <Input value={productData.name} onChange={(e) => setProductData({...productData, name: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">الماركة / البراند</Label>
-                  <Input value={productData.brand} onChange={(e) => setProductData({...productData, brand: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" />
-                </div>
-              </div>
-
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-2">
                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">السعر الحالي (د.ع)</Label>
                   <Input type="number" value={productData.price || ''} onChange={(e) => setProductData({...productData, price: parseFloat(e.target.value) || 0})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-black text-xl border-none dark:text-zinc-100" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">السعر السابق</Label>
-                  <Input type="number" value={productData.originalPrice || ''} onChange={(e) => setProductData({...productData, originalPrice: parseFloat(e.target.value) || 0})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl text-primary/40 dark:text-zinc-500 font-bold border-none" />
+                  <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">الماركة / البراند</Label>
+                  <Input value={productData.brand} onChange={(e) => setProductData({...productData, brand: e.target.value})} className="h-14 bg-accent/30 dark:bg-zinc-800 rounded-2xl font-bold border-none dark:text-zinc-100" />
                 </div>
               </div>
-            </div>
-
-            {/* تفاصيل ديناميكية */}
-            <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-8 border border-border dark:border-zinc-800">
-               <h3 className="text-lg font-black text-primary dark:text-zinc-100 flex items-center gap-2">
-                 <Info className="h-5 w-5 text-secondary" />
-                 تفاصيل إضافية
-               </h3>
-
-               <div className="grid grid-cols-1 gap-8">
-                 <div className="space-y-2">
-                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">خامة القماش / المواد</Label>
-                   <Input value={productData.material} onChange={(e) => setProductData({...productData, material: e.target.value})} className="h-12 bg-accent/30 dark:bg-zinc-800 rounded-xl border-none dark:text-zinc-100" />
-                 </div>
-                 <div className="space-y-4">
-                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">الألوان المتوفرة</Label>
-                   <div className="flex flex-wrap gap-4">
-                     {productData.colors.map((c, idx) => (
-                       <div key={idx} className="flex items-center gap-2 bg-accent dark:bg-zinc-800 p-2 rounded-xl border border-transparent dark:border-zinc-700 transition-colors">
-                         <input type="color" value={c.code} onChange={(e) => {
-                           const colors = [...productData.colors];
-                           colors[idx].code = e.target.value;
-                           setProductData({...productData, colors});
-                         }} className="h-8 w-8 rounded-lg overflow-hidden border-none cursor-pointer" />
-                         <input placeholder="اللون" value={c.name} onChange={(e) => {
-                           const colors = [...productData.colors];
-                           colors[idx].name = e.target.value;
-                           setProductData({...productData, colors});
-                         }} className="bg-transparent border-none w-24 text-xs font-bold dark:text-zinc-100 outline-none" />
-                         <button onClick={() => setProductData({...productData, colors: productData.colors.filter((_, i) => i !== idx)})} className="text-red-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
-                       </div>
-                     ))}
-                     <Button variant="outline" onClick={() => setProductData({...productData, colors: [...productData.colors, {name:'', code: '#000000'}]})} className="h-12 w-12 border-dashed border-primary/20 dark:border-zinc-700 rounded-xl">+</Button>
-                   </div>
-                 </div>
-                 <div className="space-y-4">
-                   <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">القياسات</Label>
-                   <div className="flex flex-wrap gap-2">
-                     {SIZES.map(s => (
-                       <button key={s} onClick={() => {
-                         const sizes = productData.selectedSizes.includes(s) ? productData.selectedSizes.filter(sz => sz !== s) : [...productData.selectedSizes, s];
-                         setProductData({...productData, selectedSizes: sizes});
-                       }} className={cn("h-10 w-12 rounded-lg font-black text-xs border-2 transition-all", productData.selectedSizes.includes(s) ? "border-primary bg-primary text-white" : "border-accent dark:border-zinc-800 bg-white dark:bg-zinc-900 text-primary/40 dark:text-zinc-500")}>{s}</button>
-                     ))}
-                   </div>
-                 </div>
-               </div>
-
-               <div className="space-y-2 pt-4">
-                 <Label className="text-xs font-black text-primary/40 dark:text-zinc-500 uppercase">وصف المنتج العام</Label>
-                 <Textarea value={productData.description} onChange={(e) => setProductData({...productData, description: e.target.value})} className="min-h-[150px] bg-accent/30 dark:bg-zinc-800 rounded-2xl p-6 border-none dark:text-zinc-300" />
-               </div>
             </div>
 
             <div className="nova-card p-10 bg-white dark:bg-zinc-900 shadow-premium space-y-8 border border-border dark:border-zinc-800">
