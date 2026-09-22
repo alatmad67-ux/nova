@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * NOVA FIREBASE - ABSOLUTE SINGLETON ARCHITECTURE (v88)
+ * NOVA FIREBASE - ABSOLUTE SINGLETON ARCHITECTURE (v89)
  * Optimized for both SSR and Client-side stability in proxy environments.
  */
 
@@ -16,43 +16,38 @@ interface FirebaseServices {
   auth: Auth;
 }
 
-// Persistent global storage to survive HMR and navigation
+// Persistent global storage to survive HMR and navigation in development
 const g = globalThis as any;
 
 export function initializeFirebase(): FirebaseServices {
-  // Check cached services first
+  // 1. Check cached services first (Works on both Server and Client)
   if (g.__NOVA_SERVICES__) {
     return g.__NOVA_SERVICES__;
   }
 
-  // 1. Initialize App exactly once
+  // 2. Initialize App exactly once
   const existingApps = getApps();
   const app = existingApps.length > 0 ? existingApps[0] : initializeApp(firebaseConfig);
 
-  // 2. Initialize Firestore with locked settings for proxy compatibility
+  // 3. Initialize Firestore with forced long polling for proxy compatibility (CRITICAL for Studio SSR)
   let db: Firestore;
   try {
-    // We only use experimentalForceLongPolling on the client (browser)
-    const isBrowser = typeof window !== 'undefined';
-    
     db = initializeFirestore(app, {
-      experimentalForceLongPolling: isBrowser, 
+      experimentalForceLongPolling: true, // Force Long Polling for stability everywhere
       ignoreUndefinedProperties: true
     });
   } catch (e) {
-    // If already initialized (e.g. implicitly), get existing instance
+    // If already initialized, get existing instance
     db = getFirestore(app);
   }
 
-  // 3. Initialize Auth
+  // 4. Initialize Auth
   const auth = getAuth(app);
 
   const services: FirebaseServices = { app, db, auth };
   
-  // Cache everything in global memory if in browser
-  if (typeof window !== 'undefined') {
-    g.__NOVA_SERVICES__ = services;
-  }
+  // Cache everything in global memory
+  g.__NOVA_SERVICES__ = services;
 
   return services;
 }

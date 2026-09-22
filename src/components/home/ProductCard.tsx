@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -20,6 +19,7 @@ interface ProductProps {
     badge?: string;
     stock?: number;
     variants?: any[];
+    slug?: string;
   }
 }
 
@@ -39,11 +39,14 @@ export function ProductCard({ product }: ProductProps) {
     return (product.stock || 0) <= 0;
   }, [product.stock, product.variants]);
 
+  // الرابط المفضل (Slug) لضمان التوافق مع نظام البحث الذكي
+  const productPath = `/product/${product.slug || product.id}`;
+
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-[2rem] group relative overflow-hidden flex flex-col h-full border border-border/30 dark:border-zinc-800 hover:shadow-lg transition-all duration-500">
       {/* Fixed Aspect Ratio Container for Product Images */}
       <Link 
-        href={`/product/${product.id}`} 
+        href={productPath} 
         className="block relative aspect-[4/5] w-full overflow-hidden bg-accent/30 dark:bg-zinc-800/50"
       >
         <Image
