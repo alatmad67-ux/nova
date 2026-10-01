@@ -5,27 +5,32 @@ import React, { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { useStore } from '@/providers/store-provider';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Sparkles, ChevronLeft, LayoutGrid } from 'lucide-react';
+import { STORE_ID } from '@/lib/constants';
 
 export default function CategoriesPage() {
   const db = useFirestore();
   const { storeId } = useStore();
 
-  // جلب المجموعات الكبرى ديناميكياً من Firestore
+  // جلب كافة المجموعات بدون ترتيب Firestore لتجنب الحاجة لفهارس مركبة
   const mainCatQuery = useMemo(() => {
-    if (!db || !storeId) return null;
+    if (!db) return null;
     return query(
       collection(db, 'main-categories'),
-      where('storeId', '==', storeId),
-      orderBy('order', 'asc')
+      where('storeId', '==', STORE_ID)
     );
-  }, [db, storeId]);
+  }, [db]);
 
-  const { data: mainCategories, loading } = useCollection(mainCatQuery);
+  const { data: rawMainCategories, loading } = useCollection(mainCatQuery);
+
+  const mainCategories = useMemo(() => {
+    if (!rawMainCategories) return [];
+    return [...rawMainCategories].sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [rawMainCategories]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] font-arabic pb-32">
@@ -48,7 +53,7 @@ export default function CategoriesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
-            {mainCategories?.map((m: any) => (
+            {mainCategories.map((m: any) => (
               <Link 
                 key={m.id} 
                 href={`/shop?main=${m.id}`}
@@ -72,7 +77,7 @@ export default function CategoriesPage() {
               </Link>
             ))}
             
-            {mainCategories?.length === 0 && (
+            {mainCategories.length === 0 && (
               <div className="py-32 text-center bg-accent/30 dark:bg-zinc-900/30 rounded-[4rem] border-2 border-dashed border-primary/10 dark:border-zinc-800">
                 <LayoutGrid className="h-16 w-16 mx-auto mb-6 text-primary opacity-20 dark:text-zinc-700" />
                 <p className="text-primary/40 dark:text-zinc-500 font-black">لم يتم إضافة مجموعات كبرى بعد</p>

@@ -10,6 +10,7 @@ import { collection, query, where } from 'firebase/firestore';
 import { useStore } from '@/providers/store-provider';
 import { Search, SlidersHorizontal, Package, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { STORE_ID } from '@/lib/constants';
 
 export default function ShopPage() {
   const db = useFirestore();
@@ -17,28 +18,26 @@ export default function ShopPage() {
   const [sortBy, setSortBy] = useState('newest');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // استعلام مبسط لتجنب مشاكل الفهارس
+  // استعلام فائق البساطة لضمان تخطي مشاكل الفهارس
   const productsQuery = useMemo(() => {
-    if (!db || !storeId) return null;
+    if (!db) return null;
     return query(
       collection(db, 'products'),
-      where('storeId', '==', storeId)
+      where('storeId', '==', STORE_ID)
     );
-  }, [db, storeId]);
+  }, [db]);
 
   const { data: rawProducts, loading } = useCollection(productsQuery);
 
   const filteredProducts = useMemo(() => {
     if (!rawProducts) return [];
     
-    // فلترة النشط فقط وبحث النص
     let items = rawProducts.filter((p: any) => p.status !== 'draft');
     
     if (searchTerm) {
       items = items.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }
 
-    // ترتيب برمجي
     if (sortBy === 'price-asc') items.sort((a, b) => a.price - b.price);
     else if (sortBy === 'price-desc') items.sort((a, b) => b.price - a.price);
     else items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
@@ -89,7 +88,8 @@ export default function ShopPage() {
                   image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/600',
                   badge: product.isNew ? 'جديد' : undefined,
                   stock: product.stock,
-                  variants: product.variants
+                  variants: product.variants,
+                  slug: product.slug
                 }} 
               />
             ))}
