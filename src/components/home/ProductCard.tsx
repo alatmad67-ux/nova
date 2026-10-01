@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -38,12 +37,12 @@ export function ProductCard({ product }: ProductProps) {
   const productPath = `/product/${product.slug || product.id}`;
 
   return (
-    <div className="bg-white rounded-[2.5rem] p-4 flex flex-col h-full shadow-sm hover:shadow-xl transition-all duration-500 group relative">
+    <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-4 flex flex-col h-full shadow-sm hover:shadow-xl transition-all duration-500 group relative border border-transparent dark:border-zinc-800">
       {/* Wishlist Button */}
       <button 
         className={cn(
           "absolute top-6 left-6 z-20 h-9 w-9 rounded-full flex items-center justify-center transition-all",
-          isFav ? "text-red-500" : "text-primary/10 hover:text-primary"
+          isFav ? "text-red-500" : "text-primary/10 dark:text-zinc-700 hover:text-primary dark:hover:text-zinc-400"
         )}
         onClick={(e) => {
           e.preventDefault();
@@ -54,7 +53,7 @@ export function ProductCard({ product }: ProductProps) {
       </button>
 
       {/* Product Image */}
-      <Link href={productPath} className="block relative aspect-[4/5] w-full mb-4 overflow-hidden rounded-3xl bg-[#FAF8F5]">
+      <Link href={productPath} className="block relative aspect-[4/5] w-full mb-4 overflow-hidden rounded-3xl bg-[#FAF8F5] dark:bg-zinc-800">
         <Image
           src={product.image}
           alt={product.name}
@@ -69,10 +68,10 @@ export function ProductCard({ product }: ProductProps) {
 
       {/* Info Area */}
       <div className="flex flex-col flex-grow text-right">
-        <h4 className="font-black text-primary text-sm line-clamp-1 mb-0.5">
+        <h4 className="font-black text-primary dark:text-zinc-100 text-sm line-clamp-1 mb-0.5">
           {product.name}
         </h4>
-        <span className="text-[10px] font-bold text-primary/30 uppercase tracking-widest mb-3">
+        <span className="text-[10px] font-bold text-primary/30 dark:text-zinc-500 uppercase tracking-widest mb-3">
           {product.category}
         </span>
         
@@ -81,14 +80,14 @@ export function ProductCard({ product }: ProductProps) {
           <div className="flex items-center">
             {[1, 2, 3, 4, 5].map(i => <Star key={i} className="h-2.5 w-2.5 fill-secondary text-secondary" />)}
           </div>
-          <span className="text-[8px] font-black text-primary/20">(126)</span>
+          <span className="text-[8px] font-black text-primary/20 dark:text-zinc-700">(126)</span>
         </div>
 
         {/* Price & Add */}
         <div className="flex items-center justify-between mt-auto">
           <div className="flex items-baseline gap-1">
-            <span className="text-[9px] font-bold text-primary/30 uppercase">د.ع</span>
-            <span className="text-md font-black text-primary">{product.price.toLocaleString()}</span>
+            <span className="text-[9px] font-bold text-primary/30 dark:text-zinc-600 uppercase">د.ع</span>
+            <span className="text-md font-black text-primary dark:text-zinc-100">{product.price.toLocaleString()}</span>
           </div>
           
           <button 
@@ -96,7 +95,7 @@ export function ProductCard({ product }: ProductProps) {
             className={cn(
               "h-9 w-9 rounded-2xl flex items-center justify-center transition-all shadow-lg active:scale-90",
               isOutOfStock 
-                ? "bg-zinc-100 text-zinc-300 cursor-not-allowed" 
+                ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600 cursor-not-allowed" 
                 : "bg-secondary text-white shadow-secondary/20"
             )}
           >
