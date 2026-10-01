@@ -2,21 +2,22 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProductCard } from '@/components/home/ProductCard';
 import { useStore } from '@/providers/store-provider';
-import { Sparkles, Package } from 'lucide-react';
+import { Sparkles, Package, ChevronRight } from 'lucide-react';
 
 export default function CategoryProductsPage() {
   const { slug } = useParams();
+  const router = useRouter();
   const db = useFirestore();
   const { storeId } = useStore();
 
+  // 1. جلب بيانات القسم بناءً على الـ Slug
   const catQuery = useMemo(() => {
     if (!db || !slug || !storeId) return null;
     return query(
@@ -26,51 +27,66 @@ export default function CategoryProductsPage() {
     );
   }, [db, slug, storeId]);
   
-  const { data: categoryData } = useCollection(catQuery);
+  const { data: categoryData, loading: catLoading } = useCollection(catQuery);
   const category = categoryData?.[0];
 
+  // 2. جلب المنتجات النشطة للمتجر
   const productsQuery = useMemo(() => {
     if (!db || !storeId) return null;
     return query(
       collection(db, 'products'),
       where('storeId', '==', storeId),
-      where('status', '==', 'active')
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc')
     );
   }, [db, storeId]);
 
-  const { data: rawProducts, loading } = useCollection(productsQuery);
+  const { data: rawProducts, loading: prodsLoading } = useCollection(productsQuery);
 
+  // 3. فلترة المنتجات حسب الـ Category ID المكتشف
   const products = useMemo(() => {
     if (!rawProducts || !category) return [];
-    return rawProducts
-      .filter((p: any) => p.categoryId === category?.id)
-      .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    return rawProducts.filter((p: any) => p.categoryId === category?.id);
   }, [rawProducts, category]);
 
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
-      
-      <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
-        <div className="flex flex-col items-center text-center mb-16">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-5 w-5 text-secondary" />
-            <span className="text-xs font-black text-primary tracking-[0.3em] uppercase">NOVA COLLECTION</span>
-          </div>
-          <h1 className="text-4xl md:text-6xl font-black text-primary mb-6">
-            {category?.name || 'استكشاف المجموعة'}
-          </h1>
-          <div className="h-1 w-20 bg-secondary rounded-full" />
-        </div>
+  const isLoading = catLoading || prodsLoading;
 
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-              <div key={i} className="aspect-[3/4] rounded-[2rem] bg-accent animate-pulse" />
+  return (
+    <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] font-arabic pb-32">
+      {/* Header المخصص لصفحة القسم */}
+      <header className="h-20 flex items-center px-6 justify-between bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-50 border-b border-border/30 dark:border-zinc-800">
+        <button 
+          onClick={() => router.back()} 
+          className="h-10 w-10 rounded-full bg-accent dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-zinc-300"
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
+        <h1 className="text-lg font-black text-primary dark:text-zinc-100 uppercase tracking-widest">
+          {category?.name || 'جاري التحميل...'}
+        </h1>
+        <div className="w-10" />
+      </header>
+      
+      <main className="flex-grow container mx-auto px-5 py-6">
+        {/* ترويسة فنية بسيطة */}
+        {!isLoading && category && (
+          <div className="mb-8 px-2">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="h-4 w-4 text-secondary" />
+              <span className="text-[10px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-[0.2em]">المجموعة الملكية</span>
+            </div>
+            <h2 className="text-3xl font-black text-primary dark:text-zinc-100">{category.name}</h2>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-4">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="aspect-[3/4] rounded-[2.5rem] bg-accent dark:bg-zinc-900 animate-pulse" />
             ))}
           </div>
         ) : products.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 gap-4">
             {products.map((product: any) => (
               <ProductCard 
                 key={product.id} 
@@ -81,22 +97,28 @@ export default function CategoryProductsPage() {
                   price: product.price,
                   originalPrice: product.originalPrice,
                   image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/600',
-                  rating: 5.0,
-                  badge: product.isNew ? 'جديد' : undefined
+                  badge: product.isNew ? 'جديد' : undefined,
+                  stock: product.stock,
+                  variants: product.variants,
+                  slug: product.slug
                 }} 
               />
             ))}
           </div>
         ) : (
-          <div className="text-center py-32 bg-accent rounded-[3rem] border border-border/50">
-            <Package className="h-16 w-16 mx-auto mb-6 text-primary opacity-20" />
-            <h3 className="text-2xl font-black text-primary mb-2">لا توجد قطع حالياً</h3>
-            <p className="text-primary/40 font-medium">نحن بصدد إضافة مجموعات جديدة لهذا القسم قريباً</p>
+          <div className="text-center py-32 bg-white dark:bg-zinc-900 rounded-[3rem] border-2 border-dashed border-primary/10 dark:border-zinc-800">
+            <Package className="h-16 w-16 mx-auto mb-6 text-primary opacity-20 dark:text-zinc-700" />
+            <h3 className="text-xl font-black text-primary dark:text-zinc-100 mb-2">لا توجد قطع حالياً</h3>
+            <p className="text-sm text-primary/40 dark:text-zinc-500 font-bold max-w-[200px] mx-auto leading-relaxed">نحن بصدد إضافة مجموعات جديدة لهذا القسم قريباً، تابعينا!</p>
           </div>
         )}
+
+        {/* علامة تجارية بسيطة في الأسفل بدلاً من التذيل الطويل */}
+        <div className="text-center py-10 opacity-20">
+           <p className="text-[10px] font-black uppercase tracking-[0.4em] dark:text-zinc-500">NOVA OFFICIAL — EST. 2026</p>
+        </div>
       </main>
 
-      <Footer />
       <BottomNav />
     </div>
   );
