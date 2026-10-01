@@ -13,6 +13,7 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { ArrowLeft } from 'lucide-react';
 
 export function HeroSlider() {
   const db = useFirestore();
@@ -33,8 +34,8 @@ export function HeroSlider() {
     if (loading) return [];
     if (!slides || slides.length === 0) return [
       { 
-        title: "أناقتكِ تبدأ من هنا", 
-        subtitle: "اكتشفي أحدث تشكيلات الموسم", 
+        title: "تألقي بجمال طبيعي وكوني مميزة", 
+        subtitle: "استكشفي مجموعتنا الفاخرة المنسقة خصيصاً لكِ", 
         image: "https://picsum.photos/seed/nova-h1/1200/800",
         link: "/shop"
       }
@@ -43,44 +44,53 @@ export function HeroSlider() {
   }, [slides, loading]);
 
   if (loading) return (
-    <section className="container mx-auto px-5 py-2">
-      <div className="w-full h-[200px] rounded-[2.5rem] bg-accent/20 animate-pulse" />
+    <section className="container mx-auto px-6 py-2">
+      <div className="w-full h-[220px] rounded-[3rem] bg-accent/20 animate-pulse" />
     </section>
   );
 
   return (
-    <section className="container mx-auto px-5 py-2">
+    <section className="container mx-auto px-6 py-4">
       <Carousel 
         opts={{ loop: true, direction: 'rtl' }}
         plugins={[Autoplay({ delay: 5000 })]}
-        className="w-full overflow-hidden rounded-[2.5rem] bg-accent/30 shadow-sm"
+        className="w-full overflow-hidden rounded-[3rem] shadow-premium"
       >
         <CarouselContent>
           {sortedSlides.map((slide, index) => (
             <CarouselItem key={index}>
-              <Link href={slide.link || "/shop"} className="block relative h-[180px] md:h-[400px] w-full overflow-hidden">
+              <div className="relative h-[240px] md:h-[450px] w-full bg-[#fdf5f0]">
                 <Image
                   src={slide.image}
                   alt={slide.title}
                   fill
-                  className="object-cover"
+                  className="object-cover opacity-80"
                   priority={index === 0}
                 />
-                <div className="absolute inset-0 bg-gradient-to-l from-primary/30 to-transparent flex flex-col justify-center p-8">
-                  <h2 className="text-xl md:text-4xl font-black text-white mb-1 drop-shadow-md">
+                <div className="absolute inset-0 bg-gradient-to-l from-[#fdf5f0] via-[#fdf5f0]/40 to-transparent flex flex-col justify-center p-10 max-w-[70%]">
+                  <span className="text-[10px] font-black text-secondary bg-white w-fit px-3 py-1 rounded-full mb-4 shadow-sm uppercase tracking-widest">جديدنا الآن</span>
+                  <h2 className="text-2xl md:text-5xl font-black text-primary mb-3 leading-tight">
                     {slide.title}
                   </h2>
-                  <p className="text-[10px] md:text-lg text-white/90 font-bold drop-shadow-md">
+                  <p className="text-[11px] md:text-xl text-primary/60 font-bold mb-6 line-clamp-2 leading-relaxed">
                     {slide.subtitle}
                   </p>
+                  <Link 
+                    href={slide.link || "/shop"} 
+                    className="flex items-center gap-3 bg-secondary text-white w-fit px-6 py-3 rounded-2xl text-[11px] font-black shadow-lg shadow-secondary/20 hover:scale-105 transition-all"
+                  >
+                    تسوقي الآن
+                    <ArrowLeft className="h-4 w-4" />
+                  </Link>
                 </div>
-              </Link>
+              </div>
             </CarouselItem>
           ))}
         </CarouselContent>
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+        {/* Indicators */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
           {sortedSlides.map((_, i) => (
-            <div key={i} className="h-1.5 w-1.5 rounded-full bg-white/40" />
+            <div key={i} className="h-1.5 w-1.5 rounded-full bg-primary/20" />
           ))}
         </div>
       </Carousel>

@@ -5,26 +5,22 @@ import React, { useMemo, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { HeroSlider } from '@/components/home/HeroSlider';
 import { Categories } from '@/components/home/Categories';
-import { ProductCarousel } from '@/components/home/ProductCarousel';
 import { ProductCard } from '@/components/home/ProductCard';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { useUser, useFirestore, useDoc, useCollection } from '@/firebase';
-import { doc, collection, query, where, orderBy } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection } from '@/firebase';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { 
-  Sparkles, 
   Search, 
-  ShieldCheck, 
-  Truck, 
-  MessageCircle, 
-  Star,
+  SlidersHorizontal,
+  ChevronLeft,
   Loader2,
-  X,
   Package,
-  AlertCircle
+  Sparkles
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { intelligentProductSearch } from '@/ai/flows/intelligent-product-search';
 import { STORE_ID } from '@/lib/constants';
+import Link from 'next/link';
 
 export default function Home() {
   const { user } = useUser();
@@ -33,15 +29,6 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [aiKeywords, setAiKeywords] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-
-  const profileRef = useMemo(() => (db && user) ? doc(db, 'users', user.uid) : null, [db, user]);
-  const { data: profile } = useDoc(profileRef);
-
-  const mainCatQuery = useMemo(() => {
-    if (!db) return null;
-    return query(collection(db, 'main-categories'), where('storeId', '==', STORE_ID), orderBy('order', 'asc'));
-  }, [db]);
-  const { data: mainCategories } = useCollection(mainCatQuery);
 
   const productsQuery = useMemo(() => {
     if (!db) return null;
@@ -52,192 +39,123 @@ export default function Home() {
       orderBy('createdAt', 'desc')
     );
   }, [db]);
-  const { data: allProducts, loading: productsLoading, error: productsError } = useCollection(productsQuery);
+  const { data: allProducts, loading: productsLoading } = useCollection(productsQuery);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
-
     setIsSearching(true);
     try {
       const result = await intelligentProductSearch({ query: searchTerm });
       setAiKeywords(result.keywords);
     } catch (error) {
-      console.error("AI Search Error:", error);
       setAiKeywords(searchTerm.split(' '));
     } finally {
       setIsSearching(false);
     }
   };
 
-  const clearSearch = () => {
-    setSearchTerm('');
-    setAiKeywords([]);
-  };
-
   const filteredProducts = useMemo(() => {
     if (!allProducts) return [];
-    if (!searchTerm && aiKeywords.length === 0) return [];
+    if (!searchTerm && aiKeywords.length === 0) return allProducts;
 
     return allProducts.filter((p: any) => {
-      const content = `${p.name} ${p.description} ${p.categoryName} ${p.material || ''}`.toLowerCase();
-      if (aiKeywords.length > 0) {
-        return aiKeywords.some(kw => content.includes(kw.toLowerCase()));
-      }
+      const content = `${p.name} ${p.description} ${p.categoryName}`.toLowerCase();
+      if (aiKeywords.length > 0) return aiKeywords.some(kw => content.includes(kw.toLowerCase()));
       return content.includes(searchTerm.toLowerCase());
     });
   }, [allProducts, searchTerm, aiKeywords]);
 
-  const isViewSearchResults = searchTerm.length > 0 || aiKeywords.length > 0;
-
-  const groupedSections = useMemo(() => {
-    if (!allProducts || allProducts.length === 0) return [];
-    
-    const sections: any[] = [];
-
-    sections.push({
-      id: 'new-arrivals',
-      title: 'أحدث القطع الملكية',
-      products: allProducts.slice(0, 10)
-    });
-
-    if (mainCategories && mainCategories.length > 0) {
-      mainCategories.forEach(main => {
-        const prods = allProducts.filter(p => p.mainCategory === main.id).slice(0, 10);
-        if (prods.length > 0) {
-          sections.push({
-            id: main.id,
-            title: main.name,
-            products: prods
-          });
-        }
-      });
-    }
-
-    return sections;
-  }, [allProducts, mainCategories]);
+  const displayProducts = searchTerm || aiKeywords.length > 0 ? filteredProducts : allProducts?.slice(0, 8);
 
   return (
-    <div className="min-h-screen flex flex-col relative bg-background dark:bg-[#050505] font-arabic pb-32" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-background font-arabic pb-32" dir="rtl">
       <Header />
       
-      <main className="flex-grow space-y-4 pt-24">
-        {!isViewSearchResults && (
-          <section className="container mx-auto px-6 flex justify-start">
-            <p className="text-primary/40 dark:text-zinc-500 text-sm font-medium">
-              أهلاً، {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'جميلة نوفا'}
-            </p>
-          </section>
-        )}
+      <main className="flex-grow space-y-4">
+        {/* Hero Slider */}
+        <HeroSlider />
 
-        <section className="sticky top-0 z-50 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl py-4 border-b border-primary/5 dark:border-zinc-800/50 transition-all">
-          <div className="container mx-auto px-6">
-            <form onSubmit={handleSearch} className="relative group">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/30 dark:text-zinc-600 group-focus-within:text-primary transition-colors" />
+        {/* Search Bar - Integrated in Flow */}
+        <section className="container mx-auto px-6 py-2">
+          <div className="flex gap-4">
+            <form onSubmit={handleSearch} className="relative flex-1 group">
+              <Search className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/20 group-focus-within:text-primary transition-colors" />
               <Input 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="عن ماذا تبحثين اليوم؟"
-                className="h-14 w-full bg-accent/30 dark:bg-zinc-900/50 border-none rounded-2xl flex items-center pr-12 pl-12 text-sm text-primary dark:text-zinc-100 font-bold shadow-sm focus-visible:ring-primary/20"
+                placeholder="ابحثي عن منتجاتكِ المفضلة..."
+                className="h-16 w-full bg-white border-none rounded-full flex items-center pr-14 pl-14 text-sm text-primary font-bold shadow-sm focus-visible:ring-primary/10"
               />
-              {searchTerm && (
-                <button type="button" onClick={clearSearch} className="absolute left-14 top-1/2 -translate-y-1/2 p-1 text-primary/20 hover:text-primary"><X className="h-4 w-4" /></button>
-              )}
-              <button type="submit" disabled={isSearching} className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-primary/5 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-primary dark:text-zinc-300">
-                {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              </button>
             </form>
+            <button className="h-16 w-16 bg-white rounded-[2rem] flex items-center justify-center text-primary shadow-sm active:scale-95 transition-all">
+              <SlidersHorizontal className="h-6 w-6" />
+            </button>
           </div>
         </section>
 
-        {productsError && (
-          <section className="container mx-auto px-6 py-4">
-            <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 p-4 rounded-2xl flex items-center gap-3 text-red-600 dark:text-red-400">
-               <AlertCircle className="h-5 w-5" />
-               <p className="text-xs font-bold">عذراً، تعثر الاتصال بخادم NOVA. يرجى التأكد من الإنترنت.</p>
-            </div>
-          </section>
-        )}
+        {/* Categories Section */}
+        <Categories />
 
-        {isViewSearchResults ? (
-          <section className="container mx-auto px-6 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center justify-between mb-8">
-               <h3 className="text-xl font-black text-primary dark:text-zinc-100">نتائج البحث ({filteredProducts.length})</h3>
-               <button onClick={clearSearch} className="text-xs font-black text-secondary underline underline-offset-4">إلغاء البحث</button>
-            </div>
-            
-            {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-                {filteredProducts.map((product: any) => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={{
-                      id: product.id,
-                      name: product.name,
-                      category: product.categoryName || '',
-                      price: product.price,
-                      originalPrice: product.originalPrice,
-                      image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/600',
-                      badge: product.isNew ? 'جديد' : undefined,
-                      stock: product.stock,
-                      variants: product.variants
-                    }} 
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-24 bg-accent/30 dark:bg-zinc-900/30 rounded-[3rem] border border-dashed border-primary/10">
-                <Package className="h-16 w-16 mx-auto mb-6 text-primary opacity-20" />
-                <p className="text-primary/40 dark:text-zinc-500 font-black">لم نجد نتائج مطابقة</p>
-              </div>
-            )}
-          </section>
-        ) : (
-          <div className="space-y-8">
-            <HeroSlider />
-            <Categories />
+        {/* Best Sellers Header */}
+        <section className="container mx-auto px-6 pt-4 flex items-center justify-between">
+          <h3 className="text-xl font-black text-primary tracking-tight">الأكثر مبيعاً</h3>
+          <Link href="/shop" className="text-xs font-black text-primary/40 flex items-center gap-1 hover:text-primary transition-colors">
+            عرض الكل <ChevronLeft className="h-4 w-4 rotate-180" />
+          </Link>
+        </section>
 
-            <section className="container mx-auto px-5 grid grid-cols-4 gap-2">
-              {[
-                { label: 'منتجات أصلية', icon: ShieldCheck },
-                { label: 'شحن آمن', icon: Truck },
-                { label: 'عناية فائقة', icon: Star },
-                { label: 'دعم مباشر', icon: MessageCircle },
-              ].map((item, idx) => (
-                <div key={idx} className="flex flex-col items-center text-center gap-2">
-                  <div className="h-12 w-12 rounded-full bg-white dark:bg-zinc-900 border border-primary/5 dark:border-zinc-800 shadow-sm flex items-center justify-center text-primary/60 dark:text-zinc-400">
-                    <item.icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-[9px] font-black text-primary/40 dark:text-zinc-600 leading-tight">{item.label}</span>
-                </div>
+        {/* Product Grid */}
+        <section className="container mx-auto px-6 py-4">
+          {productsLoading || isSearching ? (
+            <div className="grid grid-cols-2 gap-5">
+              {[1, 2, 3, 4].map(i => <div key={i} className="aspect-[4/6] rounded-[2.5rem] bg-white animate-pulse" />)}
+            </div>
+          ) : displayProducts && displayProducts.length > 0 ? (
+            <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+              {displayProducts.map((product: any) => (
+                <ProductCard 
+                  key={product.id} 
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    category: product.categoryName || 'جمال',
+                    price: product.price,
+                    image: product.images?.[0] || 'https://picsum.photos/seed/placeholder/400/600',
+                    stock: product.stock,
+                    variants: product.variants,
+                    slug: product.slug
+                  }} 
+                />
               ))}
-            </section>
+            </div>
+          ) : (
+            <div className="text-center py-20 bg-white rounded-[3rem] shadow-sm">
+              <Package className="h-16 w-16 mx-auto mb-4 text-primary/10" />
+              <p className="font-black text-primary/40">لا توجد قطع حالياً</p>
+            </div>
+          )}
+        </section>
 
-            <div className="space-y-12">
-              {productsLoading ? (
-                <div className="container mx-auto px-5 py-10 text-center animate-pulse text-primary/20 font-black">جاري تحميل المجموعات...</div>
-              ) : groupedSections.length > 0 ? (
-                groupedSections.map((section) => (
-                  <ProductCarousel 
-                    key={section.id}
-                    title={section.title} 
-                    products={section.products} 
-                    viewAllHref={`/shop`} 
-                  />
-                ))
-              ) : (
-                <div className="text-center py-20 opacity-20">
-                  <Package className="h-16 w-16 mx-auto mb-4" />
-                  <p className="font-black">لا توجد منتجات للعرض حالياً</p>
-                </div>
-              )}
+        {/* Special Offer Banner */}
+        <section className="container mx-auto px-6 py-4">
+          <div className="bg-[#fdf2f2] rounded-[3rem] p-10 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-white/40 rounded-full -mr-20 -mt-20 blur-3xl" />
+            <div className="relative z-10 space-y-4">
+              <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">عرض خاص</span>
+              <h3 className="text-3xl font-black text-primary max-w-[200px]">خصومات تصل إلى 30%</h3>
+              <p className="text-[11px] text-primary/40 font-bold max-w-[200px]">على أفضل أساسيات الجمال المختارة</p>
+              <button className="flex items-center gap-3 bg-secondary text-white px-6 py-3 rounded-2xl text-[11px] font-black shadow-lg shadow-secondary/20">
+                احصلي عليه الآن <ChevronLeft className="h-4 w-4" />
+              </button>
+            </div>
+            {/* Visual elements */}
+            <div className="absolute left-10 top-1/2 -translate-y-1/2 h-24 w-24 bg-white rounded-full flex flex-col items-center justify-center shadow-xl border-4 border-white">
+               <span className="text-2xl font-black text-red-500">30%</span>
+               <span className="text-[8px] font-black text-primary/20 uppercase leading-none">OFF</span>
             </div>
           </div>
-        )}
-
-        <div className="text-center pt-8 opacity-20 pb-4">
-           <p className="text-[10px] font-black uppercase tracking-[0.3em]">بشرتكِ الزجاجية تبدأ من هنا © 2026</p>
-        </div>
+        </section>
       </main>
 
       <BottomNav />
