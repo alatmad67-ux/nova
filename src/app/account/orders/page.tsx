@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
@@ -12,10 +12,11 @@ import {
   Clock, 
   Truck, 
   CheckCircle2, 
-  XCircle,
+  XCircle, 
   Calendar,
   ShoppingBag,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { STORE_ID } from '@/lib/constants';
 import { cn } from "@/lib/utils";
@@ -29,18 +30,31 @@ export default function MyOrdersPage() {
   const db = useFirestore();
   const { user, loading: userLoading } = useUser();
 
-  // الاستعلام المحدث ليتطابق تماماً مع الفهرس المركب المفعّل في Console
+  // بناء الاستعلام مع التأكد من وجود كافة المتطلبات
   const ordersQuery = useMemo(() => {
-    if (!db || !user) return null;
-    return query(
-      collection(db, 'orders'),
-      where('storeId', '==', STORE_ID),
-      where('customerId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-  }, [db, user]);
+    if (!db || !user?.uid) return null;
+    
+    try {
+      return query(
+        collection(db, 'orders'),
+        where('storeId', '==', STORE_ID),
+        where('customerId', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+    } catch (err) {
+      console.error("Error creating orders query:", err);
+      return null;
+    }
+  }, [db, user?.uid]);
 
   const { data: orders, loading: ordersLoading, error } = useCollection(ordersQuery);
+
+  // تسجيل الأخطاء للتشخيص
+  useEffect(() => {
+    if (error) {
+      console.error("Firestore Orders Fetch Error:", error);
+    }
+  }, [error]);
 
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -54,11 +68,14 @@ export default function MyOrdersPage() {
     }
   };
 
-  if (userLoading || (ordersLoading && !orders)) return (
-    <div className="min-h-screen bg-background dark:bg-[#050505] flex items-center justify-center text-primary dark:text-zinc-100 font-black animate-pulse">
-      جاري تحميل حقيبة طلباتكِ...
-    </div>
-  );
+  if (userLoading || (ordersLoading && !orders && !error)) {
+    return (
+      <div className="min-h-screen bg-background dark:bg-[#050505] flex flex-col items-center justify-center text-primary dark:text-zinc-100 font-black animate-pulse">
+        <Package className="h-10 w-10 mb-4 animate-bounce text-secondary" />
+        جاري تحميل حقيبة طلباتكِ...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] font-arabic pb-32" dir="rtl">
@@ -72,16 +89,27 @@ export default function MyOrdersPage() {
 
       <main className="container mx-auto px-5 py-6 space-y-4 max-w-lg">
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/10 p-6 rounded-[2rem] border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400">
-             <div className="flex items-center gap-3 mb-2">
-                <AlertCircle className="h-5 w-5" />
-                <h4 className="font-black">عذراً، حدث خطأ</h4>
+          <div className="bg-red-50 dark:bg-red-900/10 p-8 rounded-[2.5rem] border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400 text-center animate-in fade-in duration-500">
+             <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="h-16 w-16 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center shadow-sm">
+                  <AlertCircle className="h-8 w-8 text-red-500" />
+                </div>
+                <h4 className="font-black text-lg">عذراً، حدث خطأ في الاتصال</h4>
              </div>
-             <p className="text-xs font-bold opacity-80 leading-relaxed">يرجى التأكد من استقرار الإنترنت أو التواصل مع الدعم الفني لمتجر NOVA.</p>
+             <p className="text-sm font-bold opacity-80 leading-relaxed mb-8">
+               يبدو أن هناك مشكلة مؤقتة في مزامنة طلباتكِ الملكية. يرجى المحاولة مرة أخرى أو التحقق من جودة الإنترنت.
+             </p>
+             <Button 
+               onClick={() => window.location.reload()}
+               className="w-full h-14 rounded-2xl bg-red-600 text-white font-black shadow-lg hover:bg-red-700 transition-all gap-2"
+             >
+               <RefreshCw className="h-5 w-5" />
+               إعادة المحاولة الآن
+             </Button>
           </div>
         )}
 
-        {orders && orders.length > 0 ? (
+        {!error && orders && orders.length > 0 ? (
           orders.map((order: any) => {
             const statusInfo = getStatusInfo(order.status);
             return (
@@ -127,7 +155,7 @@ export default function MyOrdersPage() {
               </Link>
             );
           })
-        ) : !ordersLoading && (
+        ) : !ordersLoading && !error && (
           <div className="text-center py-20 bg-white dark:bg-zinc-900 rounded-[3rem] border-2 border-dashed border-primary/10 dark:border-zinc-800">
             <ShoppingBag className="h-20 w-20 mx-auto mb-6 text-primary/10 dark:text-zinc-800" />
             <h3 className="text-2xl font-black text-primary dark:text-zinc-100 mb-2">لا توجد طلبات بعد</h3>
