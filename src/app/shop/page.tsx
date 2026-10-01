@@ -8,13 +8,12 @@ import { ProductCard } from '@/components/home/ProductCard';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { useStore } from '@/providers/store-provider';
-import { Search, SlidersHorizontal, Package, Loader2 } from 'lucide-react';
+import { Search, SlidersHorizontal, Package, Loader2, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { STORE_ID } from '@/lib/constants';
 
 export default function ShopPage() {
   const db = useFirestore();
-  const { storeId } = useStore();
   const [sortBy, setSortBy] = useState('newest');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -49,9 +48,13 @@ export default function ShopPage() {
     <div className="min-h-screen flex flex-col bg-background dark:bg-[#050505] font-arabic pb-32">
       <Header />
       
-      <main className="flex-grow container mx-auto px-5 pt-24 py-6">
-        <div className="mb-8">
-           <h1 className="text-3xl font-black text-primary dark:text-zinc-100 mb-6 px-2">اكتشفي المجموعة</h1>
+      <main className="flex-grow container mx-auto px-5 pt-28 pb-6">
+        <div className="mb-10">
+           <div className="flex items-center gap-2 mb-2 px-1">
+             <Sparkles className="h-4 w-4 text-secondary" />
+             <span className="text-[10px] font-black text-primary/40 dark:text-zinc-500 uppercase tracking-[0.2em]">تسوقي الآن</span>
+           </div>
+           <h1 className="text-4xl font-black text-primary dark:text-zinc-100 mb-8 px-1">كافة المجموعات</h1>
            
            <div className="flex gap-3 px-1">
              <div className="relative flex-1 group">
@@ -60,7 +63,7 @@ export default function ShopPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="ابحثي عن فستان، تنورة..." 
-                className="h-14 pr-12 bg-white dark:bg-zinc-900 border-border dark:border-zinc-800 shadow-sm rounded-2xl font-bold dark:text-zinc-100"
+                className="h-14 pr-12 bg-white dark:bg-zinc-900 border-border dark:border-zinc-800 shadow-sm rounded-2xl font-bold dark:text-zinc-100 focus-visible:ring-primary/20"
                />
              </div>
              <button className="h-14 w-14 bg-white dark:bg-zinc-900 border border-border dark:border-zinc-800 rounded-2xl flex items-center justify-center text-primary/40 dark:text-zinc-500 shadow-sm active:scale-95 transition-all">
@@ -75,7 +78,7 @@ export default function ShopPage() {
              <p className="text-[10px] font-black text-primary/20 uppercase tracking-widest">تنسيق المتجر...</p>
           </div>
         ) : filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-700">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 animate-in fade-in duration-700">
             {filteredProducts.map((product: any) => (
               <ProductCard 
                 key={product.id} 
@@ -95,13 +98,14 @@ export default function ShopPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-32 opacity-20">
-            <Package className="h-16 w-16 mx-auto mb-4" />
-            <p className="font-black">لا توجد منتجات مطابقة</p>
+          <div className="text-center py-32 bg-white dark:bg-zinc-900 rounded-[3rem] border-2 border-dashed border-primary/10">
+            <Package className="h-16 w-16 mx-auto mb-4 text-primary opacity-20" />
+            <p className="font-black text-primary/40">لا توجد منتجات مطابقة لبحثكِ</p>
           </div>
         )}
 
-        <div className="text-center py-10 opacity-10">
+        {/* Minimal Mobile Branding - No Long Footer */}
+        <div className="text-center py-12 opacity-10 mt-10">
            <p className="text-[9px] font-black uppercase tracking-[0.4em]">NOVA SHOP — 2026</p>
         </div>
       </main>
