@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -40,10 +41,10 @@ export function Categories() {
       <div className="flex overflow-x-auto py-6 px-6 gap-6 no-scrollbar snap-x">
         {/* Offers Card First */}
         <Link href="/shop?offers=true" className="flex flex-col items-center gap-3 snap-start min-w-[70px] group">
-          <div className="h-16 w-16 rounded-[1.5rem] bg-[#fdf2f2] dark:bg-red-950/20 flex items-center justify-center shadow-sm border border-red-50 dark:border-red-900/10 group-hover:scale-110 transition-all">
+          <div className="h-16 w-16 rounded-full bg-[#fdf2f2] dark:bg-red-950/40 flex items-center justify-center shadow-sm border border-red-50 dark:border-red-900/10 group-hover:scale-110 transition-all">
             <Sparkles className="h-6 w-6 text-red-400" />
           </div>
-          <span className="text-[11px] font-black text-primary/40 dark:text-zinc-500 group-hover:text-primary dark:group-hover:text-zinc-300 transition-colors">عروض</span>
+          <span className="text-[11px] font-black text-primary dark:text-zinc-200 group-hover:text-secondary transition-colors">عروض</span>
         </Link>
 
         {sortedCategories.map((cat: any) => (
@@ -52,14 +53,14 @@ export function Categories() {
             href={`/category/${cat.slug}`}
             className="flex flex-col items-center gap-3 snap-start min-w-[70px] group"
           >
-            <div className="h-16 w-16 rounded-[1.5rem] bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-center overflow-hidden border border-transparent group-hover:border-secondary dark:group-hover:border-secondary/50 transition-all relative">
+            <div className="h-16 w-16 rounded-full bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center overflow-hidden border-2 border-transparent group-hover:border-secondary dark:group-hover:border-secondary/50 transition-all relative">
               {cat.image ? (
-                <Image src={cat.image} alt={cat.name} fill className="object-cover p-2" />
+                <Image src={cat.image} alt={cat.name} fill className="object-cover" />
               ) : (
                 <Shirt className="h-6 w-6 text-primary/40 dark:text-zinc-600" />
               )}
             </div>
-            <span className="text-[11px] font-black text-primary/40 dark:text-zinc-500 group-hover:text-primary dark:group-hover:text-zinc-300 transition-colors whitespace-nowrap">
+            <span className="text-[11px] font-black text-primary dark:text-zinc-200 group-hover:text-secondary transition-colors whitespace-nowrap text-center px-1">
               {cat.name}
             </span>
           </Link>

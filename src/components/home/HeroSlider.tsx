@@ -45,54 +45,48 @@ export function HeroSlider() {
 
   if (loading) return (
     <section className="container mx-auto px-6 py-2">
-      <div className="w-full h-[220px] rounded-[3rem] bg-accent/20 animate-pulse" />
+      <div className="w-full h-[180px] rounded-[2.5rem] bg-accent/20 animate-pulse" />
     </section>
   );
 
   return (
-    <section className="container mx-auto px-6 py-4">
+    <section className="container mx-auto px-6 py-2">
       <Carousel 
         opts={{ loop: true, direction: 'rtl' }}
         plugins={[Autoplay({ delay: 5000 })]}
-        className="w-full overflow-hidden rounded-[3rem] shadow-premium"
+        className="w-full overflow-hidden rounded-[2.5rem] shadow-premium"
       >
         <CarouselContent>
           {sortedSlides.map((slide, index) => (
             <CarouselItem key={index}>
-              <div className="relative h-[240px] md:h-[450px] w-full bg-[#fdf5f0]">
+              <div className="relative h-[190px] md:h-[350px] w-full bg-[#fdf5f0] dark:bg-zinc-900">
                 <Image
                   src={slide.image}
                   alt={slide.title}
                   fill
-                  className="object-cover opacity-80"
+                  className="object-cover opacity-90 dark:opacity-60"
                   priority={index === 0}
                 />
-                <div className="absolute inset-0 bg-gradient-to-l from-[#fdf5f0] via-[#fdf5f0]/40 to-transparent flex flex-col justify-center p-10 max-w-[70%]">
-                  <span className="text-[10px] font-black text-secondary bg-white w-fit px-3 py-1 rounded-full mb-4 shadow-sm uppercase tracking-widest">جديدنا الآن</span>
-                  <h2 className="text-2xl md:text-5xl font-black text-primary mb-3 leading-tight">
+                <div className="absolute inset-0 bg-gradient-to-l from-[#fdf5f0] dark:from-black/80 via-[#fdf5f0]/30 dark:via-black/20 to-transparent flex flex-col justify-center p-8 max-w-[75%]">
+                  <span className="text-[9px] font-black text-secondary bg-white dark:bg-zinc-800 w-fit px-2.5 py-1 rounded-full mb-3 shadow-sm uppercase tracking-widest">جديدنا الآن</span>
+                  <h2 className="text-xl md:text-4xl font-black text-primary dark:text-zinc-100 mb-2 leading-tight">
                     {slide.title}
                   </h2>
-                  <p className="text-[11px] md:text-xl text-primary/60 font-bold mb-6 line-clamp-2 leading-relaxed">
+                  <p className="text-[10px] md:text-lg text-primary/60 dark:text-zinc-400 font-bold mb-4 line-clamp-1 leading-relaxed">
                     {slide.subtitle}
                   </p>
                   <Link 
                     href={slide.link || "/shop"} 
-                    className="flex items-center gap-3 bg-secondary text-white w-fit px-6 py-3 rounded-2xl text-[11px] font-black shadow-lg shadow-secondary/20 hover:scale-105 transition-all"
+                    className="flex items-center gap-2 bg-secondary text-white w-fit px-5 py-2.5 rounded-xl text-[10px] font-black shadow-lg shadow-secondary/20 hover:scale-105 transition-all"
                   >
                     تسوقي الآن
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="h-3.5 w-3.5" />
                   </Link>
                 </div>
               </div>
             </CarouselItem>
           ))}
         </CarouselContent>
-        {/* Indicators */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-          {sortedSlides.map((_, i) => (
-            <div key={i} className="h-1.5 w-1.5 rounded-full bg-primary/20" />
-          ))}
-        </div>
       </Carousel>
     </section>
   );
