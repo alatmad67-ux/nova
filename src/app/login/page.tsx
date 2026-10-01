@@ -11,11 +11,10 @@ import {
   OAuthProvider, 
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Header } from '@/components/layout/Header';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Smartphone, Lock, Sparkles, ChevronLeft, Loader2, Apple, ArrowRight } from 'lucide-react';
+import { Smartphone, Lock, Sparkles, ChevronLeft, Loader2, Apple } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { STORE_ID } from '@/lib/constants';
 import Link from 'next/link';
@@ -48,21 +47,25 @@ function LoginForm() {
 
   const syncProfile = async (u: any, provider: string) => {
     if (!db) return;
-    const userRef = doc(db, 'users', u.uid);
-    const snap = await getDoc(userRef);
-    
-    if (!snap.exists()) {
-      await setDoc(userRef, {
-        uid: u.uid,
-        displayName: u.displayName || 'جميلة نوفا',
-        email: u.email || '',
-        phoneNumber: u.phoneNumber || (provider === 'phone' ? phone : ''),
-        photoURL: u.photoURL || '',
-        provider: provider,
-        storeId: STORE_ID,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
+    try {
+      const userRef = doc(db, 'users', u.uid);
+      const snap = await getDoc(userRef);
+      
+      if (!snap.exists()) {
+        await setDoc(userRef, {
+          uid: u.uid,
+          displayName: u.displayName || 'جميلة نوفا',
+          email: u.email || '',
+          phoneNumber: u.phoneNumber || (provider === 'phone' ? phone : ''),
+          photoURL: u.photoURL || '',
+          provider: provider,
+          storeId: STORE_ID,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      console.error("Profile Sync Error:", error);
     }
   };
 
@@ -76,7 +79,7 @@ function LoginForm() {
       const virtualEmail = `${normalized}@nova-auth.local`;
       const result = await signInWithEmailAndPassword(auth, virtualEmail, password);
       await syncProfile(result.user, 'phone');
-      toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بنجاح" });
+      toast({ title: "مرحباً بكِ مجدداً", description: "تم تسجيل الدخول بنجاح ✨" });
     } catch (error: any) {
       toast({ variant: "destructive", title: "خطأ في الدخول", description: "رقم الهاتف أو كلمة المرور غير صحيحة" });
     } finally {
@@ -91,16 +94,35 @@ function LoginForm() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       await syncProfile(result.user, 'google');
-      toast({ title: "مرحباً بكِ", description: "تم تسجيل الدخول عبر Google" });
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل تسجيل الدخول" });
+      toast({ title: "مرحباً بكِ", description: "تم تسجيل الدخول عبر Google بنجاح ✨" });
+      router.push(redirect);
+    } catch (error: any) {
+      console.error("Google Login Error:", error);
+      toast({ variant: "destructive", title: "خطأ", description: "فشل تسجيل الدخول عبر Google" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    if (!auth) return;
+    setLoading(true);
+    try {
+      const provider = new OAuthProvider('apple.com');
+      const result = await signInWithPopup(auth, provider);
+      await syncProfile(result.user, 'apple');
+      toast({ title: "مرحباً بكِ", description: "تم تسجيل الدخول عبر Apple بنجاح ✨" });
+      router.push(redirect);
+    } catch (error: any) {
+      console.error("Apple Login Error:", error);
+      toast({ variant: "destructive", title: "خطأ", description: "فشل تسجيل الدخول عبر Apple" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background font-arabic">
+    <div className="min-h-screen flex flex-col bg-background font-arabic" dir="rtl">
       <header className="h-20 flex items-center px-6 justify-between bg-white border-b border-border/30">
         <button onClick={() => router.push('/')} className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-primary">
           <ChevronLeft className="h-6 w-6" />
@@ -148,7 +170,7 @@ function LoginForm() {
             </div>
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl bg-primary text-white text-xl font-black shadow-xl shadow-primary/20">
+          <Button type="submit" disabled={loading} className="w-full h-16 rounded-2xl bg-primary text-white text-xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">
             {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "دخول"}
           </Button>
         </form>
@@ -162,10 +184,10 @@ function LoginForm() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" onClick={handleGoogleLogin} className="h-14 rounded-2xl border-border hover:bg-accent font-bold gap-3">
+            <Button variant="outline" onClick={handleGoogleLogin} disabled={loading} className="h-14 rounded-2xl border-border hover:bg-accent font-bold gap-3 transition-all active:scale-95">
               <img src="https://www.gstatic.com/firebase/explore/google.svg" className="h-5 w-5" alt="G" /> Google
             </Button>
-            <Button variant="outline" className="h-14 rounded-2xl border-border hover:bg-accent font-bold gap-3">
+            <Button variant="outline" onClick={handleAppleLogin} disabled={loading} className="h-14 rounded-2xl border-border hover:bg-accent font-bold gap-3 transition-all active:scale-95">
               <Apple className="h-5 w-5" /> Apple
             </Button>
           </div>
@@ -176,5 +198,9 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return <Suspense><LoginForm /></Suspense>;
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-black text-primary animate-pulse">جاري التحميل...</div>}>
+      <LoginForm />
+    </Suspense>
+  );
 }
